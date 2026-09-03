@@ -1,0 +1,129 @@
+<Window x:Class="CafManagerConection.App.Views.PaletaDeComandosWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Comandos guardados"
+        Height="520" Width="760"
+        MinHeight="420" MinWidth="620"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Lateral}"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Border Style="{StaticResource Tarjeta}" Margin="10" Padding="0">
+        <DockPanel>
+
+            <Border DockPanel.Dock="Top"
+                    BorderBrush="{DynamicResource Borde}" BorderThickness="0,0,0,1"
+                    Padding="12,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" x:Name="_filtro"
+                             Style="{StaticResource CampoBusqueda}"
+                             Tag="Filtrar por nombre o por comando…"
+                             TextChanged="AlFiltrar" />
+
+                    <TextBlock Grid.Column="1" x:Name="_destino"
+                               Style="{StaticResource Tenue}"
+                               Margin="12,0,2,0"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="260" />
+                </Grid>
+            </Border>
+
+            <Border DockPanel.Dock="Bottom"
+                    BorderBrush="{DynamicResource Borde}" BorderThickness="0,1,0,0"
+                    Padding="12,10">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Content="Nuevo" Style="{StaticResource BotonSecundario}"
+                                Height="30" Padding="12,0" Click="AlNuevo" />
+
+                        <Button x:Name="_guardar" Content="Guardar cambios"
+                                Style="{StaticResource BotonSecundario}"
+                                Height="30" Padding="12,0" Margin="6,0,0,0"
+                                IsEnabled="False"
+                                Click="AlGuardar" />
+
+                        <Button x:Name="_borrar" Content="Borrar"
+                                Style="{StaticResource BotonDestructivo}"
+                                Height="30" Padding="12,0" Margin="6,0,0,0"
+                                IsEnabled="False"
+                                Click="AlBorrar" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="_escribir" Content="Escribir sin ejecutar"
+                                Style="{StaticResource BotonSecundario}"
+                                Height="30" Padding="12,0"
+                                IsEnabled="False"
+                                ToolTip="Deja el comando en el prompt para revisarlo"
+                                Click="AlEscribir" />
+
+                        <Button x:Name="_enviar" Content="Enviar y ejecutar"
+                                Style="{StaticResource BotonPrimario}"
+                                Height="30" Padding="14,0" Margin="6,0,0,0"
+                                IsEnabled="False"
+                                Click="AlEnviar" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Margin="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260" MinWidth="180" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="240" />
+                </Grid.ColumnDefinitions>
+
+                <ListBox Grid.Column="0" x:Name="_lista"
+                         SelectionChanged="AlElegir"
+                         MouseDoubleClick="AlDobleClic">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,2">
+                                <TextBlock Text="{Binding Nombre}" />
+                                <TextBlock Text="{Binding Comando}"
+                                           Style="{StaticResource Tenue}"
+                                           FontFamily="{StaticResource FuenteMono}"
+                                           FontSize="{StaticResource CuerpoChico}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <GridSplitter Grid.Column="1" Width="5" />
+
+                <DockPanel Grid.Column="2" Margin="4,0,0,0">
+                    <TextBlock DockPanel.Dock="Top" Text="Nombre"
+                               Style="{StaticResource Etiqueta}" Margin="0,0,0,4" />
+
+                    <TextBox DockPanel.Dock="Top" x:Name="_nombre"
+                             Height="{StaticResource AltoControl}"
+                             TextChanged="AlEditar" />
+
+                    <TextBlock DockPanel.Dock="Top" Text="Comando"
+                               Style="{StaticResource Etiqueta}" Margin="0,14,0,4" />
+
+                    <CheckBox DockPanel.Dock="Bottom" x:Name="_soloEsta"
+                              Content="Sólo para este servidor"
+                              Margin="0,12,0,0"
+                              Checked="AlEditar" Unchecked="AlEditar" />
+
+                    <TextBox x:Name="_comando"
+                             Style="{StaticResource CampoMultilinea}"
+                             FontFamily="{StaticResource FuenteMono}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             TextChanged="AlEditar" />
+                </DockPanel>
+            </Grid>
+        </DockPanel>
+    </Border>
+</Window>

@@ -1,0 +1,359 @@
+<Window x:Class="CafManagerConection.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:CafManagerConection.App.ViewModels"
+        Title="CMC"
+        Height="800" Width="1280"
+        MinHeight="600" MinWidth="900"
+        Background="{DynamicResource Lateral}"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <HierarchicalDataTemplate DataType="{x:Type vm:NodoArbol}" ItemsSource="{Binding Hijos}">
+            <Grid Margin="0,1" ToolTip="{Binding Resumen}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Path Grid.Column="0" Width="16" Height="16"
+                      Margin="0,0,7,0" VerticalAlignment="Center"
+                      Stretch="Uniform"
+                      Data="{Binding Icono}"
+                      Fill="{Binding ClaveDePincel, Converter={StaticResource PincelClave}}" />
+
+                <Ellipse Grid.Column="1" x:Name="_vivo"
+                         Width="7" Height="7"
+                         Margin="0,0,6,0"
+                         VerticalAlignment="Center"
+                         Fill="{Binding EstadoSesion, Converter={StaticResource ColorEstado}}"
+                         Visibility="Collapsed"
+                         ToolTip="{Binding EstadoSesion, Converter={StaticResource TextoEstado}}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Nombre}"
+                               FontSize="{Binding TamanoDeFuente}"
+                               FontWeight="{Binding EsCarpeta, Converter={StaticResource ASiNegrita}}" />
+
+                    <TextBlock x:Name="_servidor" Text="{Binding ServidorEntreParentesis}"
+                               Style="{StaticResource Tenue}"
+                               FontSize="{Binding TamanoDeFuente}"
+                               Margin="5,0,0,0"
+                               Visibility="Collapsed" />
+                </StackPanel>
+
+                <Path Grid.Column="3" x:Name="_favorita"
+                      Width="11" Height="11"
+                      Margin="6,0,0,0" VerticalAlignment="Center"
+                      Stretch="Uniform"
+                      Data="{DynamicResource IconoFavorito}"
+                      Fill="{DynamicResource IconoAmbar}"
+                      Visibility="Collapsed"
+                      ToolTip="Favorita" />
+
+                <Border Grid.Column="4" x:Name="_etiqueta"
+                        Margin="7,0,0,0" Padding="5,1"
+                        VerticalAlignment="Center"
+                        CornerRadius="3"
+                        Background="{Binding ClaveDePincelDeEtiqueta,
+                                    Converter={StaticResource PincelClave}}">
+                    <TextBlock x:Name="_textoEtiqueta"
+                               Text="{Binding EtiquetaSigla}"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="White" />
+                </Border>
+
+                <TextBlock Grid.Column="5" Text="{Binding Descripcion}"
+                           Style="{StaticResource Tenue}"
+                           FontSize="{Binding TamanoDeFuenteSecundario}"
+                           Margin="8,0,0,0"
+                           VerticalAlignment="Center"
+                           MaxWidth="200"
+                           TextTrimming="CharacterEllipsis" />
+
+                <TextBlock Grid.Column="6" Text="{Binding CantidadDeHijos}"
+                           Style="{StaticResource Tenue}"
+                           FontSize="{Binding TamanoDeFuenteSecundario}"
+                           Margin="10,0,8,0"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           HorizontalAlignment="Right" />
+            </Grid>
+
+            <HierarchicalDataTemplate.Triggers>
+                <DataTrigger Binding="{Binding TieneEtiqueta}" Value="False">
+                    <Setter TargetName="_etiqueta" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Conectada}" Value="True">
+                    <Setter TargetName="_vivo" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding EsFavorita}" Value="True">
+                    <Setter TargetName="_favorita" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding TieneServidor}" Value="True">
+                    <Setter TargetName="_servidor" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+
+            </HierarchicalDataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="_columnaLateral" Width="270" MinWidth="200" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="400" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border x:Name="_avisoActualizacion" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                Background="{DynamicResource Apagado}"
+                BorderBrush="{DynamicResource Borde}"
+                BorderThickness="0,0,0,1"
+                Padding="14,8"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="_textoAviso" Grid.Column="0"
+                           Style="{StaticResource Etiqueta}"
+                           Margin="0" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="12,0,0,0">
+                    <Button x:Name="_botonVerPagina" Content="Ver la página"
+                            Style="{StaticResource BotonTenue}"
+                            Padding="10,0" Click="AlVerPaginaDeRelease" />
+                    <Button x:Name="_botonDespues" Content="Después"
+                            Style="{StaticResource BotonSecundario}"
+                            Margin="8,0,0,0" Padding="12,0" Click="AlPosponerActualizacion" />
+                    <Button x:Name="_botonActualizar" Content="Actualizar"
+                            Style="{StaticResource BotonPrimario}"
+                            Margin="8,0,0,0" MinWidth="100" Click="AlActualizarAhora" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <DockPanel x:Name="_lateral" Grid.Row="1" Grid.Column="0" Margin="10,10,4,10">
+
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="6,0,0,0">
+                    <Button Style="{StaticResource BotonPrimario}"
+                            Content="+" FontSize="16" Padding="0"
+                            Width="30"
+                            ToolTip="Nueva conexión (Ctrl+N)"
+                            Click="AlPedirNuevaConexion" />
+
+                    <Button x:Name="_botonTema"
+                            Style="{StaticResource BotonTenue}"
+                            Content="☀" FontSize="14"
+                            Width="28" Height="24" Padding="0"
+                            Margin="4,0,0,0"
+                            ToolTip="Cambiar el tema"
+                            Click="AlCambiarTema" />
+
+                    <Button x:Name="_botonAjustes"
+                            Style="{StaticResource BotonTenue}"
+                            Width="28" Height="24" Padding="0"
+                            Margin="2,0,0,0"
+                            ToolTip="Configuración"
+                            Click="AlAbrirAjustes">
+                        <Path Width="16" Height="16"
+                              Stretch="Uniform"
+                              Data="{DynamicResource IconoAjustes}"
+                              Fill="{DynamicResource Texto}" />
+                    </Button>
+                </StackPanel>
+
+                <TextBox x:Name="_busqueda" Grid.Column="0"
+                         Style="{StaticResource CampoBusqueda}"
+                         Tag="Buscar servidor…"
+                         TextChanged="AlEscribirBusqueda" />
+
+            </Grid>
+
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                <ToggleButton x:Name="_filtroFavoritas"
+                              Style="{StaticResource ChipDeFiltro}"
+                              Margin="0,0,5,0"
+                              Tag="Favoritas"
+                              ToolTip="Sólo las favoritas. Apretalo de nuevo para ver todo."
+                              Click="AlAlternarFiltro">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="10" Height="10"
+                              Margin="0,0,5,0"
+                              VerticalAlignment="Center"
+                              Stretch="Uniform"
+                              Data="{DynamicResource IconoFavorito}"
+                              Fill="{DynamicResource IconoAmbar}" />
+                        <TextBlock Text="Favoritas" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+
+                <ToggleButton x:Name="_filtroSsh"
+                              Style="{StaticResource ChipDeFiltro}"
+                              Margin="0,0,5,0"
+                              Tag="Ssh"
+                              ToolTip="Sólo SSH. Apretalo de nuevo para ver todo."
+                              Click="AlAlternarFiltro">
+                    <TextBlock Text="SSH" VerticalAlignment="Center" />
+                </ToggleButton>
+
+                <ToggleButton x:Name="_filtroRdp"
+                              Style="{StaticResource ChipDeFiltro}"
+                              Tag="Rdp"
+                              ToolTip="Sólo RDP. Apretalo de nuevo para ver todo."
+                              Click="AlAlternarFiltro">
+                    <TextBlock Text="RDP" VerticalAlignment="Center" />
+                </ToggleButton>
+            </StackPanel>
+
+            <Button x:Name="_logo" DockPanel.Dock="Bottom"
+                    Style="{StaticResource BotonDeFirma}"
+                    Margin="0,10,0,0"
+                    HorizontalAlignment="Center"
+                    ToolTip="https://caftech.com.ar"
+                    Click="AlAbrirSitioDeCafTech">
+                <Grid>
+                    <Image x:Name="_logoColor"
+                           Source="Assets/logo.png"
+                           MaxHeight="44"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+
+                    <Image x:Name="_logoClaro"
+                           Source="Assets/logo-oscuro.png"
+                           MaxHeight="44"
+                           Stretch="Uniform"
+                           Visibility="Collapsed"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                </Grid>
+            </Button>
+
+            <TextBlock x:Name="_nombreYVersion" DockPanel.Dock="Bottom"
+                       Style="{StaticResource Tenue}"
+                       Margin="4,2,0,0"
+                       ToolTip="Versión instalada. La misma que la etiqueta de la release." />
+
+            <TextBlock x:Name="_contador" DockPanel.Dock="Bottom"
+                       Style="{StaticResource Tenue}"
+                       Margin="4,8,0,0" Text="Cargando…" />
+
+            <TreeView x:Name="_arbol"
+                      ItemsSource="{Binding}"
+                      MouseDoubleClick="AlDobleClicEnArbol"
+                      SelectedItemChanged="AlCambiarSeleccion"
+                      PreviewMouseRightButtonDown="AlClicDerecho"
+                      KeyDown="AlPresionarTeclaEnArbol"
+                      AllowDrop="True"
+                      MouseMove="AlMoverSobreArbol"
+                      DragOver="AlArrastrarSobreArbol"
+                      Drop="AlSoltarEnArbol"
+                      PreviewMouseLeftButtonDown="AlPresionarBotonIzquierdo" />
+        </DockPanel>
+
+        <GridSplitter x:Name="_divisorLateral" Grid.Row="1" Grid.Column="1" />
+
+        <Grid Grid.Row="1" Grid.Column="2" Margin="4,10,10,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="120" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition x:Name="_filaConsola" Height="0" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource Tarjeta}" Padding="0">
+                <Grid>
+                    <TextBlock x:Name="_vacio"
+                               Text="Elegí un servidor del árbol para abrir una sesión"
+                               Style="{StaticResource Tenue}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+
+                    <TabControl x:Name="_sesiones" PreviewMouseWheel="AlRodarSobrePestanas"
+                                Visibility="Collapsed"
+                                SelectionChanged="AlCambiarDeSesion" />
+                </Grid>
+            </Border>
+
+            <GridSplitter x:Name="_divisorConsola" Grid.Row="1"
+                          Height="5" HorizontalAlignment="Stretch"
+                          ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
+                          Visibility="Collapsed" />
+
+            <ContentControl x:Name="_consola" Grid.Row="2" />
+
+            <Grid Grid.Row="3">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Ellipse x:Name="_puntoEstado"
+                             Width="8" Height="8"
+                             Margin="4,9,6,0"
+                             VerticalAlignment="Center"
+                             Fill="{DynamicResource EstadoInactivo}"
+                             Visibility="Collapsed" />
+
+                    <TextBlock x:Name="_estado"
+                               Style="{StaticResource Tenue}"
+                               Margin="0,8,0,0" Text="Listo"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock x:Name="_tiempoDeSesion"
+                               Style="{StaticResource Tenue}"
+                               Margin="0,8,14,0"
+                               Visibility="Collapsed"
+                               ToolTip="Lo que tardó el saludo en abrir esta sesión, la hora en que quedó conectada, y hace cuánto." />
+
+                    <TextBlock x:Name="_transferencia"
+                               Style="{StaticResource Tenue}"
+                               Margin="0,8,14,0"
+                               Visibility="Collapsed"
+                               ToolTip="Acumulado del terminal de esta sesion, refrescado cada segundo. Los comandos de los paneles van por otra conexion y se cuentan en la consola de traza (F12)." />
+
+                    <TextBlock x:Name="_sesionesAbiertas"
+                               Style="{StaticResource Tenue}"
+                               Margin="0,8,8,0"
+                               Text="Sin sesiones abiertas" />
+
+                    <ToggleButton x:Name="_botonConsola"
+                                  Style="{StaticResource AccesoPanel}"
+                                  Width="26" Height="22" Padding="0"
+                                  Margin="0,6,2,0"
+                                  ToolTip="Consola de traza (F12)"
+                                  Click="AlAlternarConsola">
+                        <Path Width="14" Height="14"
+                              Stretch="Uniform"
+                              Data="{DynamicResource IconoPanelSupervisor}"
+                              Fill="{DynamicResource TextoTenue}" />
+                    </ToggleButton>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

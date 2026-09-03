@@ -1,0 +1,61 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="Fondo" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="Texto" Color="#FF09090B" />
+    <SolidColorBrush x:Key="TextoTenue" Color="#FF71717A" />
+    <SolidColorBrush x:Key="Borde" Color="#FFE4E4E7" />
+    <SolidColorBrush x:Key="Apagado" Color="#FFF4F4F5" />
+    <SolidColorBrush x:Key="BordeFuerte" Color="#FFA1A1AA" />
+    <SolidColorBrush x:Key="Lateral" Color="#FFF4F4F5" />
+    <SolidColorBrush x:Key="Seleccion" Color="#FFE4E4E7" />
+
+    <SolidColorBrush x:Key="Primario" Color="#FF2563EB" />
+    <SolidColorBrush x:Key="PrimarioTexto" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="Destructivo" Color="#FFDC2626" />
+
+    <!-- El ámbar brillante de los estados no llega a 4,5:1 como texto sobre fondo claro (SC-025) -->
+    <SolidColorBrush x:Key="MedidaNormal" Color="#FF16A34A" />
+    <SolidColorBrush x:Key="MedidaAdvertencia" Color="#FFB45309" />
+    <SolidColorBrush x:Key="MedidaCritica" Color="#FFDC2626" />
+
+    <SolidColorBrush x:Key="EstadoConectado" Color="#FF16A34A" />
+    <SolidColorBrush x:Key="EstadoConectando" Color="#FFCA8A04" />
+    <SolidColorBrush x:Key="EstadoError" Color="#FFDC2626" />
+    <SolidColorBrush x:Key="EstadoInactivo" Color="#FFA1A1AA" />
+
+    <SolidColorBrush x:Key="ProtocoloRdp" Color="#FF2563EB" />
+    <SolidColorBrush x:Key="ProtocoloSsh" Color="#FF16A34A" />
+    <SolidColorBrush x:Key="ProtocoloWeb" Color="#FFEA8C3A" />
+
+    <SolidColorBrush x:Key="Pulgar" Color="#40000000" />
+    <SolidColorBrush x:Key="PulgarActivo" Color="#77000000" />
+
+    <!-- Mismos valores que en Themes/Paleta.Oscuro.xaml: la consola no sigue al tema -->
+    <SolidColorBrush x:Key="FondoConsola" Color="#FF0C0C0C" />
+    <SolidColorBrush x:Key="SuperficieConsola" Color="#FF2A2A31" />
+    <SolidColorBrush x:Key="BordeConsola" Color="#FF60606B" />
+    <SolidColorBrush x:Key="TextoConsola" Color="#FFD4D4D8" />
+    <SolidColorBrush x:Key="TextoConsolaFuerte" Color="#FFFAFAFA" />
+    <SolidColorBrush x:Key="TextoConsolaTenue" Color="#FF8A8A8A" />
+    <SolidColorBrush x:Key="RealceConsola" Color="#26FFFFFF" />
+    <SolidColorBrush x:Key="RealceConsolaFuerte" Color="#3DFFFFFF" />
+    <SolidColorBrush x:Key="PulgarConsola" Color="#50FFFFFF" />
+    <SolidColorBrush x:Key="PulgarConsolaActivo" Color="#90FFFFFF" />
+    <SolidColorBrush x:Key="ConsolaAcento" Color="#FF22D3EE" />
+    <SolidColorBrush x:Key="ConsolaOk" Color="#FF4ADE80" />
+    <SolidColorBrush x:Key="ConsolaAdvertencia" Color="#FFFFC107" />
+    <SolidColorBrush x:Key="ConsolaError" Color="#FFFF6B6B" />
+
+    <SolidColorBrush x:Key="IconoAzul" Color="#FF2563EB" />
+    <SolidColorBrush x:Key="IconoVerde" Color="#FF16A34A" />
+    <SolidColorBrush x:Key="IconoAmbar" Color="#FFD97706" />
+    <SolidColorBrush x:Key="IconoRojo" Color="#FFDC2626" />
+    <SolidColorBrush x:Key="IconoVioleta" Color="#FF7C3AED" />
+    <SolidColorBrush x:Key="IconoCyan" Color="#FF0891B2" />
+    <SolidColorBrush x:Key="IconoRosa" Color="#FFDB2777" />
+    <SolidColorBrush x:Key="IconoLima" Color="#FF65A30D" />
+    <SolidColorBrush x:Key="IconoNaranja" Color="#FFEA580C" />
+    <SolidColorBrush x:Key="IconoGris" Color="#FF71717A" />
+
+</ResourceDictionary>

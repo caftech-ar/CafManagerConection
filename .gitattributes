@@ -1,0 +1,41 @@
+# Normalización de fin de línea.
+#
+# Sin esto, cada máquina que clona decide cómo quedan los saltos de línea, y eso no es cosmético
+# acá: hay pruebas que parsean texto plano —salida de `df`, de `/proc`, de `docker inspect`— desde
+# literales del propio código fuente. En el CI, que hizo un clon nuevo, esos literales llegaron
+# con CRLF y tres pruebas fallaron mientras pasaban en la máquina de desarrollo. Un fallo que
+# depende de quién clonó el repositorio es el más caro de diagnosticar.
+#
+# Los parsers además se hicieron tolerantes a los dos finales de línea, porque un servidor remoto
+# puede contestar con cualquiera de los dos y eso no lo arregla ningún .gitattributes. Esto es la
+# otra mitad: que el código fuente sea igual en todas las máquinas.
+
+# Detección automática, y en el repositorio siempre LF.
+* text=auto eol=lf
+
+# Archivos que Windows necesita con CRLF para que se abran bien con doble clic.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.nsi text eol=crlf
+*.sln text eol=crlf
+*.slnx text eol=crlf
+
+# Binarios: que git no los toque ni intente mostrarlos como texto.
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.exe binary
+*.dll binary
+*.ppk binary
+*.pfx binary
+*.db binary
+
+# Para que los diffs de C# y XAML muestren el nombre del método o del elemento en la cabecera del
+# fragmento, en lugar de una línea cualquiera.
+*.cs diff=csharp
+*.xaml diff=html

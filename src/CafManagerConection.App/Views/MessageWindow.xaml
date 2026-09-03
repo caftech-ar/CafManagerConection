@@ -1,0 +1,29 @@
+<Window x:Class="CafManagerConection.App.Views.MessageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        SizeToContent="Height" Width="440"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource Fondo}">
+
+    <StackPanel Margin="18">
+        <TextBlock x:Name="_mensaje"
+                   TextWrapping="Wrap"
+                   LineHeight="19"
+                   MaxHeight="320" />
+
+        <StackPanel x:Name="_botones" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="_secundario"
+                    Style="{StaticResource BotonSecundario}"
+                    IsCancel="True" MinWidth="100"
+                    Click="AlCancelar" />
+
+            <Button x:Name="_primario"
+                    Style="{StaticResource BotonPrimario}"
+                    MinWidth="100" Margin="8,0,0,0"
+                    Click="AlAceptar" />
+        </StackPanel>
+    </StackPanel>
+</Window>

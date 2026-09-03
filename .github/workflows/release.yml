@@ -1,0 +1,174 @@
+# Publica una release cuando se crea una etiqueta `vX.Y.Z`.
+#
+# Cómo se usa: subís la versión en `Directory.Build.props`, commiteás, y etiquetás con la misma
+# versión. Empujar la etiqueta dispara esto —compila, prueba, arma los dos instaladores y el ZIP
+# portable, calcula los SHA-256 y publica la release—.
+#
+#   git tag -a v0.1.0 -m "0.1.0"
+#   git push origin v0.1.0
+#
+# La etiqueta y `Directory.Build.props` tienen que decir lo mismo, y el primer paso lo verifica y
+# falla si no coinciden. Sin esa verificación habría dos números que hay que acordarse de mover
+# juntos, que es el riesgo de derivar la versión de la etiqueta.
+name: Publicar release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+
+permissions:
+  # Para publicar la release. Nada más: sin esto el paso final falla con 403.
+  contents: write
+
+env:
+  DOTNET_NOLOGO: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  MSBUILDDISABLENODEREUSE: '1'
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # El historial completo hace falta para armar las novedades desde la etiqueta anterior.
+          fetch-depth: 0
+
+      - name: Verificar que la etiqueta y la versión coincidan
+        id: version
+        shell: pwsh
+        run: |
+          $etiqueta = '${{ github.ref_name }}'
+
+          $props = Get-Content Directory.Build.props -Raw
+          if ($props -notmatch '<Version>([^<]+)</Version>') {
+            throw 'No se encontró <Version> en Directory.Build.props.'
+          }
+
+          $version = $Matches[1].Trim()
+          $esperada = "v$version"
+
+          if ($etiqueta -ne $esperada) {
+            throw "La etiqueta $etiqueta no coincide con la versión $version de Directory.Build.props (esperaba $esperada). La release no se publica: el instalador y el aviso de versión nueva compararían números distintos."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "etiqueta=$etiqueta" >> $env:GITHUB_OUTPUT
+
+          Write-Output "Versión $version · etiqueta $etiqueta"
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Instalar NSIS y go-task
+        shell: pwsh
+        run: |
+          choco install nsis --no-progress -y
+          choco install go-task --no-progress -y
+
+      # Por las tareas del Taskfile y no repitiendo los comandos acá: si el CI arma el paquete de
+      # una forma y la máquina de desarrollo de otra, la diferencia aparece recién en el equipo del
+      # usuario. `task release` corre la suite antes de publicar —`publish` depende de `test`—, así
+      # que no hay un paso de pruebas aparte.
+      #
+      # El FILTRO excluye `RdpLifecycle`, y es la única exclusión: mide cuántos descriptores de
+      # Win32 filtra el control ActiveX de Escritorio remoto por sesión, y ese número depende del
+      # entorno —3 por sesión con escritorio real, 8 en este runner—. Sigue estricta en la máquina
+      # de desarrollo, que es donde su medición significa algo.
+      - name: Probar, armar el ZIP portable y los dos instaladores
+        shell: pwsh
+        run: |
+          $env:PATH = "C:\Program Files (x86)\NSIS;$env:PATH"
+          task release FILTRO='Categoria!=RdpLifecycle'
+
+      - name: Calcular los SHA-256
+        shell: pwsh
+        run: |
+          # Sin esto la aplicación NO ejecuta lo que descarga: el instalador no lleva firma de
+          # certificado, así que el hash es la única garantía de que lo que se corre es lo que se
+          # publicó, y por eso se rechaza un archivo sin hash publicado (FR-161a).
+          #
+          # La lista va explícita y no con un comodín sobre la carpeta. Dos motivos, y los dos
+          # costaron: `Get-ChildItem publish -Include *.exe` devuelve CERO archivos —`-Include`
+          # necesita un comodín en la ruta o `-Recurse`, y sin eso no filtra, no falla—, y con
+          # `-Recurse` se colarían los cientos de .exe y .dll que hay dentro de la carpeta
+          # self-contained. Nombrar los tres artefactos deja las dos trampas afuera.
+          $artefactos = @(
+            'publish/CafManagerConection-setup.exe'
+            'publish/CafManagerConection-setup-completo.exe'
+            'publish/CafManagerConection-win-x64.zip'
+          )
+
+          foreach ($ruta in $artefactos) {
+            # Falla ruidosamente si falta uno: publicar una release a la que le falta un paquete
+            # —o su hash— es peor que no publicarla, porque el aviso de versión nueva ya salió y
+            # cada usuario se topa con la descarga rota.
+            if (-not (Test-Path $ruta)) {
+              throw "No se generó $ruta. La release no se publica incompleta."
+            }
+
+            $hash = (Get-FileHash $ruta -Algorithm SHA256).Hash.ToLower()
+            $nombre = Split-Path $ruta -Leaf
+
+            "$hash  $nombre" | Set-Content "$ruta.sha256" -NoNewline -Encoding ascii
+            Write-Output "$nombre -> $hash"
+          }
+
+      - name: Armar las novedades
+        id: novedades
+        shell: pwsh
+        run: |
+          # Se excluye la etiqueta que dispara esta corrida: `git describe` la encontraría a ella
+          # misma y el rango saldría vacío.
+          $anterior = git describe --tags --abbrev=0 --exclude='${{ github.ref_name }}' 2>$null
+
+          $rango = if ([string]::IsNullOrWhiteSpace($anterior)) { 'HEAD' } else { "$anterior..HEAD" }
+          $lineas = git log $rango --no-merges --pretty=format:'- %s'
+
+          if ([string]::IsNullOrWhiteSpace($lineas)) {
+            $lineas = '- Sin cambios registrados.'
+          }
+
+          $cuerpo = @"
+          $lineas
+
+          ---
+
+          **Cuál bajar**
+
+          - ``CafManagerConection-setup.exe`` — instalador liviano. Necesita el Escritorio de .NET 10 en el equipo; si falta, el instalador te lleva a la descarga oficial.
+          - ``CafManagerConection-setup-completo.exe`` — lleva el runtime adentro. Para equipos sin internet o sin permiso para instalarlo.
+          - ``CafManagerConection-win-x64.zip`` — portable, se descomprime y se usa. No instala nada.
+
+          Cada archivo viene con su ``.sha256``. La aplicación lo verifica antes de ejecutar lo que descarga: **un archivo cuyo hash no coincida no se ejecuta**.
+          "@
+
+          # Delimitador multilínea: un cuerpo con saltos de línea rompe la forma `clave=valor`.
+          "cuerpo<<FIN_DEL_CUERPO" >> $env:GITHUB_OUTPUT
+          $cuerpo >> $env:GITHUB_OUTPUT
+          "FIN_DEL_CUERPO" >> $env:GITHUB_OUTPUT
+
+      - name: Publicar la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.etiqueta }}
+          name: ${{ steps.version.outputs.etiqueta }}
+          body: ${{ steps.novedades.outputs.cuerpo }}
+          draft: false
+
+          # Prerelease cuando la versión lleva sufijo —0.1.0-rc1—: la aplicación las ordena por
+          # debajo de la definitiva, así que una rc no se ofrece como si fuera la buena.
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: |
+            publish/CafManagerConection-setup.exe
+            publish/CafManagerConection-setup.exe.sha256
+            publish/CafManagerConection-setup-completo.exe
+            publish/CafManagerConection-setup-completo.exe.sha256
+            publish/CafManagerConection-win-x64.zip
+            publish/CafManagerConection-win-x64.zip.sha256

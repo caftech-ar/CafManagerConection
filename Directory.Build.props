@@ -1,0 +1,59 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!--
+      El nombre visible va separado en palabras: es lo que Windows muestra en el Administrador de
+      tareas, en las propiedades del archivo y en el globo del acceso directo. Todo junto no se lee.
+
+      El ejecutable, en cambio, se llama cmc.exe (ver el csproj de App): es lo que se tipea y lo
+      que ocupa lugar en una linea de comando.
+    -->
+    <Company>CafTech</Company>
+    <Product>Caf Manager Conection</Product>
+    <NeutralLanguage>es</NeutralLanguage>
+
+    <!--
+      La version vive aca y en ningun otro lado. El instalador la lee del ejecutable publicado en
+      lugar de repetirla en su guion: dos numeros de version que hay que acordarse de mover juntos
+      terminan separados, y el sintoma es un instalador que dice una cosa y un «Acerca de» que dice
+      otra.
+
+      Version: la que se muestra. AssemblyVersion lleva la misma con un cuarto numero en cero,
+      porque Windows y .NET esperan cuatro numeros ahi.
+    -->
+    <!--
+      Simbolos dentro del propio binario, sin archivos .pdb sueltos.
+
+      No es solo prolijidad: los .pdb se separan del ejecutable con una facilidad asombrosa —al
+      copiar una carpeta, al armar un paquete, al mandar un binario por chat— y un rastro de pila
+      sin numeros de linea es justo lo que no sirve cuando alguien reporta un fallo. Embebidos no se
+      pueden separar nunca.
+
+      La alternativa era DebugType=none, que ahorra lo mismo y deja los rastros de pila sin numeros
+      de linea. Para un producto cuyo canal de diagnostico son sus propios registros, eso es perder
+      lo que mas se necesita.
+    -->
+    <DebugType>embedded</DebugType>
+
+    <Version>0.1.1</Version>
+    <AssemblyVersion>0.1.1.0</AssemblyVersion>
+    <FileVersion>0.1.1.0</FileVersion>
+    <InformationalVersion>0.1.1</InformationalVersion>
+  </PropertyGroup>
+
+  <!--
+    Los proyectos de prueba no tratan los avisos como errores: xUnit genera avisos de
+    analizadores que no queremos que rompan la compilacion de la suite.
+  -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

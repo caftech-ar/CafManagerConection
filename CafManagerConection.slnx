@@ -1,0 +1,27 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CafManagerConection.App/CafManagerConection.App.csproj" />
+    <Project Path="src/CafManagerConection.Domain/CafManagerConection.Domain.csproj" />
+    <Project Path="src/CafManagerConection.Infrastructure/CafManagerConection.Infrastructure.csproj" />
+    <Project Path="src/CafManagerConection.Monitoring/CafManagerConection.Monitoring.csproj" />
+    <Project Path="src/CafManagerConection.Platform/CafManagerConection.Platform.csproj" />
+    <Project Path="src/CafManagerConection.Rdp/CafManagerConection.Rdp.csproj" />
+    <Project Path="src/CafManagerConection.Ssh/CafManagerConection.Ssh.csproj" />
+    <Project Path="src/CafManagerConection.Terminal/CafManagerConection.Terminal.csproj" />
+    <Project Path="src/CafManagerConection.UseCases/CafManagerConection.UseCases.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CafManagerConection.App.Tests/CafManagerConection.App.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Domain.Tests/CafManagerConection.Domain.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Infrastructure.Tests/CafManagerConection.Infrastructure.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Monitoring.Tests/CafManagerConection.Monitoring.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Platform.Tests/CafManagerConection.Platform.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Rdp.Tests/CafManagerConection.Rdp.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Ssh.Tests/CafManagerConection.Ssh.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.Terminal.Tests/CafManagerConection.Terminal.Tests.csproj" />
+    <Project Path="tests/CafManagerConection.UseCases.Tests/CafManagerConection.UseCases.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/CafManagerConection.Import/CafManagerConection.Import.csproj" />
+  </Folder>
+</Solution>

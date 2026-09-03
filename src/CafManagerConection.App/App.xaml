@@ -1,0 +1,24 @@
+<Application x:Class="CafManagerConection.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:temas="clr-namespace:CafManagerConection.App.Themes">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- La paleta va primera: Services/Temas.cs reemplaza el diccionario en el índice 0 -->
+                <ResourceDictionary Source="Themes/Paleta.Claro.xaml" />
+                <ResourceDictionary Source="Themes/Estilos.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <temas:SiVisible x:Key="ASiVisible" />
+            <temas:SiOculto x:Key="ASiOculto" />
+            <temas:SiNegrita x:Key="ASiNegrita" />
+            <temas:ColorDeProtocolo x:Key="ColorProtocolo" />
+            <temas:ColorDeEstado x:Key="ColorEstado" />
+            <temas:PincelPorClave x:Key="PincelClave" />
+            <temas:GeometriaPorClave x:Key="GeometriaClave" />
+            <temas:TextoDeEstado x:Key="TextoEstado" />
+            <temas:IconoDeProtocolo x:Key="IconoProtocolo" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

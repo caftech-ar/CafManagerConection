@@ -1,0 +1,47 @@
+<Window x:Class="CafManagerConection.App.Views.PedidoDeContrasenaDeSudoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        SizeToContent="Height" Width="440"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Title="Contraseña de sudo"
+        Background="{DynamicResource Fondo}">
+
+    <StackPanel Margin="18">
+        <TextBlock x:Name="_encabezado" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+        <TextBlock Text="Contraseña de sudo" Style="{StaticResource Etiqueta}" Margin="0,0,0,4" />
+        <PasswordBox x:Name="_clave" />
+
+        <Border Background="{DynamicResource Apagado}"
+                BorderBrush="{DynamicResource Borde}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="10"
+                Margin="0,14,0,0">
+            <StackPanel>
+                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                           Text="No se guarda en ningún lado: ni en el Administrador de credenciales de Windows, ni en la base de datos, ni en la configuración, ni en un archivo temporal." />
+                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap" Margin="0,6,0,0"
+                           Text="Vive en memoria mientras esta sesión esté abierta y se borra al cerrarla. La próxima vez que abras esta conexión se va a volver a pedir." />
+                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap" Margin="0,6,0,0"
+                           Text="Viaja por la entrada estándar de sudo y nunca por la línea de comandos, así que no aparece en el ps del servidor ni en ningún registro de la aplicación." />
+            </StackPanel>
+        </Border>
+
+        <TextBlock x:Name="_error" Foreground="{DynamicResource Destructivo}"
+                   TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed" />
+
+        <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap" Margin="0,14,0,0"
+                   Text="Si cancelás, los paneles siguen mostrando sólo lo que alcanza tu usuario y no se vuelve a pedir en esta sesión." />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="Cancelar" Style="{StaticResource BotonSecundario}"
+                    IsCancel="True" MinWidth="100" />
+            <Button Content="Usar para sudo" Style="{StaticResource BotonPrimario}"
+                    IsDefault="True" MinWidth="120" Margin="8,0,0,0"
+                    Click="AlAceptar" />
+        </StackPanel>
+    </StackPanel>
+</Window>

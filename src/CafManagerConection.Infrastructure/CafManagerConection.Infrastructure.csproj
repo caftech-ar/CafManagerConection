@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CafManagerConection.UseCases\CafManagerConection.UseCases.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      La politica de busqueda de las herramientas externas se prueba: que se miren las dos
+      carpetas de programas y los dos nombres de carpeta de FileZilla es justo lo que se olvida,
+      y el sintoma seria "no detecta lo que esta instalado" en la mitad de los equipos.
+      Exponerla como publica solo para probarla ampliaria la superficie del componente.
+    -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>CafManagerConection.Infrastructure.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.79" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    <PackageReference Include="Serilog" Version="4.4.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!--
+      Lo exige el generador de LibraryImport, que produce el marshalling del P/Invoke al
+      Credential Manager. Se habilita solo en este proyecto, que es el unico con interop.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- El producto es Windows-only por constitucion; evita los avisos CA1416. -->
+    
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,435 @@
+﻿<Window x:Class="CafManagerConection.App.Views.PreferenciasWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:CafManagerConection.App.Views"
+        Title="Preferencias"
+        Height="780" Width="820"
+        MinHeight="640" MinWidth="680"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource Lateral}"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <Style TargetType="TabControl" BasedOn="{StaticResource {x:Type TabControl}}">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style x:Key="Ruta" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="FontFamily" Value="{StaticResource FuenteMono}" />
+            <Setter Property="FontSize" Value="{StaticResource CuerpoChico}" />
+            <Setter Property="Background" Value="{DynamicResource Apagado}" />
+        </Style>
+
+        <Style x:Key="BotonPaso" TargetType="Button" BasedOn="{StaticResource BotonSecundario}">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="14">
+
+        <Grid DockPanel.Dock="Bottom" Margin="0,14,0,0">
+            <TextBlock x:Name="_estado" Style="{StaticResource Tenue}"
+                       VerticalAlignment="Center" HorizontalAlignment="Left"
+                       TextTrimming="CharacterEllipsis" MaxWidth="420" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cerrar" Style="{StaticResource BotonPrimario}"
+                        IsCancel="True" MinWidth="100" Click="AlCerrar" />
+            </StackPanel>
+        </Grid>
+
+        <TabControl Margin="0,10,0,0">
+
+            <TabItem Header="General">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,0,0">
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14">
+                            <StackPanel>
+                                <TextBlock Text="Dónde vive todo" Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,14"
+                                           Text="Todo bajo tu perfil, no en Archivos de programa: es lo que permite que CMC funcione sin privilegios de administrador. Desinstalar no se lleva nada de esto." />
+
+                                <TextBlock Text="Base de datos" Style="{StaticResource Etiqueta}" />
+                                <Grid Margin="0,4,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" x:Name="_rutaBase" Style="{StaticResource Ruta}" />
+                                    <Button Grid.Column="1" Content="Abrir carpeta"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="8,0,0,0" Padding="12,0"
+                                            Click="AlAbrirCarpetaBase" />
+                                </Grid>
+
+                                <TextBlock Text="Registros" Style="{StaticResource Etiqueta}" />
+                                <Grid Margin="0,4,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" x:Name="_rutaLogs" Style="{StaticResource Ruta}" />
+                                    <Button Grid.Column="1" Content="Abrir carpeta"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="8,0,0,0" Padding="12,0"
+                                            Click="AlAbrirCarpetaLogs" />
+                                </Grid>
+
+                                <TextBlock Text="Contraseñas" Style="{StaticResource Etiqueta}" />
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="No están en la base. Viven en el Administrador de credenciales de Windows, cifradas y atadas a tu cuenta. En la base sólo queda un identificador que apunta a ellas, así que copiarla a otra máquina no filtra ninguna." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Actualizaciones" Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,10"
+                                           Text="En cada inicio se consulta la última release publicada en este repositorio de GitHub y, si hay una versión más nueva, se ofrece actualizar. El repositorio es fijo y no se puede cambiar: apuntar la comprobación a otro lado permitiría que la aplicación se actualice desde un origen que no es el del proyecto (FR-159b)." />
+
+                                <TextBlock Text="Repositorio" Style="{StaticResource Etiqueta}" />
+                                <TextBox x:Name="_origenActualizaciones" Margin="0,4,0,4"
+                                         Style="{StaticResource Ruta}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Content="Buscar actualizaciones"
+                                            Style="{StaticResource BotonSecundario}"
+                                            MinWidth="170" Click="AlBuscarActualizaciones" />
+                                    <TextBlock x:Name="_estadoActualizaciones" Style="{StaticResource Tenue}"
+                                               VerticalAlignment="Center" Margin="10,0,0,0"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Apariencia">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,0,0">
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14">
+                            <StackPanel>
+                                <TextBlock Text="Tema" Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,10"
+                                           Text="El terminal siempre va en oscuro, sea cual sea el tema elegido acá: es el que hace legibles a las herramientas de línea de comandos." />
+
+                                <RadioButton x:Name="_temaClaro" Content="Claro" GroupName="Tema"
+                                             Margin="0,0,0,8" Checked="AlCambiarTema" />
+                                <RadioButton x:Name="_temaOscuro" Content="Oscuro" GroupName="Tema"
+                                             Margin="0,0,0,8" Checked="AlCambiarTema" />
+                                <RadioButton x:Name="_temaSistema" Content="Acompañar a Windows"
+                                             GroupName="Tema" Checked="AlCambiarTema" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14" Margin="0,12,0,0">
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="Color de los iconos" Style="{StaticResource Titulo}"
+                                               FontSize="15" HorizontalAlignment="Left" />
+                                    <Button Content="Personalizar…" Style="{StaticResource BotonSecundario}"
+                                            HorizontalAlignment="Right" Padding="12,0"
+                                            Click="AlPersonalizarColores" />
+                                </Grid>
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="El color de RDP, SSH y las entradas web en el árbol, elegido de una paleta cerrada de diez para que se vea bien en los dos temas." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Árbol de conexiones" Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Text="Tamaño de letra" Style="{StaticResource Etiqueta}"
+                                           Margin="0,10,0,4" />
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,8"
+                                           Text="Cinco escalones. Con letra más chica entra más árbol en la misma pantalla." />
+
+                                <ComboBox x:Name="_tamanoArbol" Width="180"
+                                          HorizontalAlignment="Left"
+                                          SelectionChanged="AlElegirTamanoDelArbol" />
+
+                                <CheckBox x:Name="_mostrarHost" Content="Mostrar el servidor junto a cada conexión"
+                                          Margin="0,16,0,0" Click="AlCambiarAparienciaDelArbol" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Etiquetas">
+                <v:EtiquetasPanel x:Name="_panelEtiquetas" Margin="0,12,0,0" />
+            </TabItem>
+
+            <TabItem Header="Importar">
+                <v:PanelImportacion x:Name="_panelImportacion" Margin="0,12,0,0" />
+            </TabItem>
+
+            <TabItem Header="Copias">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,0,0">
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14">
+                            <StackPanel>
+                                <TextBlock Text="Copias de seguridad" Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,14"
+                                           Text="Se hace una copia al abrir la aplicación, como mucho una por día, y sólo si la base cambió desde la anterior. No hay servicio ni tarea programada: si no abrís CMC, no se copia nada — y tampoco cambió nada." />
+
+                                <CheckBox x:Name="_copiasActivas" Content="Copiar al abrir la aplicación"
+                                          Margin="0,0,0,14" Click="AlCambiarAjuste" />
+
+                                <TextBlock Text="Carpeta de las copias" Style="{StaticResource Etiqueta}" />
+                                <Grid Margin="0,4,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" x:Name="_carpeta" Style="{StaticResource Ruta}" />
+                                    <Button Grid.Column="1" Content="Elegir…"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="8,0,0,0" Padding="12,0" Click="AlElegirCarpeta" />
+                                    <Button Grid.Column="2" Content="Abrir"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="6,0,0,0" Padding="12,0" Click="AlAbrirCarpetaCopias" />
+                                </Grid>
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,14"
+                                           Text="CMC no se conecta con ninguna nube. Si elegís una carpeta de OneDrive, Drive o un recurso de red, la copia queda respaldada por esa herramienta sin que CMC sepa nada de ella." />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                    <TextBlock Text="Cuántas guardar" Style="{StaticResource Etiqueta}"
+                                               VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <TextBox x:Name="_cuantas" Width="70"
+                                             TextAlignment="Center"
+                                             PreviewTextInput="AlEscribirNumero"
+                                             TextChanged="AlCambiarAjuste" />
+                                    <TextBlock Style="{StaticResource Tenue}" VerticalAlignment="Center"
+                                               Margin="10,0,0,0"
+                                               Text="Las más viejas se borran solas." />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Button Content="Copiar ahora" Style="{StaticResource BotonSecundario}"
+                                            MinWidth="120" Click="AlCopiarAhora" />
+                                    <Button Content="Exportar a un archivo…"
+                                            Style="{StaticResource BotonSecundario}"
+                                            MinWidth="170" Margin="8,0,0,0" Click="AlExportar" />
+                                </StackPanel>
+
+                                <TextBlock Text="Copias que hay" Style="{StaticResource Etiqueta}"
+                                           Margin="0,0,0,4" />
+
+                                <Border BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                                        CornerRadius="{StaticResource Radio}" Height="150">
+                                    <DataGrid x:Name="_copias"
+                                              AutoGenerateColumns="False"
+                                              IsReadOnly="True"
+                                              HeadersVisibility="Column"
+                                              BorderThickness="0">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Cuándo" Binding="{Binding Cuando}"
+                                                                Width="150" />
+                                            <DataGridTextColumn Header="Tamaño" Binding="{Binding Tamano}"
+                                                                Width="90" />
+                                            <DataGridTextColumn Header="Archivo" Binding="{Binding Archivo}"
+                                                                Width="*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Avanzado">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,0,0">
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="Credenciales guardadas" Style="{StaticResource Titulo}"
+                                               FontSize="15" HorizontalAlignment="Left" />
+
+                                    <Button Content="Abrir el Administrador de Windows"
+                                            Style="{StaticResource BotonSecundario}"
+                                            HorizontalAlignment="Right" Padding="12,0"
+                                            Click="AlAbrirCredenciales" />
+                                </Grid>
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,10"
+                                           Text="Sólo se muestran los nombres. El secreto no sale de Windows: ni por acá ni por línea de comandos." />
+
+                                <Border BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                                        CornerRadius="{StaticResource Radio}" Height="160">
+                                    <DataGrid x:Name="_credenciales"
+                                              AutoGenerateColumns="False"
+                                              IsReadOnly="True"
+                                              HeadersVisibility="Column"
+                                              BorderThickness="0">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}"
+                                                                Width="80" />
+                                            <DataGridTextColumn Header="De" Binding="{Binding Dueno}"
+                                                                Width="*" />
+                                            <DataGridTextColumn Header="Clave" Binding="{Binding Clave}"
+                                                                Width="2*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+
+                                <TextBlock x:Name="_resumenCreds" Style="{StaticResource Tenue}"
+                                           Margin="0,6,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Terminal" Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,10"
+                                           Text="Vale para las sesiones SSH que se abran después. Ctrl+rueda encima de una sesión cambia el tamaño al vuelo y lo guarda acá mismo." />
+
+                                <TextBlock Text="Tipo de letra" Style="{StaticResource Etiqueta}" />
+
+                                <TextBox x:Name="_buscarFuente" Margin="0,4,0,4"
+                                         Style="{StaticResource CampoBusqueda}"
+                                         Tag="Buscar entre las instaladas…"
+                                         TextChanged="AlBuscarFuente" />
+
+                                <Border BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                                        CornerRadius="{StaticResource Radio}" Height="150"
+                                        Margin="0,0,0,6">
+                                    <ListBox x:Name="_fuentes" BorderThickness="0"
+                                             SelectionChanged="AlElegirFuente">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}"
+                                                           FontFamily="{Binding}"
+                                                           FontSize="13" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+
+                                <TextBlock x:Name="_fuenteElegida"
+                                           Style="{StaticResource Tenue}"
+                                           Margin="0,0,0,12" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="Tamaño (puntos)" Style="{StaticResource Etiqueta}" />
+                                        <TextBox x:Name="_terminalTamano" Margin="0,4,0,0"
+                                                 PreviewTextInput="AlEscribirNumero"
+                                                 TextChanged="AlCambiarTerminal" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="Líneas de historial" Style="{StaticResource Etiqueta}" />
+                                        <TextBox x:Name="_terminalHistorial" Margin="0,4,0,0"
+                                                 PreviewTextInput="AlEscribirNumero"
+                                                 TextChanged="AlCambiarTerminal" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Acerca de">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,0,0">
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,18">
+                            <StackPanel>
+                                <Grid>
+                                    <Image x:Name="_logoAcercaColor"
+                                           Source="../Assets/logo.png"
+                                           MaxHeight="72"
+                                           HorizontalAlignment="Left"
+                                           Stretch="Uniform"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+
+                                    <Image x:Name="_logoAcercaClaro"
+                                           Source="../Assets/logo-oscuro.png"
+                                           MaxHeight="72"
+                                           HorizontalAlignment="Left"
+                                           Stretch="Uniform"
+                                           Visibility="Collapsed"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                </Grid>
+
+                                <TextBlock x:Name="_acercaNombre"
+                                           Style="{StaticResource Titulo}"
+                                           FontSize="17"
+                                           HorizontalAlignment="Left"
+                                           Margin="0,14,0,2" />
+
+                                <TextBlock x:Name="_acercaVersion"
+                                           Style="{StaticResource Tenue}"
+                                           Margin="0,0,0,12" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,14"
+                                           Text="Administrador de servidores RDP y SSH para Windows. Las conexiones y la configuración viven en tu perfil; los secretos, cifrados." />
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="_botonRepo" Content="Repositorio"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Padding="14,0"
+                                            Click="AlAbrirRepositorio" />
+
+                                    <Button x:Name="_botonWeb" Content="caftech.com.ar"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="8,0,0,0" Padding="14,0"
+                                            Click="AlAbrirWeb" />
+
+                                    <Button Content="Copiar la versión"
+                                            Style="{StaticResource BotonTenue}"
+                                            Margin="8,0,0,0" Padding="14,0"
+                                            Click="AlCopiarVersion" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

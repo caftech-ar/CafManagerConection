@@ -1,0 +1,171 @@
+<UserControl x:Class="CafManagerConection.App.Views.PanelImportacion"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             UseLayoutRounding="True"
+             TextOptions.TextFormattingMode="Display">
+
+    <Border Style="{StaticResource Tarjeta}" Padding="0">
+        <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0">
+                <TextBlock Text="De dónde traer las conexiones" Style="{StaticResource Titulo}" />
+
+                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap" Margin="0,4,0,10"
+                           Text="Se leen las sesiones guardadas de otros programas y no se les toca nada. Sólo entran las que van sobre SSH; el resto se lista aparte con el motivo." />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <RadioButton Grid.Row="0" Grid.Column="0" x:Name="_origenPutty"
+                                 GroupName="Origen" Content="PuTTY"
+                                 Margin="0,0,0,7" Checked="AlElegirOrigen" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="_detallePutty"
+                               Style="{StaticResource Tenue}" Margin="12,0,0,7"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                    <RadioButton Grid.Row="1" Grid.Column="0" x:Name="_origenWinScpRegistro"
+                                 GroupName="Origen" Content="WinSCP (registro)"
+                                 Margin="0,0,0,7" Checked="AlElegirOrigen" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="_detalleWinScpRegistro"
+                               Style="{StaticResource Tenue}" Margin="12,0,0,7"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                    <RadioButton Grid.Row="2" Grid.Column="0" x:Name="_origenWinScpIni"
+                                 GroupName="Origen" Content="WinSCP (WinSCP.ini)"
+                                 Margin="0,0,0,7" Checked="AlElegirOrigen" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="_detalleWinScpIni"
+                               Style="{StaticResource Tenue}" Margin="12,0,0,7"
+                               FontFamily="{StaticResource FuenteMono}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                    <RadioButton Grid.Row="3" Grid.Column="0" x:Name="_origenFileZilla"
+                                 GroupName="Origen" Content="FileZilla"
+                                 Checked="AlElegirOrigen" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="_detalleFileZilla"
+                               Style="{StaticResource Tenue}" Margin="12,0,0,0"
+                               FontFamily="{StaticResource FuenteMono}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="_buscar" Content="Buscar" Style="{StaticResource BotonSecundario}"
+                            Height="30" MinWidth="110" Click="AlBuscar" />
+
+                    <TextBlock x:Name="_estado" Style="{StaticResource Tenue}"
+                               VerticalAlignment="Center" Margin="12,0,0,0"
+                               TextTrimming="CharacterEllipsis" MaxWidth="560" />
+                </StackPanel>
+
+                <TextBlock x:Name="_error" Foreground="{DynamicResource Destructivo}"
+                           TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed" />
+            </StackPanel>
+
+            <Grid Grid.Row="2" Margin="0,12,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Qué se va a importar" Style="{StaticResource Etiqueta}" />
+
+                <Border Grid.Row="1" BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                        CornerRadius="{StaticResource Radio}" MinHeight="130" Margin="0,4,0,0">
+                    <DataGrid x:Name="_previa" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Traer" Width="58">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Elegida, Mode=TwoWay}"
+                                                  Click="AlTildar" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Ruta" Binding="{Binding Ruta}" Width="2*" />
+                            <DataGridTextColumn Header="Host" Binding="{Binding Host}" Width="*" />
+                            <DataGridTextColumn Header="Usuario" Binding="{Binding Usuario}" Width="*" />
+                            <DataGridTextColumn Header="Puerto" Binding="{Binding Puerto}" Width="70" />
+                            <DataGridTextColumn Header="Protocolo" Binding="{Binding Protocolo}" Width="130" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <TextBlock Grid.Row="2" x:Name="_resumen" Style="{StaticResource Tenue}"
+                           TextWrapping="Wrap" Margin="0,6,0,0" />
+            </Grid>
+
+            <Border Grid.Row="3" x:Name="_bloqueAdvertencias" Visibility="Collapsed"
+                    Background="{DynamicResource Apagado}"
+                    BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                    CornerRadius="{StaticResource Radio}"
+                    Padding="10,8" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Para tener en cuenta" Style="{StaticResource Etiqueta}" />
+                    <TextBlock x:Name="_advertencias" Style="{StaticResource Tenue}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Row="4" x:Name="_bloqueOmitidas" Visibility="Collapsed"
+                        Margin="0,12,0,0">
+                <TextBlock x:Name="_tituloOmitidas" Style="{StaticResource Etiqueta}" />
+
+                <ListBox x:Name="_omitidas" Height="110" Margin="0,4,0,0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="{Binding Nombre}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Nombre}" />
+
+                                <TextBlock Grid.Column="1" Text="{Binding Motivo}"
+                                           Style="{StaticResource Tenue}"
+                                           TextWrapping="Wrap" Margin="8,0,0,0" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+
+            <Grid Grid.Row="5" Margin="0,14,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <CheckBox x:Name="_traerContrasenas" IsChecked="True" IsEnabled="False"
+                              VerticalAlignment="Center"
+                              Content="Traer también las contraseñas guardadas" />
+
+                    <TextBlock x:Name="_cuantasContrasenas" Style="{StaticResource Tenue}"
+                               VerticalAlignment="Center" Margin="12,0,0,0"
+                               TextTrimming="CharacterEllipsis" MaxWidth="320" />
+                </StackPanel>
+
+                <Button x:Name="_importar" Content="Importar" Style="{StaticResource BotonPrimario}"
+                        HorizontalAlignment="Right" Height="30" MinWidth="120"
+                        IsEnabled="False" Click="AlImportar" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

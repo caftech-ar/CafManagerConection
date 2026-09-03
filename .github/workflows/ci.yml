@@ -1,0 +1,65 @@
+# Compila y prueba en cada empujón y en cada pull request.
+#
+# Corre en Windows y no en Linux, y no es una comodidad: la solución tiene proyectos
+# `net10.0-windows` —WPF, el control ActiveX de RDP, el terminal alojado en WinForms— que
+# directamente no compilan en otro sistema. Un CI en Linux daría verde sobre la mitad del código.
+name: Compilar y probar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Para poder dispararlo a mano desde la pestaña Actions sin empujar nada.
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+  # Los nodos de MSBuild quedan vivos entre compilaciones para reusarse. En un runner que se
+  # destruye al terminar no aportan nada, y en cambio pueden dejar el paso colgado esperándolos.
+  MSBUILDDISABLENODEREUSE: '1'
+
+jobs:
+  compilar:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar
+        run: dotnet restore CafManagerConection.slnx
+
+      # Con /warnaserror: una advertencia nueva que nadie mira se vuelve permanente en dos
+      # semanas. Hoy la solución compila con cero, así que el umbral es sostenible.
+      - name: Compilar
+        run: dotnet build CafManagerConection.slnx --configuration Release --no-restore -nodeReuse:false /warnaserror
+
+      # Las 18 pruebas de integración SSH necesitan un contenedor OpenSSH y se saltean solas
+      # cuando no está. No se levanta acá: lo que prueban es la conexión real contra un servidor,
+      # y montarlo en el runner sería probar el contenedor, no la aplicación.
+      #
+      # `RdpLifecycle` se excluye, y es la única exclusión: mide cuántos descriptores de Win32
+      # filtra el control ActiveX de Escritorio remoto por sesión, y ese número depende del
+      # entorno. En una máquina con escritorio real son 3,0 por sesión —medido, y el presupuesto
+      # es 5—; en este runner, sin escritorio y con otra versión de mstscax.dll, son 8,0. Dejarla
+      # acá sería un rojo permanente que nadie mira, que es exactamente lo que su propio
+      # comentario dice querer evitar. Sigue corriendo estricta en la máquina de desarrollo, que
+      # es donde su medición significa algo.
+      - name: Probar
+        run: dotnet test CafManagerConection.slnx --configuration Release --no-build -nodeReuse:false --filter "Categoria!=RdpLifecycle" --logger "trx;LogFileName=pruebas.trx" --results-directory pruebas
+
+      - name: Guardar el resultado de las pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultado-de-pruebas
+          path: pruebas
+          retention-days: 14

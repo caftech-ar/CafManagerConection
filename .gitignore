@@ -1,0 +1,133 @@
+# .gitignore de CafManagerConection
+#
+# Este repositorio es PÚBLICO. Lo que entra acá lo puede leer cualquiera, para siempre y aunque
+# después se borre: GitHub conserva el objeto en el historial y los espejos y las cachés de
+# terceros ya se lo llevaron. Por eso las reglas de secretos están primero y son amplias a
+# propósito: es preferible ignorar de más y agregar una excepción a mano, que enterarse de menos.
+
+# ==============================================================================
+# Secretos y datos de servidores  ·  NO NEGOCIABLE
+# ==============================================================================
+
+# Exportaciones de gestores de conexiones. La de Remote Desktop Manager trae `SafePassword` y
+# `PasswordHistory` por conexión: es el inventario de servidores de la empresa con su material de
+# credenciales. Ninguna tiene por qué estar en un repositorio, y menos en uno público.
+ConeccionesRemotas.xml
+*.rdm
+/Conexiones*.xml
+/Conecciones*.xml
+/RemoteDesktopManager*.xml
+/*-export.xml
+/*-export.csv
+/*-export.json
+
+# Claves privadas y certificados, en cualquiera de sus formas.
+*.ppk
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*_rsa
+*_ed25519
+!*.pub
+*-cert.pub
+
+# Variables de entorno y archivos de secretos. `.env.example` sí entra: es la plantilla sin
+# valores, y es lo que le dice al que clona qué variables hacen falta.
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.*.Local.json
+*.secrets.*
+
+# Bases de datos y registros de la aplicación. En uso normal viven en %LocalAppData% y no acá,
+# pero una corrida de pruebas o un arnés de diagnóstico los puede dejar en el árbol, y la base
+# trae los nombres, los hosts y los usuarios de los servidores reales.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.log
+/base-*/
+/logs/
+
+# ==============================================================================
+# Salida de compilación
+# ==============================================================================
+
+[Bb]in/
+[Oo]bj/
+/publish/
+/build/out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.dll
+*.exe
+*.pdb
+*.cache
+*.tlog
+
+# Los recursos que el ejecutable necesita sí entran, aunque terminen en .png o .ico dentro de
+# Assets: sin ellos la aplicación no compila.
+!src/CafManagerConection.App/Assets/*
+
+# Los instaladores se publican como adjuntos de una release, no se versionan: pesan megas, se
+# regeneran de una etiqueta y quedarían desactualizados en dos versiones.
+*-setup.exe
+*-setup-completo.exe
+*-win-x64.zip
+*.sha256
+
+# ==============================================================================
+# Herramientas y entornos locales
+# ==============================================================================
+
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Entornos de Python de scripts auxiliares.
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Paquetes restaurados y cachés de herramientas.
+packages/
+.nuget/
+*.nupkg
+!.config/dotnet-tools.json
+
+# ==============================================================================
+# Cosas de trabajo que no son del proyecto
+# ==============================================================================
+
+# Capturas de pantalla: se usan para revisar la interfaz durante el desarrollo y muestran el
+# árbol de conexiones, o sea nombres de servidores y direcciones reales. En un repositorio
+# público eso es publicar el mapa de la infraestructura. Si alguna hace falta para la
+# documentación, se agrega a mano con `git add -f` después de mirarla.
+/capturas/
+
+# Archivos sueltos de diagnóstico y pruebas manuales.
+/scratch/
+/tmp/
+*.tmp
+*.bak
+*.orig
+*.rej

@@ -1,0 +1,301 @@
+<UserControl x:Class="CafManagerConection.App.Panels.StatusPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:oxy="http://oxyplot.org/wpf">
+
+    <UserControl.Resources>
+
+        <Style x:Key="Seccion" TargetType="TextBlock" BasedOn="{StaticResource Etiqueta}">
+            <Setter Property="Margin" Value="0,18,0,6" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="Dato" TargetType="TextBlock" BasedOn="{StaticResource Tenue}">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+    </UserControl.Resources>
+
+    <DockPanel Background="{DynamicResource Fondo}">
+
+        <Border DockPanel.Dock="Top"
+                BorderBrush="{DynamicResource Borde}" BorderThickness="0,0,0,1"
+                Padding="12,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock x:Name="_host" Style="{StaticResource Etiqueta}" Margin="0"
+                               Text="Estado del servidor"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="_distro" Style="{StaticResource Tenue}" Margin="0,2,0,0"
+                               TextWrapping="Wrap" />
+                    <TextBlock x:Name="_cpuModelo" Style="{StaticResource Tenue}" Margin="0,2,0,0"
+                               TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" x:Name="_uptime" Style="{StaticResource Tenue}"
+                           VerticalAlignment="Top" Margin="8,0,0,0" />
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Top"
+                BorderBrush="{DynamicResource Borde}" BorderThickness="0,0,0,1"
+                Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Actualizar cada" Style="{StaticResource Tenue}"
+                               VerticalAlignment="Center" Margin="0,0,6,0" />
+
+                    <ComboBox x:Name="_intervalo" Width="86" Height="24"
+                              SelectionChanged="AlCambiarIntervalo" />
+
+                    <TextBlock x:Name="_ultimaLectura" Style="{StaticResource Tenue}"
+                               VerticalAlignment="Center" Margin="10,0,0,0"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <Button Grid.Column="1" x:Name="_botonInterfaces" Content="Interfaces…"
+                        Style="{StaticResource BotonTenue}" Height="24" Padding="8,0"
+                        Margin="8,0,0,0"
+                        Click="AlElegirInterfacesClick" />
+
+                <Popup x:Name="_popupInterfaces" PlacementTarget="{Binding ElementName=_botonInterfaces}"
+                       Placement="Bottom" StaysOpen="False">
+                    <Border Background="{DynamicResource Fondo}"
+                            BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                            CornerRadius="{StaticResource Radio}" Padding="10" MinWidth="160">
+                        <StackPanel x:Name="_listaInterfaces" />
+                    </Border>
+                </Popup>
+            </Grid>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="12">
+
+                <Border BorderBrush="{DynamicResource Borde}" BorderThickness="1"
+                        CornerRadius="{StaticResource Radio}" Padding="2" Height="140">
+                    <oxy:PlotView x:Name="_grafico" Background="Transparent" />
+                </Border>
+
+                <Grid Margin="0,16,0,0">
+                    <TextBlock Text="CPU" Style="{StaticResource Etiqueta}" Margin="0" />
+                    <TextBlock x:Name="_cpuNivel" HorizontalAlignment="Right"
+                               Visibility="Collapsed" />
+                </Grid>
+                <ProgressBar x:Name="_cpu" Maximum="100" Margin="0,4,0,0" />
+                <TextBlock x:Name="_cpuDetalle" Style="{StaticResource Dato}" Margin="0,3,0,0" />
+                <TextBlock x:Name="_cpuPresion" Style="{StaticResource Dato}" Margin="0,1,0,0"
+                           Visibility="Collapsed" TextWrapping="Wrap" />
+
+                <Grid Margin="0,14,0,0">
+                    <TextBlock Text="Memoria" Style="{StaticResource Etiqueta}" Margin="0" />
+                    <TextBlock x:Name="_memoriaNivel" HorizontalAlignment="Right"
+                               Visibility="Collapsed" />
+                </Grid>
+                <ProgressBar x:Name="_memoria" Maximum="100" Margin="0,4,0,0" />
+                <TextBlock x:Name="_memoriaDetalle" Style="{StaticResource Dato}" Margin="0,3,0,0" />
+
+                <StackPanel x:Name="_swapPanel" Visibility="Collapsed" Margin="0,8,0,0">
+                    <Grid>
+                        <TextBlock Text="Intercambio (swap)" Style="{StaticResource Etiqueta}" Margin="0" />
+                        <TextBlock x:Name="_swapNivel" HorizontalAlignment="Right"
+                                   Visibility="Collapsed" />
+                    </Grid>
+                    <ProgressBar x:Name="_swap" Maximum="100" Margin="0,4,0,0" />
+                    <TextBlock x:Name="_swapDetalle" Style="{StaticResource Dato}" Margin="0,3,0,0" />
+                </StackPanel>
+
+                <TextBlock x:Name="_memoriaPresion" Style="{StaticResource Dato}" Margin="0,4,0,0"
+                           Visibility="Collapsed" TextWrapping="Wrap" />
+
+                <Grid Margin="0,14,0,0">
+                    <TextBlock Text="Carga" Style="{StaticResource Etiqueta}" Margin="0" />
+                    <TextBlock x:Name="_cargaNivel" HorizontalAlignment="Right"
+                               Visibility="Collapsed" />
+                </Grid>
+                <TextBlock x:Name="_carga" Style="{StaticResource Dato}" Margin="0,3,0,0" />
+
+                <TextBlock Text="Discos" Style="{StaticResource Seccion}" />
+                <ItemsControl x:Name="_discos">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,10">
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Punto}" />
+                                        <TextBlock Text="{Binding Tipo}"
+                                                   Style="{StaticResource Tenue}"
+                                                   Margin="6,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding Nivel}"
+                                                   Foreground="{Binding Color}"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding Detalle}"
+                                                   Style="{StaticResource Tenue}" />
+                                    </StackPanel>
+                                </Grid>
+                                <ProgressBar Value="{Binding Porcentaje, Mode=OneWay}" Maximum="100"
+                                             Foreground="{Binding Color}"
+                                             Margin="0,3,0,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel x:Name="_ioPanel" Visibility="Collapsed">
+                    <TextBlock Text="Actividad de disco" Style="{StaticResource Seccion}" />
+                    <TextBlock x:Name="_ioPresion" Style="{StaticResource Dato}"
+                               Margin="0,0,0,6" Visibility="Collapsed" TextWrapping="Wrap" />
+                    <ItemsControl x:Name="_discoIo">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding Dispositivo}" />
+                                    <TextBlock Text="{Binding Detalle}"
+                                               Style="{StaticResource Tenue}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <TextBlock Text="Red" Style="{StaticResource Seccion}" />
+                <ItemsControl x:Name="_red">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,9">
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Margin="0,0,6,0"
+                                                 VerticalAlignment="Center"
+                                                 Fill="{Binding Color}" />
+                                        <TextBlock Text="{Binding Interfaz}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Detalle}"
+                                               Style="{StaticResource Tenue}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                                <TextBlock Text="{Binding Direcciones}"
+                                           Style="{StaticResource Tenue}"
+                                           Margin="13,1,0,0" TextTrimming="CharacterEllipsis"
+                                           Visibility="{Binding VisibilidadDirecciones}" />
+                                <TextBlock Text="{Binding Enlace}"
+                                           Style="{StaticResource Tenue}"
+                                           Margin="13,1,0,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel x:Name="_rutasPanel" Visibility="Collapsed">
+                    <TextBlock Text="Rutas" Style="{StaticResource Seccion}" />
+                    <TextBlock x:Name="_dns" Style="{StaticResource Dato}" Margin="0,0,0,6"
+                               TextWrapping="Wrap" />
+                    <ItemsControl x:Name="_rutas">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,3">
+                                    <TextBlock Text="{Binding Destino}"
+                                               Foreground="{Binding Color}" />
+                                    <TextBlock Text="{Binding Detalle}"
+                                               Style="{StaticResource Tenue}"
+                                               HorizontalAlignment="Right"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel x:Name="_procesosPanel" Visibility="Collapsed">
+                    <Grid Margin="0,18,0,6">
+                        <TextBlock Text="Procesos" Style="{StaticResource Etiqueta}"
+                                   FontWeight="SemiBold" Margin="0" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <RadioButton x:Name="_porCpu" Content="CPU"
+                                         GroupName="orden" Margin="0,0,10,0"
+                                         Checked="AlCambiarOrdenDeProcesos" />
+                            <RadioButton Content="Memoria" GroupName="orden"
+                                         Checked="AlCambiarOrdenDeProcesos" />
+
+                            <Button x:Name="_verTodos" Content="Ver todos…"
+                                    Style="{StaticResource BotonTenue}"
+                                    Height="22" Padding="8,0" Margin="12,0,0,0"
+                                    FontWeight="Normal"
+                                    Visibility="Collapsed"
+                                    Click="AlVerTodosLosProcesos" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ItemsControl x:Name="_procesos">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="Transparent" Padding="0,2"
+                                        MouseLeftButtonDown="AlProcesoDobleClic"
+                                        ToolTip="{Binding Ayuda}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Nombre}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Cpu}"
+                                                   Foreground="{Binding ColorCpu}"
+                                                   Width="58" TextAlignment="Right" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Memoria}"
+                                                   Style="{StaticResource Tenue}"
+                                                   Width="74" TextAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel x:Name="_temperaturasPanel" Visibility="Collapsed">
+                    <TextBlock Text="Temperaturas" Style="{StaticResource Seccion}" />
+                    <ItemsControl x:Name="_temperaturas">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,3">
+                                    <TextBlock Text="{Binding Sensor}" />
+                                    <TextBlock Text="{Binding Grados}"
+                                               Foreground="{Binding Color}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <TextBlock x:Name="_fallidosTitulo" Text="Servicios fallados"
+                           Style="{StaticResource Seccion}" Visibility="Collapsed" />
+                <ItemsControl x:Name="_fallidos">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Foreground="{DynamicResource MedidaCritica}"
+                                       Margin="0,0,0,2" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

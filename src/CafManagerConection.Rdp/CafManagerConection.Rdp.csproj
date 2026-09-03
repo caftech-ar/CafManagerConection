@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CafManagerConection.UseCases\CafManagerConection.UseCases.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      La eleccion de version del control es lo que hay que poder probar, y comprobarla creando
+      el control exige contenedor y bomba de mensajes. Se expone el CLSID resuelto en vez de
+      volver publica la resolucion entera.
+    -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>CafManagerConection.Rdp.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>

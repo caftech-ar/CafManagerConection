@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CafManagerConection.UseCases\CafManagerConection.UseCases.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      La geometria de la barra de desplazamiento se prueba: es aritmetica invertida —el
+      desplazamiento cuenta desde el fondo y el pulgar se dibuja desde arriba— y equivocarla da
+      una barra que se mueve al reves sin que nada falle. Exponerla como publica solo para poder
+      probarla ampliaria la superficie del control sin motivo.
+    -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>CafManagerConection.Terminal.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,360 @@
+# Taskfile de CafManagerConection (CMC)
+# https://taskfile.dev  ·  requiere go-task 3.x  ·  `task --list` para ver todo
+version: '3'
+
+vars:
+  SLN: CafManagerConection.slnx
+  APP: src/CafManagerConection.App
+  PUBLISH_DIR: publish/CafManagerConection
+  ZIP: publish/CafManagerConection-win-x64.zip
+  EXE: publish/CafManagerConection/cmc.exe
+  RID: win-x64
+  SETUP: publish/CafManagerConection-setup.exe
+  SETUP_COMPLETO: publish/CafManagerConection-setup-completo.exe
+  # Publicacion dependiente del framework: nueve megas en lugar de ciento ochenta, a cambio de
+  # necesitar el Escritorio de .NET instalado.
+  LIVIANO_DIR: publish/CafManagerConection-fd
+  LIVIANO_EXE: publish/CafManagerConection-fd/cmc.exe
+  NSIS: 'C:/Program Files (x86)/NSIS/makensis.exe'
+  # NSIS resuelve las rutas relativas contra el guion, no contra el directorio de trabajo, asi
+  # que las que le llegan por linea de comando van absolutas.
+  #
+  # Con Join-Path y no con Resolve-Path: Task evalua estas variables UNA VEZ al leer el archivo,
+  # antes de correr ninguna tarea, y Resolve-Path sobre una carpeta que todavia no existe devuelve
+  # vacio. El sintoma era un instalador que fallaba al leer la version de un ORIGEN en blanco, y
+  # solo la primera vez —despues la carpeta ya existia y no volvia a pasar—.
+  LIVIANO_ABS:
+    sh: pwsh -NoProfile -Command "Join-Path (Get-Location) 'publish/CafManagerConection-fd'"
+  SETUP_COMPLETO_ABS:
+    sh: pwsh -NoProfile -Command "Join-Path (Get-Location) 'publish/CafManagerConection-setup-completo.exe'"
+  PUBLISH_ABS:
+    sh: pwsh -NoProfile -Command "Join-Path (Get-Location) 'publish/CafManagerConection'"
+  SETUP_ABS:
+    sh: pwsh -NoProfile -Command "Join-Path (Get-Location) 'publish/CafManagerConection-setup.exe'"
+
+env:
+  # Los mensajes del SDK en el idioma del sistema, sin telemetría de primera ejecución.
+  DOTNET_NOLOGO: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+  # MSBuild deja vivos sus nodos de trabajo despues de cada compilacion, para reusarlos en la
+  # siguiente. Con una sesion larga de compilar y publicar se acumulan siete procesos de unos
+  # cien megas cada uno --novecientos megas-- que nadie pidio y que tardan un cuarto de hora en
+  # irse solos.
+  #
+  # El costo de apagarlo es un par de segundos mas por compilacion. Vale la pena: la maquina de
+  # quien desarrolla tambien esta corriendo Teams, un navegador y las sesiones de servidor.
+  MSBUILDDISABLENODEREUSE: '1'
+
+tasks:
+
+  default:
+    desc: Muestra las tareas disponibles
+    silent: true
+    cmds:
+      - task --list
+
+  # ---------------------------------------------------------------- levantar la app
+
+  run:
+    desc: Levanta la aplicación (compila y ejecuta en Debug)
+    summary: |
+      Compila y arranca CMC desde el código fuente.
+
+      Es la forma habitual de levantarla mientras se desarrolla: toma los cambios de
+      código sin necesidad de publicar. La ventana queda abierta y la terminal ocupada
+      hasta que la cierres.
+    cmds:
+      - dotnet run --project {{.APP}}
+
+  watch:
+    desc: Levanta la aplicación y la reinicia al guardar cambios
+    summary: |
+      Igual que `task run`, pero vigila los archivos y recompila cuando guardás.
+      Útil para iterar sobre la interfaz sin relanzar a mano cada vez.
+    cmds:
+      - dotnet watch --project {{.APP}} run
+
+  start:
+    desc: Ejecuta el binario ya publicado, sin recompilar
+    summary: |
+      Arranca el ejecutable de publish/. Es lo más parecido a lo que va a correr el
+      usuario final. Si todavía no publicaste, corré antes `task publish`.
+    preconditions:
+      - sh: test -f {{.EXE}}
+        msg: 'No hay binario publicado. Ejecutá primero: task publish'
+    cmds:
+      - '{{.EXE}}'
+
+  # ------------------------------------------------------------------- construcción
+
+  build:
+    desc: Compila la solución en Debug
+    cmds:
+      - dotnet build {{.SLN}}
+
+  build:release:
+    desc: Compila la solución en Release
+    cmds:
+      - dotnet build {{.SLN}} --configuration Release
+
+  restore:
+    desc: Restaura los paquetes NuGet
+    cmds:
+      - dotnet restore {{.SLN}}
+
+  format:
+    desc: Aplica el formato de código del SDK
+    cmds:
+      - dotnet format {{.SLN}}
+
+  # ------------------------------------------------------------------------ pruebas
+
+  test:
+    desc: Ejecuta todas las pruebas
+    summary: |
+      Con FILTRO se le pasa un filtro de dotnet test, y las tareas que dependen de ésta lo
+      heredan: `task release FILTRO='Categoria!=RdpLifecycle'` publica sin correr las pruebas de
+      ciclo de vida de RDP.
+
+      Existe por el CI. `RdpLifecycle` mide cuántos descriptores de Win32 filtra el control
+      ActiveX por sesión, y ese número depende del entorno: son 3 por sesión en una máquina con
+      escritorio real y 8 en un runner sin escritorio. Sin poder filtrar, el CI tenía que repetir
+      los comandos de publicación en su propio guion en lugar de usar estas tareas, y entonces la
+      forma de armar el paquete se separaba entre el CI y esta máquina — que es de donde salen
+      los defectos que aparecen recién en el equipo del usuario.
+    vars:
+      FILTRO: '{{.FILTRO | default ""}}'
+    cmds:
+      - dotnet test {{.SLN}} {{if .FILTRO}}--filter "{{.FILTRO}}"{{end}}
+
+  test:quick:
+    desc: Ejecuta sólo las pruebas que no tocan disco ni el Credential Manager
+    summary: |
+      Domain y UseCases son código puro: corren en milisegundos. Es la vuelta rápida
+      mientras se trabaja en el núcleo.
+    cmds:
+      - dotnet test tests/CafManagerConection.Domain.Tests
+      - dotnet test tests/CafManagerConection.UseCases.Tests
+
+  test:coverage:
+    desc: Ejecuta las pruebas midiendo la cobertura
+    cmds:
+      - dotnet test {{.SLN}} --collect:"XPlat Code Coverage"
+      - cmd: echo "Informes en tests/*/TestResults/*/coverage.cobertura.xml"
+        silent: true
+
+  # -------------------------------------------------------------------- publicación
+
+  publish:
+    desc: Publica el binario portable self-contained y genera el ZIP
+    summary: |
+      Publicación self-contained para win-x64, deliberadamente SIN archivo único y SIN
+      recorte: el archivo único extrae a un temporal y eso convive mal con la carga del
+      control ActiveX de RDP, y el recorte rompe WinForms y el interop COM, que dependen
+      de reflexión.
+
+      El resultado no necesita .NET instalado ni privilegios de administrador.
+    deps: [test]
+    cmds:
+      - cmd: pwsh -NoProfile -Command "if (Test-Path '{{.PUBLISH_DIR}}') { Remove-Item '{{.PUBLISH_DIR}}' -Recurse -Force }"
+      - dotnet publish {{.APP}} --configuration Release --runtime {{.RID}} --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false --output {{.PUBLISH_DIR}}
+      - cmd: pwsh -NoProfile -Command "Compress-Archive -Path '{{.PUBLISH_DIR}}/*' -DestinationPath '{{.ZIP}}' -Force"
+      - cmd: pwsh -NoProfile -File scripts/resumen-publicacion.ps1 "{{.ZIP}}"
+        silent: true
+
+  publish:liviano:
+    desc: Publica la version dependiente del framework, para el instalador liviano
+    summary: |
+      Nueve megas en lugar de ciento ochenta, a cambio de necesitar el Escritorio de .NET
+      instalado en el equipo.
+
+      Esto NO reemplaza a `publish`: el ZIP portable sigue siendo self-contained, que es lo que
+      garantiza el Principio VI —descomprimir en cualquier equipo y usarlo, sin instalar nada—.
+      Lo liviano es una comodidad para el instalador, que de todas formas ya modifica el sistema.
+    cmds:
+      - cmd: pwsh -NoProfile -Command "if (Test-Path '{{.LIVIANO_DIR}}') { Remove-Item '{{.LIVIANO_DIR}}' -Recurse -Force }"
+      - dotnet publish {{.APP}} --configuration Release --runtime {{.RID}} --self-contained false -p:PublishSingleFile=false --output {{.LIVIANO_DIR}}
+
+  installer:
+    desc: 'Instalador liviano (~4 MB): pide el Escritorio de .NET si falta'
+    summary: |
+      Empaqueta la publicacion dependiente del framework. Al instalar comprueba que este el
+      Escritorio de .NET y, si falta, ofrece abrir la descarga oficial de Microsoft y corta.
+
+      Para un equipo sin internet o sin permiso para instalar el runtime, usa
+      `task installer:completo`, que lleva todo adentro.
+    deps: [publish:liviano]
+    preconditions:
+      - sh: test -f "{{.NSIS}}"
+        msg: 'No se encontro makensis.exe. Instala NSIS o ajusta la variable NSIS del Taskfile.'
+    cmds:
+      - cmd: '"{{.NSIS}}" /V2 /DREQUIERE_RUNTIME /DORIGEN="{{.LIVIANO_ABS}}" /DSALIDA="{{.SETUP_ABS}}" installer/CafManagerConection.nsi'
+      - cmd: pwsh -NoProfile -File scripts/resumen-instalador.ps1 "{{.SETUP}}"
+        silent: true
+
+  installer:completo:
+    desc: 'Instalador completo (~53 MB): no necesita .NET en el equipo'
+    summary: |
+      Empaqueta la carpeta self-contained que deja `task publish`. No comprueba ni pide nada:
+      lleva el runtime adentro.
+
+      Es el que sirve para un equipo sin internet, o donde no se pueda instalar el runtime.
+    preconditions:
+      - sh: test -f "{{.EXE}}"
+        msg: 'No hay binario self-contained publicado. Ejecuta primero: task publish'
+      - sh: test -f "{{.NSIS}}"
+        msg: 'No se encontro makensis.exe. Instala NSIS o ajusta la variable NSIS del Taskfile.'
+    cmds:
+      - cmd: '"{{.NSIS}}" /V2 /DORIGEN="{{.PUBLISH_ABS}}" /DSALIDA="{{.SETUP_COMPLETO_ABS}}" installer/CafManagerConection.nsi'
+      - cmd: pwsh -NoProfile -File scripts/resumen-instalador.ps1 "{{.SETUP_COMPLETO}}"
+        silent: true
+
+  release:
+    desc: 'Todo lo que se entrega: ZIP portable y los dos instaladores'
+    cmds:
+      - task: publish
+      - task: installer
+      - task: installer:completo
+
+  publish:fast:
+    desc: Publica sin correr las pruebas antes
+    summary: Igual que `publish`, pero se saltea la suite. Para iterar, no para entregar.
+    cmds:
+      - dotnet publish {{.APP}} --configuration Release --runtime {{.RID}} --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false --output {{.PUBLISH_DIR}}
+
+  # --------------------------------------------------------------------- migración
+
+  import:preview:
+    desc: Muestra qué se importaría del XML exportado de Remote Desktop Manager, sin escribir nada
+    summary: |
+      Lee el export de Remote Desktop Manager y muestra el resumen: cuántas carpetas y
+      conexiones se crearían, qué queda afuera y por qué.
+
+      La ruta del XML es obligatoria:
+
+          task import:preview -- ruta/al/export.xml
+
+      No toca la base. Es la tarea que conviene correr primero, siempre.
+    preconditions:
+      - sh: test -n "{{.CLI_ARGS}}"
+        msg: 'Falta la ruta del XML exportado de Remote Desktop Manager. Ejecutá: task import:preview -- ruta/al/export.xml'
+    cmds:
+      - dotnet run --project tools/CafManagerConection.Import -- {{.CLI_ARGS}}
+
+  import:
+    desc: Importa las conexiones del XML exportado de Remote Desktop Manager a la base de CMC
+    summary: |
+      Crea las carpetas y las conexiones en %LocalAppData%\CafManagerConection\cmc.db.
+
+      La ruta del XML es obligatoria:
+
+          task import -- ruta/al/export.xml
+
+      Las contraseñas NO se migran: Remote Desktop Manager las exporta cifradas con la
+      clave de su data source y no se pueden descifrar desde afuera. Hay que volver a
+      cargarlas, y conviene hacerlo a nivel de carpeta para aprovechar la herencia.
+
+      Reimportar no duplica carpetas, pero sí duplica conexiones: para empezar limpio,
+      `task reset:data` primero.
+    prompt: Va a escribir las conexiones en la base de CMC. ¿Continuar?
+    preconditions:
+      - sh: test -n "{{.CLI_ARGS}}"
+        msg: 'Falta la ruta del XML exportado de Remote Desktop Manager. Ejecutá: task import -- ruta/al/export.xml'
+    cmds:
+      - dotnet run --project tools/CafManagerConection.Import -- {{.CLI_ARGS}} --apply
+
+  # ------------------------------------------------------------------------- datos
+
+  data:
+    desc: Muestra dónde están la base de datos y los registros
+    silent: true
+    cmds:
+      - cmd: dotnet run --project tools/CafManagerConection.Import -- --stats
+
+  logs:
+    desc: Muestra las últimas líneas del registro de hoy
+    silent: true
+    cmds:
+      - cmd: pwsh -NoProfile -Command "$d = Join-Path $env:LOCALAPPDATA 'CafManagerConection\logs'; if (-not (Test-Path $d)) { Write-Host 'Todavía no hay registros. Ejecutá la aplicación al menos una vez.'; exit 0 }; $f = Get-ChildItem $d -Filter *.log | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($f) { Write-Host $f.FullName -ForegroundColor Cyan; Get-Content $f.FullName -Tail 40 } else { Write-Host 'No hay archivos de registro.' }"
+
+  logs:follow:
+    desc: Sigue el registro en vivo mientras la aplicación corre
+    silent: true
+    cmds:
+      - cmd: pwsh -NoProfile -Command "$d = Join-Path $env:LOCALAPPDATA 'CafManagerConection\logs'; $f = Get-ChildItem $d -Filter *.log | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($f) { Get-Content $f.FullName -Wait -Tail 20 } else { Write-Host 'No hay registros todavía.' }"
+
+  creds:
+    desc: Lista las credenciales que CMC guardó en el Administrador de credenciales
+    summary: |
+      Muestra sólo los nombres de las claves (cmc:*), nunca los secretos: Windows no los
+      expone por línea de comandos, y este proyecto tampoco lo haría.
+    silent: true
+    cmds:
+      - cmd: pwsh -NoProfile -File scripts/credenciales.ps1
+
+  sshd:up:
+    desc: Levanta el servidor SSH de prueba para las pruebas de integracion
+    summary: |
+      Las pruebas de integracion de SSH necesitan un servidor de verdad: hay cosas —el saludo,
+      la verificacion de la clave del host, el canal interactivo, el cambio de tamaño— que solo
+      se pueden comprobar hablando con uno. Sin el contenedor esas pruebas se omiten con
+      instrucciones, no fallan.
+
+      El script le ajusta la configuracion al servidor. Un `docker run` pelado deja la serie
+      inestable: ver scripts/sshd-prueba.ps1, que explica por que.
+    silent: true
+    cmds:
+      - cmd: pwsh -NoProfile -File scripts/sshd-prueba.ps1
+
+  sshd:down:
+    desc: Da de baja el servidor SSH de prueba
+    silent: true
+    cmds:
+      - cmd: pwsh -NoProfile -File scripts/sshd-prueba.ps1 -Down
+
+  audit:secrets:
+    desc: Verifica que no haya secretos en la base ni en los registros
+    summary: |
+      Comprobación bloqueante del Principio II. Pasale la contraseña que usaste en las
+      pruebas:
+
+          task audit:secrets -- MiContraseña123
+
+      Cero coincidencias es el único resultado aceptable.
+    silent: true
+    cmds:
+      - cmd: pwsh -NoProfile -File scripts/auditar-secretos.ps1 "{{.CLI_ARGS}}"
+
+  # ------------------------------------------------------------------------ limpieza
+
+  clean:
+    desc: Borra los artefactos de compilación (bin, obj, publish)
+    cmds:
+      - dotnet clean {{.SLN}}
+      - cmd: pwsh -NoProfile -Command "Get-ChildItem -Path src,tests -Include bin,obj -Recurse -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; if (Test-Path publish) { Remove-Item publish -Recurse -Force }"
+
+  reset:data:
+    desc: 'PELIGRO: borra la base de datos y los registros locales de CMC'
+    summary: |
+      Elimina %LocalAppData%\CafManagerConection: la base con todas tus conexiones y
+      carpetas, y los registros.
+
+      NO borra las credenciales del Administrador de credenciales de Windows: eso queda
+      a tu criterio, y `task creds` te muestra cuáles hay.
+
+      Pide confirmación antes de hacer nada.
+    prompt: Esto borra la base de datos con todas tus conexiones. ¿Seguro?
+    cmds:
+      - cmd: pwsh -NoProfile -Command "$d = Join-Path $env:LOCALAPPDATA 'CafManagerConection'; if (Test-Path $d) { Remove-Item $d -Recurse -Force; Write-Host 'Datos locales borrados.' -ForegroundColor Yellow } else { Write-Host 'No había datos que borrar.' }"
+
+  # --------------------------------------------------------------------- verificación
+
+  check:
+    desc: 'Verificación completa: compila en Release y corre todas las pruebas'
+    summary: Lo que conviene correr antes de dar por bueno un cambio.
+    cmds:
+      - task: build:release
+      - task: test
+      - cmd: pwsh -NoProfile -Command "Write-Host '' ; Write-Host 'Verificación completa OK.' -ForegroundColor Green"
+        silent: true

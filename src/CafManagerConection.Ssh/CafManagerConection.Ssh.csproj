@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CafManagerConection.UseCases\CafManagerConection.UseCases.csproj" />
+
+    <!--
+      Sólo para que SshCommandRunner pueda implementar IPlatformLogStreamer: el canal de
+      registro en vivo de Docker (docker logs -f) necesita una conexión SSH propia, y ésta es la
+      única clase que ya sabe abrir una con la misma verificación de host y la misma credencial
+      que el resto de la sesión.
+    -->
+    <ProjectReference Include="..\CafManagerConection.Platform\CafManagerConection.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      La decisión de reintentar con contraseña se prueba (FR-039a): es la que separa «la
+      contraseña estaba mal» de «el servidor no ofrece autenticación interactiva», y equivocarla
+      deja al usuario sin poder conectarse a servidores que sólo aceptan contraseña. Hacerla
+      pública sólo para poder probarla ampliaría la superficie del adaptador sin motivo.
+    -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>CafManagerConection.Ssh.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

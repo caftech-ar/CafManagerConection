@@ -1,0 +1,56 @@
+<Window x:Class="CafManagerConection.App.Views.TextViewerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Height="620" Width="900"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource Fondo}">
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="_buscar" Grid.Column="0"
+                     Style="{StaticResource CampoBusqueda}"
+                     Tag="Buscar en el texto…"
+                     TextChanged="AlBuscar" />
+
+            <TextBlock x:Name="_resultado" Grid.Column="1"
+                       Style="{StaticResource Tenue}"
+                       VerticalAlignment="Center" Margin="10,0,0,0" />
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource Tarjeta}" Padding="0">
+            <RichTextBox x:Name="_codigo"
+                         IsReadOnly="True"
+                         IsDocumentEnabled="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Padding="10"
+                         FontFamily="{StaticResource FuenteMono}"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto" />
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,14,0,0">
+            <TextBlock Style="{StaticResource Tenue}"
+                       VerticalAlignment="Center" Margin="0,0,12,0"
+                       Text="Texto estático: no se refresca solo." />
+
+            <Button Content="Copiar todo" Style="{StaticResource BotonSecundario}"
+                    MinWidth="110" Click="AlCopiar" />
+            <Button Content="Cerrar" Style="{StaticResource BotonPrimario}"
+                    IsDefault="True" IsCancel="True" MinWidth="90" Margin="8,0,0,0" />
+        </StackPanel>
+    </Grid>
+</Window>

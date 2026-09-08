@@ -1,0 +1,48 @@
+# Windows y no Linux: los proyectos net10.0-windows no compilan en otro sistema.
+name: Compilar y probar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+  # Sin reuso de nodos: en un runner que se destruye al terminar pueden colgar el paso.
+  MSBUILDDISABLENODEREUSE: '1'
+
+jobs:
+  compilar:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar
+        run: dotnet restore CafManagerConection.slnx
+
+      - name: Compilar
+        run: dotnet build CafManagerConection.slnx --configuration Release --no-restore -nodeReuse:false /warnaserror
+
+      # RdpLifecycle se excluye: 3,0 descriptores por sesion con escritorio real (presupuesto 5)
+      # contra 8,0 en este runner. Sigue estricta en la maquina de desarrollo.
+      - name: Probar
+        run: dotnet test CafManagerConection.slnx --configuration Release --no-build -nodeReuse:false --filter "Categoria!=RdpLifecycle" --logger "trx;LogFileName=pruebas.trx" --results-directory pruebas
+
+      - name: Guardar el resultado de las pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultado-de-pruebas
+          path: pruebas
+          retention-days: 14

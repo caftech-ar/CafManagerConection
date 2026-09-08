@@ -1,0 +1,87 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!--
+      Icono del ejecutable: barra de tareas, Alt+Tab, Explorador y barra de título. Las ventanas
+      de WPF que no fijan Icon toman este, así que con declararlo acá alcanza y no hay que
+      repetirlo en cada XAML.
+    -->
+    <ApplicationIcon>Assets\cmc.ico</ApplicationIcon>
+
+    <!--
+      WPF para la interfaz. WinForms sigue habilitado por una sola razón: WindowsFormsHost, que
+      es lo que permite alojar el control ActiveX del cliente RDP y el control de terminal. Son
+      las dos piezas que no tienen equivalente en WPF; el resto de la interfaz no usa WinForms.
+    -->
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <RootNamespace>CafManagerConection.App</RootNamespace>
+
+    <!--
+      El ejecutable se llama cmc.exe: es lo que se tipea, lo que se ve en la barra de tareas y lo
+      que ocupa lugar en una línea de comando. El nombre largo va en AssemblyTitle, que es de donde
+      Windows saca la descripción del archivo: eso es lo que muestra el Administrador de tareas, el
+      globo del acceso directo y la pestaña Detalles de las propiedades del archivo.
+
+      El namespace NO cambia con el nombre del ensamblado, y eso es a propósito: renombrarlo
+      tocaría cada archivo del proyecto sin que se vea ninguna diferencia. Lo que sí cambia son las
+      URI de recursos que nombraban el ensamblado; pasaron a ser relativas, que además no vuelven
+      a romperse si el nombre cambia de nuevo.
+    -->
+    <AssemblyName>cmc</AssemblyName>
+    <AssemblyTitle>Caf Manager Conection</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      WinForms sale de los usings implícitos. Con las dos cargas habilitadas, decenas de
+      nombres quedan ambiguos: Point, UserControl, ContextMenu, KeyEventArgs, DragEventArgs y
+      varios más existen en los dos mundos. Quitando este namespace, el nombre corto siempre
+      es el de WPF y lo poco que necesita WinForms —el alojamiento del terminal y del RDP— se
+      escribe calificado, que además deja a la vista dónde se cruza la frontera.
+    -->
+    <Using Remove="System.Windows.Forms" />
+
+    <!-- System.Drawing.Point choca con System.Windows.Point por la misma razón. -->
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Como recurso incrustado y no como archivo copiado al lado del ejecutable: el paquete
+      portable se descomprime y se usa tal cual, y un logo que viva como archivo suelto se puede
+      borrar o quedar atrás en una actualización parcial. Incrustado viaja dentro del .dll.
+    -->
+    <!--
+      El icono de la ventana va como .ico y no como .png: el .ico lleva nueve medidas dibujadas
+      una por una, y WPF elige la que corresponde a cada lugar. Con un PNG de 256 hay una sola
+      imagen, y el de 16 px de la barra de tareas sale de achicarla: el trazo se reparte entre
+      pixeles vecinos y queda una mancha que no se lee. Es exactamente lo que pasaba.
+    -->
+    <Resource Include="Assets\cmc.ico" />
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\logo-oscuro.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CafManagerConection.Domain\CafManagerConection.Domain.csproj" />
+    <ProjectReference Include="..\CafManagerConection.Infrastructure\CafManagerConection.Infrastructure.csproj" />
+    <ProjectReference Include="..\CafManagerConection.Monitoring\CafManagerConection.Monitoring.csproj" />
+    <ProjectReference Include="..\CafManagerConection.Platform\CafManagerConection.Platform.csproj" />
+    <ProjectReference Include="..\CafManagerConection.Rdp\CafManagerConection.Rdp.csproj" />
+    <ProjectReference Include="..\CafManagerConection.Ssh\CafManagerConection.Ssh.csproj" />
+    <ProjectReference Include="..\CafManagerConection.Terminal\CafManagerConection.Terminal.csproj" />
+    <ProjectReference Include="..\CafManagerConection.UseCases\CafManagerConection.UseCases.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
+  </ItemGroup>
+
+</Project>

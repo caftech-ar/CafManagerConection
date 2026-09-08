@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CafManagerConection.UseCases\CafManagerConection.UseCases.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Los analizadores de texto remoto tienen partes internas que vale probar por separado:
+      el reparto de sufijos binarios y decimales de Docker, y la lectura de las etiquetas de
+      compose. Exponerlas como publicas solo para poder probarlas ampliaria la superficie del
+      componente sin motivo.
+    -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>CafManagerConection.Platform.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

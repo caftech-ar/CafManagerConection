@@ -1,0 +1,33 @@
+<Window x:Class="CafManagerConection.App.Views.IconColorsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Color de los iconos"
+        SizeToContent="Height" Width="440"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource Fondo}">
+
+    <StackPanel Margin="20">
+        <TextBlock TextWrapping="Wrap" Style="{StaticResource Tenue}" Margin="0,0,0,16"
+                   Text="El color se guarda por nombre, no por valor: cada tema usa su propio tono para el mismo color, de modo que se ve bien en claro y en oscuro." />
+
+        <TextBlock Text="RDP" Style="{StaticResource Etiqueta}" />
+        <ItemsControl x:Name="_rdp" />
+
+        <TextBlock Text="SSH" Style="{StaticResource Etiqueta}" Margin="0,16,0,4" />
+        <ItemsControl x:Name="_ssh" />
+
+        <TextBlock Text="Web" Style="{StaticResource Etiqueta}" Margin="0,16,0,4" />
+        <ItemsControl x:Name="_web" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+            <Button Content="Restablecer" Style="{StaticResource BotonTenue}"
+                    MinWidth="110" Click="AlRestablecer" />
+            <Button Content="Cancelar" Style="{StaticResource BotonSecundario}"
+                    IsCancel="True" MinWidth="100" Margin="8,0,0,0" />
+            <Button Content="Guardar" Style="{StaticResource BotonPrimario}"
+                    IsDefault="True" MinWidth="100" Margin="8,0,0,0" Click="AlGuardar" />
+        </StackPanel>
+    </StackPanel>
+</Window>

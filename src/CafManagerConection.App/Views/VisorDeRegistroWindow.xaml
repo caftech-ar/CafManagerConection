@@ -1,0 +1,124 @@
+<Window x:Class="CafManagerConection.App.Views.VisorDeRegistroWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wf="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
+        Height="660" Width="940"
+        MinHeight="440" MinWidth="640"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Fondo}"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource Tarjeta}" Padding="12,9">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse x:Name="_puntoEnVivo" Width="8" Height="8"
+                             Margin="2,0,8,0" VerticalAlignment="Center"
+                             Fill="{DynamicResource EstadoInactivo}" />
+
+                    <TextBlock x:Name="_titulo" Style="{StaticResource Titulo}"
+                               FontSize="15" Margin="0" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <TextBlock x:Name="_cuentaLineas" Style="{StaticResource Tenue}"
+                               Margin="10,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <ToggleButton x:Name="_seguir" Content="Seguir en vivo"
+                                  Style="{StaticResource AccesoPanel}"
+                                  Height="26" Padding="12,0" MinWidth="110"
+                                  ToolTip="Ir mostrando cada línea nueva del archivo"
+                                  Click="AlAlternarSeguir" />
+
+                    <Button x:Name="_forzar" Content="Forzar lectura"
+                            Style="{StaticResource BotonSecundario}"
+                            Height="26" Padding="12,0" Margin="8,0,0,0" FontWeight="Normal"
+                            ToolTip="Volver a leer el archivo ahora, sin esperar una línea nueva"
+                            Click="AlForzarLectura" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" x:Name="_marcoAviso"
+                Margin="0,8,0,0" Padding="12,8"
+                CornerRadius="4"
+                BorderThickness="3,0,0,0"
+                Background="{DynamicResource Seleccion}"
+                BorderBrush="{DynamicResource Destructivo}"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" x:Name="_aviso"
+                           TextWrapping="Wrap" FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Destructivo}" />
+
+                <Button Grid.Column="1" Content="Descartar"
+                        Style="{StaticResource BotonTenue}"
+                        Height="24" Padding="10,0" Margin="10,0,0,0" FontWeight="Normal"
+                        Click="AlDescartarAviso" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource Tarjeta}" Padding="12,9" Margin="0,8,0,0">
+            <StackPanel>
+                <TextBlock Text="MONITOREANDO" Style="{StaticResource Etiqueta}" />
+                <StackPanel x:Name="_archivos" Margin="0,4,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="3" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="_buscar" Grid.Column="0"
+                     Style="{StaticResource CampoBusqueda}"
+                     Tag="Buscar en el registro…"
+                     TextChanged="AlBuscar" />
+
+            <TextBlock x:Name="_resultado" Grid.Column="1"
+                       Style="{StaticResource Tenue}"
+                       VerticalAlignment="Center" Margin="10,0,0,0" />
+        </Grid>
+
+        <Border Grid.Row="4" Style="{StaticResource Tarjeta}" Padding="0" Margin="0,8,0,0">
+            <wf:WindowsFormsHost x:Name="_host" />
+        </Border>
+
+        <Grid Grid.Row="5" Margin="0,12,0,0">
+            <TextBlock x:Name="_estado" Style="{StaticResource Tenue}"
+                       HorizontalAlignment="Left" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" MaxWidth="460" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Copiar todo" Style="{StaticResource BotonSecundario}"
+                        MinWidth="110" Click="AlCopiar" />
+
+                <Button Content="Cerrar" Style="{StaticResource BotonPrimario}"
+                        IsCancel="True" MinWidth="90" Margin="8,0,0,0" Click="AlCerrar" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,72 @@
+﻿<UserControl x:Class="CafManagerConection.App.Panels.PanelInventario"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <DockPanel Background="{DynamicResource Fondo}">
+
+        <Border DockPanel.Dock="Top"
+                BorderBrush="{DynamicResource Borde}" BorderThickness="0,0,0,1"
+                Padding="12,10">
+            <Grid>
+                <TextBlock x:Name="_titulo" Style="{StaticResource Etiqueta}"
+                           Margin="0" VerticalAlignment="Center" />
+
+                <TextBlock x:Name="_ultima"
+                           Style="{StaticResource Tenue}"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Margin="0,0,96,0"
+                           TextTrimming="CharacterEllipsis" />
+
+                <Button x:Name="_actualizar"
+                        Content="Actualizar" Style="{StaticResource BotonSecundario}"
+                        HorizontalAlignment="Right" Height="26" Padding="10,0"
+                        FontWeight="Normal"
+                        Click="AlActualizar" />
+            </Grid>
+        </Border>
+
+        <Border x:Name="_escalada" DockPanel.Dock="Top"
+                Background="{DynamicResource Seleccion}"
+                Padding="12,7"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="_escaladaTexto" Grid.Column="0"
+                           Style="{StaticResource Tenue}"
+                           VerticalAlignment="Center" TextWrapping="Wrap" />
+
+                <Button x:Name="_botonEscalar" Grid.Column="1"
+                        Content="Reintentar con privilegios"
+                        Style="{StaticResource BotonSecundario}"
+                        Height="26" Padding="10,0" Margin="10,0,0,0"
+                        FontWeight="Normal"
+                        Visibility="Collapsed"
+                        Click="AlEscalarPrivilegios" />
+            </Grid>
+        </Border>
+
+        <Border x:Name="_trabajando" DockPanel.Dock="Top"
+                Background="{DynamicResource Seleccion}"
+                Padding="12,7"
+                Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="⏳" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <TextBlock x:Name="_trabajandoTexto"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock x:Name="_resumen" DockPanel.Dock="Bottom"
+                   Style="{StaticResource Tenue}"
+                   Margin="12,8" TextWrapping="Wrap"
+                   Text="Sin consultar" />
+
+        <DataGrid x:Name="Tabla" Margin="4,4,4,0" />
+    </DockPanel>
+</UserControl>

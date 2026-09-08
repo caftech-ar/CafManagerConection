@@ -1,0 +1,122 @@
+﻿<UserControl x:Class="CafManagerConection.App.Views.EtiquetasPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             UseLayoutRounding="True"
+             TextOptions.TextFormattingMode="Display">
+
+    <Border Style="{StaticResource Tarjeta}" Padding="0">
+        <DockPanel>
+
+            <Border DockPanel.Dock="Top"
+                    BorderBrush="{DynamicResource Borde}" BorderThickness="0,0,0,1"
+                    Padding="12,10">
+                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                           Text="Las etiquetas marcan a qué ambiente pertenece cada servidor. Una carpeta se la presta a todo lo que contiene, y una conexión puede tener la suya propia." />
+            </Border>
+
+            <Border DockPanel.Dock="Bottom"
+                    BorderBrush="{DynamicResource Borde}" BorderThickness="0,1,0,0"
+                    Padding="12,10">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Content="Nueva" Style="{StaticResource BotonSecundario}"
+                                Height="30" Padding="12,0" Click="AlNueva" />
+
+                        <Button x:Name="_guardar" Content="Guardar cambios"
+                                Style="{StaticResource BotonSecundario}"
+                                Height="30" Padding="12,0" Margin="6,0,0,0"
+                                IsEnabled="False"
+                                Click="AlGuardar" />
+
+                        <Button x:Name="_borrar" Content="Borrar"
+                                Style="{StaticResource BotonDestructivo}"
+                                Height="30" Padding="12,0" Margin="6,0,0,0"
+                                IsEnabled="False"
+                                Click="AlBorrar" />
+
+                        <Button Content="Restablecer" ToolTip="Volver al catálogo de fábrica"
+                                Style="{StaticResource BotonSecundario}"
+                                Height="30" Padding="12,0" Margin="18,0,0,0"
+                                Click="AlRestablecer" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="_subir" Content="↑" ToolTip="Subir en el orden"
+                                Style="{StaticResource BotonSecundario}"
+                                Height="30" Width="34" IsEnabled="False" Click="AlSubir" />
+
+                        <Button x:Name="_bajar" Content="↓" ToolTip="Bajar en el orden"
+                                Style="{StaticResource BotonSecundario}"
+                                Height="30" Width="34" Margin="6,0,0,0"
+                                IsEnabled="False" Click="AlBajar" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Margin="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" MinWidth="180" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="250" />
+                </Grid.ColumnDefinitions>
+
+                <ListBox Grid.Column="0" x:Name="_lista" SelectionChanged="AlElegir">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <Border Padding="5,1" CornerRadius="3"
+                                        VerticalAlignment="Center"
+                                        MinWidth="34"
+                                        Background="{Binding Pincel}">
+                                    <TextBlock Text="{Binding Codigo}"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center"
+                                               Foreground="White" />
+                                </Border>
+
+                                <TextBlock Text="{Binding Nombre}" Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <GridSplitter Grid.Column="1" Width="5" />
+
+                <StackPanel Grid.Column="2" Margin="6,0,0,0">
+                    <TextBlock Text="Código" Style="{StaticResource Etiqueta}" />
+                    <TextBox x:Name="_codigo" MaxLength="5" Width="90"
+                             HorizontalAlignment="Left"
+                             Height="{StaticResource AltoControl}"
+                             CharacterCasing="Upper"
+                             ToolTip="Hasta cinco letras. Es lo que se ve en el árbol."
+                             TextChanged="AlEditar" />
+
+                    <TextBlock Text="Nombre" Style="{StaticResource Etiqueta}" Margin="0,14,0,4" />
+                    <TextBox x:Name="_nombre" MaxLength="40"
+                             Height="{StaticResource AltoControl}"
+                             TextChanged="AlEditar" />
+
+                    <TextBlock Text="Color" Style="{StaticResource Etiqueta}" Margin="0,14,0,4" />
+                    <WrapPanel x:Name="_colores" />
+
+                    <TextBlock Text="Así se va a ver en el árbol"
+                               Style="{StaticResource Etiqueta}" Margin="0,10,0,4" />
+
+                    <Border x:Name="_muestra" Padding="5,1" CornerRadius="3"
+                            HorizontalAlignment="Left" MinWidth="34">
+                        <TextBlock x:Name="_muestraTexto"
+                                   FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                    </Border>
+
+                    <TextBlock x:Name="_error" Foreground="{DynamicResource Destructivo}"
+                               TextWrapping="Wrap" Margin="0,12,0,0"
+                               Visibility="Collapsed" />
+                </StackPanel>
+            </Grid>
+        </DockPanel>
+    </Border>
+</UserControl>

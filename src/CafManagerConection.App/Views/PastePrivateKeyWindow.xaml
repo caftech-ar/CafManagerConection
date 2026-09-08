@@ -1,0 +1,50 @@
+<Window x:Class="CafManagerConection.App.Views.PastePrivateKeyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        SizeToContent="Height" Width="520"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Title="Pegar clave privada"
+        Background="{DynamicResource Fondo}">
+
+    <StackPanel Margin="20">
+        <TextBlock Text="Pegá acá el contenido del archivo de clave privada (.ppk, OpenSSH o PEM)."
+                   Style="{StaticResource Tenue}" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+        <TextBox x:Name="_pegado" Style="{StaticResource CampoMultilinea}"
+                 FontFamily="{StaticResource FuenteMono}" FontSize="11"
+                 Height="140" TextChanged="AlCambiarElPegado" />
+
+        <TextBlock Text="Se reconoció" Style="{StaticResource Titulo}" FontSize="13"
+                   Margin="0,16,0,6" />
+
+        <Border Style="{StaticResource Tarjeta}">
+            <StackPanel>
+                <TextBlock x:Name="_tipo" TextWrapping="Wrap" />
+                <TextBlock x:Name="_cifrada" TextWrapping="Wrap" Margin="0,4,0,0" />
+                <TextBlock x:Name="_comentario" TextWrapping="Wrap" Margin="0,4,0,0" />
+                <TextBlock x:Name="_huella" TextWrapping="Wrap" Margin="0,4,0,0"
+                           FontFamily="{StaticResource FuenteMono}" FontSize="11" />
+                <TextBlock x:Name="_notaHuella" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Style="{StaticResource Tenue}" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Nombre del archivo" Style="{StaticResource Etiqueta}" Margin="0,16,0,4" />
+        <TextBox x:Name="_nombreArchivo" TextChanged="AlCambiarElNombre" />
+
+        <TextBlock x:Name="_destino" Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                   Margin="0,6,0,0" />
+
+        <TextBlock x:Name="_error" Foreground="{DynamicResource Destructivo}"
+                   TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button Content="Cancelar" Style="{StaticResource BotonSecundario}"
+                    IsCancel="True" MinWidth="100" />
+            <Button Content="Guardar" Style="{StaticResource BotonPrimario}"
+                    IsDefault="True" MinWidth="100" Margin="8,0,0,0" Click="AlGuardar" />
+        </StackPanel>
+    </StackPanel>
+</Window>

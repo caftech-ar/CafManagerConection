@@ -11,6 +11,8 @@ public sealed class Connection
     private readonly Dictionary<string, string> _customFields =
         new(StringComparer.OrdinalIgnoreCase);
 
+    private DateTimeOffset _updatedAt = DateTimeOffset.UtcNow;
+
     public Connection(Guid id, string name, Protocol protocol, string host)
     {
         Id = id;
@@ -75,11 +77,8 @@ public sealed class Connection
 
     public bool IsFavorite { get; set; }
 
-    public string? DocumentationUrl
-    {
-        get;
-        set => field = ValidateDocumentationUrl(value);
-    }
+    /// <summary>Conexión de un solo uso: no se muestra en el árbol y se barre al arrancar.</summary>
+    public bool EsRapida { get; set; }
 
     /// <summary>Pares nombre/valor sueltos; no se indexan ni se buscan.</summary>
     public IReadOnlyDictionary<string, string> CustomFields => _customFields;
@@ -88,9 +87,12 @@ public sealed class Connection
 
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
-    public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
-
-    public DateTimeOffset? LastConnectedAt { get; set; }
+    /// <summary>Cuándo cambió por última vez algún dato de la conexión. El repositorio la restituye al cargar.</summary>
+    public DateTimeOffset UpdatedAt
+    {
+        get => _updatedAt;
+        init => _updatedAt = value;
+    }
 
     public static int DefaultPortFor(Protocol protocol) => protocol switch
     {
@@ -124,7 +126,11 @@ public sealed class Connection
         Touch();
     }
 
-    public void Touch() => UpdatedAt = DateTimeOffset.UtcNow;
+    /// <summary>Marca que algo cambió. Sólo la llama quien cambió un dato de la conexión.</summary>
+    public void Touch() => _updatedAt = DateTimeOffset.UtcNow;
+
+    /// <summary>Devuelve la fecha de modificación guardada. La usa el repositorio al terminar de cargar, porque aplicar los valores la habría corrido a la hora actual.</summary>
+    public void RestituirModificacion(DateTimeOffset cuando) => _updatedAt = cuando;
 
     private static string ValidateName(string name)
     {
@@ -199,25 +205,6 @@ public sealed class Connection
             throw new ArgumentException(
                 $"La descripción no puede superar los {MaxDescriptionLength} caracteres.",
                 nameof(description));
-        }
-
-        return limpia;
-    }
-
-    private static string? ValidateDocumentationUrl(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return null;
-        }
-
-        var limpia = url.Trim();
-
-        if (!Uri.TryCreate(limpia, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-        {
-            throw new ArgumentException(
-                "La dirección de documentación debe ser una URL http o https.", nameof(url));
         }
 
         return limpia;

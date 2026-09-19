@@ -33,6 +33,13 @@ public sealed class ContrasenaDeSudoDeSesion : IDisposable
     /// <summary>La contraseña no sirvió: se pisa con ceros y no se vuelve a pedir en esta sesión.</summary>
     public void Descartar() => PisarConCeros();
 
+    /// <summary>Habilita un pedido más, a pedido explícito del usuario. Sin esto, cancelar una vez deja la sesión sin sudo hasta reconectar.</summary>
+    public void PermitirOtroIntento()
+    {
+        PisarConCeros();
+        YaSePidio = false;
+    }
+
     /// <summary>Cierre de la sesión: la contraseña queda como recién nacida, así que reabrir la misma conexión la vuelve a pedir.</summary>
     public void Cerrar()
     {

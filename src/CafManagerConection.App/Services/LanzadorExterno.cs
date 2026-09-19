@@ -14,6 +14,7 @@ public static class LanzadorExterno
         HerramientaExterna.Putty => "PuTTY",
         HerramientaExterna.FileZilla => "FileZilla",
         HerramientaExterna.WinScp => "WinSCP",
+        HerramientaExterna.Mstsc => "Escritorio remoto",
         _ => herramienta.ToString(),
     };
 

@@ -28,8 +28,6 @@ public sealed class SshTunnel
 
     public bool AutoStart { get; set; }
 
-    public int SortOrder { get; set; }
-
     private static string ValidateName(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);

@@ -174,4 +174,53 @@ public sealed class ContrasenaDeSudoDeSesionTests
             Guid connectionId, string host, string fingerprint, string? known) =>
             HostKeyDecision.Accept;
     }
+    [Fact]
+    public void Volver_a_permitir_deja_pedirla_de_nuevo()
+    {
+        using var contrasena = new ContrasenaDeSudoDeSesion();
+
+        contrasena.MarcarPedida();
+        Assert.True(contrasena.YaSePidio);
+
+        contrasena.PermitirOtroIntento();
+
+        Assert.False(contrasena.YaSePidio);
+    }
+
+    [Fact]
+    public void Volver_a_permitir_descarta_la_que_habia()
+    {
+        using var contrasena = new ContrasenaDeSudoDeSesion();
+
+        contrasena.Guardar("secreta".AsSpan());
+        Assert.True(contrasena.Tiene);
+
+        contrasena.PermitirOtroIntento();
+
+        Assert.False(contrasena.Tiene);
+        Assert.True(contrasena.BuferEnCeros);
+    }
+
+    [Fact]
+    public void El_ciclo_completo_de_cancelar_y_reintentar()
+    {
+        using var contrasena = new ContrasenaDeSudoDeSesion();
+
+        // Se pide, se cancela: queda marcada y sin contraseña.
+        contrasena.MarcarPedida();
+        contrasena.Descartar();
+
+        Assert.True(contrasena.YaSePidio);
+        Assert.False(contrasena.Tiene);
+
+        // El usuario pide volver a intentarlo.
+        contrasena.PermitirOtroIntento();
+        Assert.False(contrasena.YaSePidio);
+
+        // Y esta vez la escribe.
+        contrasena.MarcarPedida();
+        contrasena.Guardar("secreta".AsSpan());
+
+        Assert.True(contrasena.Tiene);
+    }
 }

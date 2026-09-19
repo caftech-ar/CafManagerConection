@@ -1,5 +1,6 @@
 using CafManagerConection.Infrastructure.Configuration;
 using CafManagerConection.Infrastructure.Database;
+using CafManagerConection.Infrastructure.Database.Migrations;
 using CafManagerConection.UseCases.Abstractions;
 using Microsoft.Data.Sqlite;
 
@@ -25,7 +26,8 @@ public sealed class TempDatabase : IDisposable
 
     public SqliteConnectionFactory Factory { get; }
 
-    public DatabaseInitializer CreateInitializer() => new(Factory, Paths);
+    public DatabaseInitializer CreateInitializer(TimeProvider? time = null) =>
+        new(Factory, Paths, logger: null, time);
 
     public void Dispose()
     {
@@ -267,19 +269,130 @@ public class DatabaseInitializerTests
         using var db = new TempDatabase();
         await File.WriteAllTextAsync(db.Paths.DatabasePath, "esto no es una base de datos");
 
-        using var bloqueo = new FileStream(
-            db.Paths.DatabasePath, FileMode.Open, FileAccess.Read, FileShare.None);
+        var momento = new DateTimeOffset(2026, 9, 18, 12, 0, 0, TimeSpan.Zero);
+        await File.WriteAllTextAsync(db.Paths.CorruptedDatabasePath(momento), "ya ocupado");
 
         DatabaseStartupResult? result = null;
         var exception = await Record.ExceptionAsync(async () =>
         {
-            result = await db.CreateInitializer().InitializeAsync();
+            result = await db.CreateInitializer(new RelojFijo(momento)).InitializeAsync();
         });
 
         Assert.Null(exception);
         Assert.NotNull(result);
 
         Assert.Null(result!.RecoveredFromCorruptionPath);
+    }
+
+    [Fact]
+    public async Task Un_error_que_no_es_corrupcion_deja_la_base_donde_estaba()
+    {
+        using var db = new TempDatabase();
+        await db.CreateInitializer().InitializeAsync();
+        SqliteConnection.ClearAllPools();
+
+        using var bloqueo = new FileStream(
+            db.Paths.DatabasePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        await Assert.ThrowsAsync<SqliteException>(
+            () => db.CreateInitializer().InitializeAsync());
+
+        Assert.True(File.Exists(db.Paths.DatabasePath));
+        Assert.Empty(Directory.GetFiles(db.Paths.Root, "*.corrupta-*"));
+    }
+
+    [Fact]
+    public async Task Una_base_en_la_version_1_conserva_sus_datos_al_migrar()
+    {
+        using var db = new TempDatabase();
+        CrearBaseEnLaVersion(db, Migration001_Esquema.Version, Migration001_Esquema.Sql);
+        InsertarCarpetaConUsuarioCompartido(db, "f1", "Producción", "operador");
+
+        var result = await db.CreateInitializer().InitializeAsync();
+
+        Assert.True(result.Migrated);
+        Assert.Equal(Migration001_Esquema.Version, result.FromVersion);
+        Assert.Equal(DatabaseInitializer.LatestVersion, result.ToVersion);
+        Assert.Equal(
+            "Producción",
+            Escalar(db, "SELECT name FROM connection_folders WHERE id = 'f1';"));
+        Assert.Equal(
+            "operador",
+            Escalar(db, "SELECT ssh_username FROM folder_settings WHERE folder_id = 'f1';"));
+        Assert.Contains("custom_fields", Columnas(db, "folder_settings"));
+    }
+
+    [Fact]
+    public async Task Una_base_en_la_version_2_conserva_sus_datos_al_migrar()
+    {
+        using var db = new TempDatabase();
+        CrearBaseEnLaVersion(
+            db,
+            Migration002_CamposDeCarpeta.Version,
+            Migration001_Esquema.Sql,
+            Migration002_CamposDeCarpeta.Sql);
+        InsertarCarpetaConUsuarioCompartido(db, "f2", "Desarrollo", "deploy");
+
+        var result = await db.CreateInitializer().InitializeAsync();
+
+        Assert.Equal(Migration002_CamposDeCarpeta.Version, result.FromVersion);
+        Assert.Equal(DatabaseInitializer.LatestVersion, result.ToVersion);
+        Assert.Equal(
+            "deploy",
+            Escalar(db, "SELECT ssh_username FROM folder_settings WHERE folder_id = 'f2';"));
+        Assert.Equal(
+            "deploy",
+            Escalar(db, "SELECT web_username FROM folder_settings WHERE folder_id = 'f2';"));
+    }
+
+    private static void CrearBaseEnLaVersion(TempDatabase db, int version, params string[] sql)
+    {
+        using var connection = db.Factory.Create();
+
+        foreach (var sentencia in sql)
+        {
+            Ejecutar(connection, sentencia);
+        }
+
+        Ejecutar(connection, $"PRAGMA user_version = {version};");
+    }
+
+    private static void InsertarCarpetaConUsuarioCompartido(
+        TempDatabase db,
+        string id,
+        string nombre,
+        string usuario)
+    {
+        using var connection = db.Factory.Create();
+
+        Ejecutar(connection, $"""
+            INSERT INTO connection_folders (id, name, created_at, updated_at)
+            VALUES ('{id}', '{nombre}', '2026-08-24T00:00:00.0000000Z', '2026-08-24T00:00:00.0000000Z');
+
+            INSERT INTO folder_settings (folder_id, username) VALUES ('{id}', '{usuario}');
+            """);
+    }
+
+    private static void Ejecutar(SqliteConnection connection, string sql)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.ExecuteNonQuery();
+    }
+
+    private static string? Escalar(TempDatabase db, string sql)
+    {
+        using var connection = db.Factory.Create();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        var valor = cmd.ExecuteScalar();
+
+        return valor is null or DBNull ? null : Convert.ToString(valor);
+    }
+
+    private sealed class RelojFijo(DateTimeOffset momento) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => momento;
     }
 
     [Fact]

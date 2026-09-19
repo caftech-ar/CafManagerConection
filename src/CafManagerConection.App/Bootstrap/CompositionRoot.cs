@@ -27,6 +27,7 @@ public sealed class CompositionRoot : IDisposable
         Paths = paths;
         _logger = logger;
         Startup = startup;
+        Sqlite = factory;
 
         Folders = new FolderRepository(factory);
         Connections = new ConnectionRepository(factory);
@@ -41,7 +42,8 @@ public sealed class CompositionRoot : IDisposable
 
         AppSettings = new AppSettingsService(Settings);
         FolderService = new FolderService(Folders, Connections, Credentials);
-        ConnectionService = new ConnectionService(Connections, Folders, Credentials, Tags, logger);
+        ConnectionService = new ConnectionService(
+            Connections, Folders, Credentials, Tags, logger, History);
 
         CredentialProvider = new CredentialProvider(
             Connections,
@@ -55,6 +57,9 @@ public sealed class CompositionRoot : IDisposable
     public IAppLogger Logger => _logger;
 
     public DatabaseStartupResult Startup { get; }
+
+    /// <summary>La fábrica de conexiones, para los caminos que reabren la base sin pasar por un repositorio, como restaurar una copia.</summary>
+    public ISqliteConnectionFactory Sqlite { get; }
 
     public IFolderRepository Folders { get; }
 

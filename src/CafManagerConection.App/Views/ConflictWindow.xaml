@@ -22,7 +22,7 @@
             <Button Content="Omitir" Style="{StaticResource BotonSecundario}"
                     MinWidth="90" Margin="8,0,0,0" Click="AlOmitir" />
             <Button Content="Conservar ambos" Style="{StaticResource BotonSecundario}"
-                    MinWidth="130" Margin="8,0,0,0" Click="AlConservarAmbos" />
+                    IsDefault="True" MinWidth="130" Margin="8,0,0,0" Click="AlConservarAmbos" />
             <Button Content="Sobrescribir" Style="{StaticResource BotonDestructivo}"
                     MinWidth="120" Margin="8,0,0,0" Click="AlSobrescribir" />
         </StackPanel>

@@ -39,12 +39,14 @@ viejo queda a la vista y editable.
 
 ## Risks / Trade-offs
 
-- [Perder el usuario/puerto de carpetas existentes al migrar] → El backfill copia a los tres
-  protocolos antes de bajar las viejas; hay un escenario que lo fija.
-- [`DROP COLUMN` sobre `folder_settings`] → El SQLite que trae Microsoft.Data.Sqlite lo soporta; se
-  hace después del backfill, en una transacción, así que o queda todo migrado o nada.
 - [El editor de carpeta gana seis campos] → Se agrupan por protocolo, como ya están las credenciales,
   para no alargar la ventana; el usuario RDP va junto al dominio RDP.
+
+## Superado por un cambio posterior
+
+La reserva compartida que decidió este cambio la cierra `saneamiento-del-modelo-de-datos`: el usuario
+y el puerto compartidos se promueven a los tres protocolos y se retiran, así que la resolución deja
+de tener valor de reserva.
 
 ## Resolved Questions
 

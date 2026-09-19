@@ -39,6 +39,11 @@ public partial class SessionView
         Agregar("IconoElevar", "Elevar a root con sudo -i", ElevarShell);
 
         Agregar(
+            "IconoElevar",
+            "Volver a pedir la contraseña de sudo para los paneles del servidor",
+            ReabrirElPedidoDeSudo);
+
+        Agregar(
             "IconoPaleta",
             "Comandos guardados (Ctrl+Shift+P)",
             AbrirPaleta);
@@ -246,6 +251,14 @@ public partial class SessionView
         _ssh.Send(Encoding.UTF8.GetBytes("sudo -i\r"));
         _root.Logger.PlatformActionPerformed(ConnectionId, "sudo -i");
         Informar("Enviado «sudo -i»");
+    }
+
+    /// <summary>Habilita un pedido más de la contraseña de sudo, que si no se pide una sola vez por sesión.</summary>
+    private void ReabrirElPedidoDeSudo()
+    {
+        ContrasenaDeSudoDeLaSesion().PermitirOtroIntento();
+
+        Informar("Se va a volver a pedir la contraseña de sudo cuando un panel la necesite");
     }
 
     private void Informar(string mensaje)

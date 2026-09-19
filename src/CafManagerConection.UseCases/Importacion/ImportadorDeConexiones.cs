@@ -98,15 +98,27 @@ public sealed class ImportadorDeConexiones(
             creadas, carpetasCreadas, contrasenas, yaExistian, fallidas, sinTraer);
     }
 
-    // Mismo host, usuario y puerto efectivo: es lo que hace que reimportar no duplique.
+    // Mismo protocolo, host, usuario y puerto efectivo: es lo que hace que reimportar no duplique.
     private static bool YaEsta(
-        IReadOnlyList<Connection> existentes, ConexionImportada importada) =>
-        existentes.Any(c =>
-            c.Protocol == Protocol.Ssh
+        IReadOnlyList<Connection> existentes, ConexionImportada importada)
+    {
+        var protocolo = ProtocoloDe(importada);
+        var porOmision = Connection.DefaultPortFor(protocolo);
+
+        return existentes.Any(c =>
+            c.Protocol == protocolo
             && string.Equals(c.Host, importada.Host, StringComparison.OrdinalIgnoreCase)
             && string.Equals(c.UserName ?? string.Empty, importada.Usuario ?? string.Empty,
                 StringComparison.OrdinalIgnoreCase)
-            && (c.Port ?? 22) == (importada.Puerto ?? 22));
+            && (c.Port ?? porOmision) == (importada.Puerto ?? porOmision));
+    }
+
+    private static Protocol ProtocoloDe(ConexionImportada importada) => importada.Protocolo switch
+    {
+        ProtocoloImportado.Rdp => Protocol.Rdp,
+        ProtocoloImportado.Web => Protocol.Web,
+        _ => Protocol.Ssh,
+    };
 
     private async Task<(Guid? Carpeta, int Creadas)> AsegurarCarpetasAsync(
         List<Folder> arbol, ConexionImportada importada, CancellationToken ct)
@@ -172,12 +184,7 @@ public sealed class ImportadorDeConexiones(
         bool conContrasena,
         CancellationToken ct)
     {
-        var protocolo = importada.Protocolo switch
-        {
-            ProtocoloImportado.Rdp => Protocol.Rdp,
-            ProtocoloImportado.Web => Protocol.Web,
-            _ => Protocol.Ssh,
-        };
+        var protocolo = ProtocoloDe(importada);
 
         var conexion = new Connection(
             Guid.NewGuid(), importada.Nombre, protocolo, importada.Host)
@@ -213,7 +220,9 @@ public sealed class ImportadorDeConexiones(
                 Web: new WebSettings
                 {
                     ConnectionId = conexion.Id,
-                    Url = importada.Url ?? string.Empty,
+                    Url = string.IsNullOrWhiteSpace(importada.Url)
+                        ? $"https://{importada.Host}"
+                        : importada.Url,
                 }),
             _ => new ConnectionRecord(conexion),
         };
@@ -226,15 +235,11 @@ public sealed class ImportadorDeConexiones(
         return servicio.CreateAsync(registro, credencial, ct);
     }
 
+    /// <summary>Sólo las advertencias del origen. El origen y el tipo original van al resultado de la importación, no al campo de notas del usuario.</summary>
     private static string? Notas(ConexionImportada importada)
     {
-        var lineas = new List<string>
-        {
-            $"Importado de {importada.Origen} como {importada.ProtocoloOriginal}.",
-        };
+        var lineas = importada.AdvertenciasOVacio.ToList();
 
-        lineas.AddRange(importada.AdvertenciasOVacio);
-
-        return string.Join(Environment.NewLine, lineas);
+        return lineas.Count == 0 ? null : string.Join(Environment.NewLine, lineas);
     }
 }

@@ -108,4 +108,73 @@ public sealed class SelectorDeInstaladorTests
         Assert.Null(preferido);
         Assert.Equal(Liviano, SelectorDeInstalador.Elegir([Completo, Liviano], preferido));
     }
+    [Fact]
+    public void Se_enumeran_los_dos_instaladores_con_su_tipo()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles(
+            [Hash, Liviano, Notas, Completo], instalado: null);
+
+        Assert.Equal(2, disponibles.Count);
+        Assert.Contains(disponibles, d => d.Tipo == TipoDeInstalador.Liviano);
+        Assert.Contains(disponibles, d => d.Tipo == TipoDeInstalador.Completo);
+    }
+
+    [Fact]
+    public void Lo_que_no_es_instalador_no_se_enumera()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles([Hash, Notas], instalado: null);
+
+        Assert.Empty(disponibles);
+    }
+
+    [Fact]
+    public void Se_marca_el_que_coincide_con_el_instalado()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles(
+            [Liviano, Completo], TipoDeInstalador.Completo);
+
+        Assert.True(disponibles.Single(d => d.Tipo == TipoDeInstalador.Completo).EsElInstalado);
+        Assert.False(disponibles.Single(d => d.Tipo == TipoDeInstalador.Liviano).EsElInstalado);
+    }
+
+    [Fact]
+    public void Sin_marca_del_registro_no_se_senala_ninguno()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles([Liviano, Completo], instalado: null);
+
+        Assert.All(disponibles, d => Assert.False(d.EsElInstalado));
+    }
+
+    [Fact]
+    public void El_tamano_se_muestra_en_megabytes()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles(
+            [Liviano with { Bytes = 12 * 1024 * 1024 }], instalado: null);
+
+        Assert.Equal("12 MB", disponibles[0].Tamano);
+    }
+
+    [Fact]
+    public void Sin_tamano_publicado_no_se_inventa_ninguno()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles([Liviano], instalado: null);
+
+        Assert.Null(disponibles[0].Tamano);
+    }
+
+    [Fact]
+    public void Cada_tipo_dice_que_precisa()
+    {
+        var disponibles = SelectorDeInstalador.Disponibles([Liviano, Completo], instalado: null);
+
+        Assert.Contains(
+            "precisa .NET",
+            disponibles.Single(d => d.Tipo == TipoDeInstalador.Liviano).Condicion,
+            StringComparison.Ordinal);
+
+        Assert.Contains(
+            "incluye todo",
+            disponibles.Single(d => d.Tipo == TipoDeInstalador.Completo).Condicion,
+            StringComparison.Ordinal);
+    }
 }

@@ -46,7 +46,6 @@ public sealed record EffectiveSettings
     public Inherited<Guid> TagId { get; init; }
 
     public Inherited<bool> ClipboardEnabled { get; init; }
-    public Inherited<bool> FitToTab { get; init; }
     public Inherited<bool> IgnoreCertificateWarnings { get; init; }
 
     public Inherited<BanderasDeRendimientoRdp> Rendimiento { get; init; }
@@ -72,18 +71,14 @@ public sealed record EffectiveSettings
 
     public bool ResolvedClipboardEnabled => ClipboardEnabled.ValueOr(true);
 
-    public bool ResolvedFitToTab => FitToTab.ValueOr(true);
-
     public BanderasDeRendimientoRdp ResolvedRendimiento =>
         Rendimiento.ValueOr(BanderasDeRendimientoRdp.Ninguna);
 
     public TipoDeRedRdp? ResolvedTipoDeRed => TipoDeRed.IsDefined ? TipoDeRed.Value : null;
 
-    /// <summary>El modo propio o heredado; si nadie lo define, se deriva del viejo <see cref="FitToTab"/> para no cambiarle la conducta a lo ya guardado.</summary>
+    /// <summary>El modo propio o heredado; si nadie lo define, la sesión escala los píxeles.</summary>
     public ModoDeTamanoRdp ResolvedModoDeTamano =>
-        ModoDeTamano.IsDefined
-            ? ModoDeTamano.Value
-            : ResolvedFitToTab ? ModoDeTamanoRdp.EscalarPixeles : ModoDeTamanoRdp.Ninguno;
+        ModoDeTamano.ValueOr(ModoDeTamanoRdp.EscalarPixeles);
 
     public int? ResolvedEscalaDeEscritorio =>
         EscalaDeEscritorio.IsDefined ? EscalaDeEscritorio.Value : null;

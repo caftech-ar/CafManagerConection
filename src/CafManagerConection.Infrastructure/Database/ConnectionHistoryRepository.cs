@@ -7,13 +7,21 @@ namespace CafManagerConection.Infrastructure.Database;
 
 public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
 {
+    private const string Columnas =
+        "SELECT id, connection_id, attempted_at, outcome, failure_reason, duration_seconds "
+        + "FROM connection_history";
+
     private readonly ISqliteConnectionFactory _factory;
 
     public ConnectionHistoryRepository(ISqliteConnectionFactory factory) => _factory = factory;
 
+    /// <summary>Anota el evento y descarta los que exceden la retención, en una sola transacción.</summary>
     public Task AddAsync(ConnectionHistoryEntry entry, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(entry);
+
         using var db = _factory.Create();
+        using var tx = db.BeginTransaction();
 
         db.Execute("""
             INSERT INTO connection_history (
@@ -29,7 +37,7 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
                 Outcome = entry.Outcome.ToString(),
                 FailureReason = entry.FailureReason?.ToString(),
                 entry.DurationSeconds,
-            });
+            }, tx);
 
         db.Execute("""
             DELETE FROM connection_history
@@ -44,26 +52,10 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
             {
                 ConnectionId = entry.ConnectionId.ToString("D"),
                 Retencion = ConnectionHistoryEntry.RetentionPerConnection,
-            });
+            }, tx);
 
+        tx.Commit();
         return Task.CompletedTask;
-    }
-
-    public Task<IReadOnlyList<ConnectionHistoryEntry>> GetForConnectionAsync(
-        Guid connectionId, int limit = 50, CancellationToken ct = default)
-    {
-        using var db = _factory.Create();
-
-        var filas = db.Query<FilaHistorial>("""
-            SELECT * FROM connection_history
-            WHERE connection_id = @Id
-            ORDER BY attempted_at DESC
-            LIMIT @Limite;
-            """,
-            new { Id = connectionId.ToString("D"), Limite = limit }).ToList();
-
-        return Task.FromResult<IReadOnlyList<ConnectionHistoryEntry>>(
-            filas.ConvertAll(f => f.ADominio()));
     }
 
     public Task<IReadOnlyList<ConnectionHistoryEntry>> GetRecentAsync(
@@ -71,39 +63,68 @@ public sealed class ConnectionHistoryRepository : IConnectionHistoryRepository
     {
         using var db = _factory.Create();
 
-        var filas = db.Query<FilaHistorial>("""
-            SELECT * FROM connection_history
-            ORDER BY attempted_at DESC
-            LIMIT @Limite;
-            """,
+        var filas = db.Query<FilaHistorial>(
+            Columnas + " ORDER BY attempted_at DESC LIMIT @Limite;",
             new { Limite = limit }).ToList();
 
         return Task.FromResult<IReadOnlyList<ConnectionHistoryEntry>>(
             filas.ConvertAll(f => f.ADominio()));
     }
 
+    public Task<int> ContarAsync(CancellationToken ct = default)
+    {
+        using var db = _factory.Create();
+        return Task.FromResult(db.ExecuteScalar<int>("SELECT COUNT(*) FROM connection_history;"));
+    }
+
+    public Task<IReadOnlyDictionary<Guid, DateTimeOffset>> UltimaConexionExitosaPorConexionAsync(
+        CancellationToken ct = default)
+    {
+        using var db = _factory.Create();
+
+        var filas = db.Query<FilaUltima>("""
+            SELECT connection_id, MAX(attempted_at) AS cuando
+              FROM connection_history
+             WHERE outcome = 'Success'
+             GROUP BY connection_id;
+            """).ToList();
+
+        return Task.FromResult<IReadOnlyDictionary<Guid, DateTimeOffset>>(
+            filas.ToDictionary(f => Guid.Parse(f.ConnectionId), f => Fecha(f.Cuando)));
+    }
+
+    private static DateTimeOffset Fecha(string valor) =>
+        DateTimeOffset.Parse(valor, null, System.Globalization.DateTimeStyles.RoundtripKind);
+
+    private sealed class FilaUltima
+    {
+        public string ConnectionId { get; init; } = string.Empty;
+
+        public string Cuando { get; init; } = string.Empty;
+    }
+
     private sealed class FilaHistorial
     {
         public string Id { get; set; } = string.Empty;
 
-        public string Connection_Id { get; set; } = string.Empty;
+        public string ConnectionId { get; set; } = string.Empty;
 
-        public string Attempted_At { get; set; } = string.Empty;
+        public string AttemptedAt { get; set; } = string.Empty;
 
         public string Outcome { get; set; } = string.Empty;
 
-        public string? Failure_Reason { get; set; }
+        public string? FailureReason { get; set; }
 
-        public int? Duration_Seconds { get; set; }
+        public int? DurationSeconds { get; set; }
 
         public ConnectionHistoryEntry ADominio() => new(
             Guid.Parse(Id),
-            Guid.Parse(Connection_Id),
-            DateTimeOffset.Parse(Attempted_At, null, System.Globalization.DateTimeStyles.RoundtripKind),
+            Guid.Parse(ConnectionId),
+            Fecha(AttemptedAt),
             Enum.TryParse<ConnectionOutcome>(Outcome, out var resultado)
                 ? resultado
                 : ConnectionOutcome.Failed,
-            Enum.TryParse<SessionFailureReason>(Failure_Reason, out var motivo) ? motivo : null,
-            Duration_Seconds);
+            Enum.TryParse<SessionFailureReason>(FailureReason, out var motivo) ? motivo : null,
+            DurationSeconds);
     }
 }

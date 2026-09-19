@@ -241,6 +241,13 @@ public sealed class SessionManager
             null);
     }
 
+    /// <summary>El motivo acompaña sólo a un resultado fallido: una sesión que conectó y después se cayó no es una falla, y una falla sin motivo no dice nada.</summary>
+    private static SessionFailureReason? MotivoDe(
+        Seguimiento seguimiento, ConnectionOutcome resultado) =>
+        resultado == ConnectionOutcome.Failed
+            ? seguimiento.UltimoFallo?.Reason ?? SessionFailureReason.Other
+            : null;
+
     private async Task Anotar(Seguimiento seguimiento, ConnectionOutcome resultado, int? segundos)
     {
         seguimiento.Anotada = true;
@@ -257,7 +264,7 @@ public sealed class SessionManager
                 seguimiento.Conexion,
                 seguimiento.Inicio,
                 resultado,
-                seguimiento.UltimoFallo?.Reason,
+                MotivoDe(seguimiento, resultado),
                 segundos)).ConfigureAwait(false);
         }
         catch (Exception ex)

@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using CafManagerConection.Domain.Connections;
 
 namespace CafManagerConection.Infrastructure;
 
@@ -9,6 +10,25 @@ public enum HerramientaExterna
     FileZilla,
 
     WinScp,
+
+    Mstsc,
+}
+
+public static class ProtocolosDeHerramienta
+{
+    /// <summary>Si la herramienta sirve para abrir una conexión de ese protocolo.</summary>
+    /// <param name="herramienta">La herramienta externa.</param>
+    /// <param name="protocolo">El protocolo de la conexión.</param>
+    public static bool Atiende(HerramientaExterna herramienta, Protocol protocolo) =>
+        herramienta switch
+        {
+            HerramientaExterna.Putty or HerramientaExterna.FileZilla or HerramientaExterna.WinScp =>
+                protocolo == Protocol.Ssh,
+
+            HerramientaExterna.Mstsc => protocolo == Protocol.Rdp,
+
+            _ => false,
+        };
 }
 
 // No hay campo para la contraseña a propósito: lo que va en la línea de comandos queda visible en la lista de procesos de la máquina.
@@ -29,6 +49,7 @@ public static class LineaDeComando
             HerramientaExterna.Putty => Putty(destino),
             HerramientaExterna.FileZilla => FileZilla(destino),
             HerramientaExterna.WinScp => WinScp(destino),
+            HerramientaExterna.Mstsc => Mstsc(destino),
             _ => throw new ArgumentOutOfRangeException(nameof(herramienta)),
         };
     }
@@ -50,6 +71,9 @@ public static class LineaDeComando
 
         return string.Join(' ', partes);
     }
+
+    // Sin usuario: mstsc no lo toma en el destino, lo pide su propio cuadro de credenciales.
+    private static string Mstsc(DestinoRemoto d) => $"/v:{d.Host}:{d.Puerto}";
 
     // Sin clave: FileZilla no la toma por línea de comandos y escribirla en su configuración está prohibido.
     private static string FileZilla(DestinoRemoto d) => Url(d);
@@ -90,6 +114,16 @@ public sealed class BuscadorDeHerramientas(Func<string, bool> existe)
     // Las dos carpetas de programas: PuTTY y WinSCP se distribuyen en 32 y en 64 bits y las dos instalaciones pueden convivir.
     internal static IEnumerable<string> Candidatas(HerramientaExterna herramienta)
     {
+        if (herramienta == HerramientaExterna.Mstsc)
+        {
+            // Viene con Windows: no está en Archivos de programa ni en App Paths.
+            return
+            [
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.System), "mstsc.exe"),
+            ];
+        }
+
         var programas = new[]
         {
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),

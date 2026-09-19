@@ -402,7 +402,8 @@ public partial class FilesPanel : UserControl
             : $"Se va a eliminar «{nodo.Nombre}» del servidor.";
 
         if (!Dialogos.Confirmar(
-                Window.GetWindow(this)!, "Eliminar del servidor", detalle, "Eliminar"))
+                Window.GetWindow(this)!, "Eliminar del servidor", detalle, "Eliminar",
+                destructivo: true))
         {
             return;
         }

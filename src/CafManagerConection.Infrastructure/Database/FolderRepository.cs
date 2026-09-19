@@ -7,8 +7,13 @@ namespace CafManagerConection.Infrastructure.Database;
 public sealed class FolderRepository : IFolderRepository
 {
     private readonly ISqliteConnectionFactory _factory;
+    private readonly IAppLogger? _logger;
 
-    public FolderRepository(ISqliteConnectionFactory factory) => _factory = factory;
+    public FolderRepository(ISqliteConnectionFactory factory, IAppLogger? logger = null)
+    {
+        _factory = factory;
+        _logger = logger;
+    }
 
     // La lista de columnas tiene que seguir a la de UpdateAsync y WriteSettings: guardar lee y reescribe entero, y una columna que falte acá vuelve como null en el próximo renombre.
     public Task<IReadOnlyList<Folder>> GetAllAsync(CancellationToken ct = default)
@@ -18,11 +23,11 @@ public sealed class FolderRepository : IFolderRepository
         var rows = db.Query<FolderRow>("""
             SELECT f.id, f.parent_id, f.name, f.sort_order, f.created_at, f.updated_at,
                    f.icon_color, f.icon_key, f.description,
-                   s.username, s.domain, s.port,
+                   s.domain,
                    s.rdp_secreto IS NOT NULL AS rdp_tiene_secreto,
                    s.ssh_secreto IS NOT NULL AS ssh_tiene_secreto,
                    s.web_secreto IS NOT NULL AS web_tiene_secreto,
-                   s.rdp_clipboard_enabled, s.rdp_fit_to_tab, s.rdp_ignore_certificate_warnings,
+                   s.rdp_clipboard_enabled, s.rdp_ignore_certificate_warnings,
                    s.ssh_auth_method, s.ssh_private_key_path, s.ssh_certificate_path,
                    s.ssh_keep_alive_seconds,
                    s.tag_id, s.custom_fields,
@@ -33,7 +38,8 @@ public sealed class FolderRepository : IFolderRepository
             ORDER BY f.sort_order, f.name;
             """).ToList();
 
-        return Task.FromResult<IReadOnlyList<Folder>>(rows.Select(r => r.ToDomain()).ToList());
+        return Task.FromResult<IReadOnlyList<Folder>>(
+            rows.Select(r => r.ADominio(_logger)).ToList());
     }
 
     public async Task<Folder?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -171,23 +177,20 @@ public sealed class FolderRepository : IFolderRepository
         var s = folder.Settings;
         db.Execute("""
             INSERT INTO folder_settings (
-                folder_id, username, domain, port,
-                rdp_clipboard_enabled, rdp_fit_to_tab, rdp_ignore_certificate_warnings,
+                folder_id, domain,
+                rdp_clipboard_enabled, rdp_ignore_certificate_warnings,
                 ssh_auth_method, ssh_private_key_path, ssh_certificate_path,
                 ssh_keep_alive_seconds, tag_id, custom_fields,
                 rdp_username, ssh_username, web_username, rdp_port, ssh_port, web_port)
             VALUES (
-                @FolderId, @UserName, @Domain, @Port,
-                @RdpClipboardEnabled, @RdpFitToTab, @RdpIgnoreCertificateWarnings,
+                @FolderId, @Domain,
+                @RdpClipboardEnabled, @RdpIgnoreCertificateWarnings,
                 @SshAuthMethod, @SshPrivateKeyPath, @SshCertificatePath,
                 @SshKeepAliveSeconds, @TagId, @CustomFields,
                 @RdpUserName, @SshUserName, @WebUserName, @RdpPort, @SshPort, @WebPort)
             ON CONFLICT(folder_id) DO UPDATE SET
-                username = @UserName,
                 domain = @Domain,
-                port = @Port,
                 rdp_clipboard_enabled = @RdpClipboardEnabled,
-                rdp_fit_to_tab = @RdpFitToTab,
                 rdp_ignore_certificate_warnings = @RdpIgnoreCertificateWarnings,
                 ssh_auth_method = @SshAuthMethod,
                 ssh_private_key_path = @SshPrivateKeyPath,
@@ -205,11 +208,8 @@ public sealed class FolderRepository : IFolderRepository
             new
             {
                 FolderId = folder.Id.ToString("D"),
-                s.UserName,
                 s.Domain,
-                s.Port,
                 RdpClipboardEnabled = ToDb(s.RdpClipboardEnabled),
-                RdpFitToTab = ToDb(s.RdpFitToTab),
                 RdpIgnoreCertificateWarnings = ToDb(s.RdpIgnoreCertificateWarnings),
                 SshAuthMethod = s.SshAuthMethod?.ToString(),
                 s.SshPrivateKeyPath,
@@ -248,81 +248,92 @@ public sealed class FolderRepository : IFolderRepository
     private sealed class FolderRow
     {
         public string Id { get; init; } = string.Empty;
-        public string? Parent_Id { get; init; }
+        public string? ParentId { get; init; }
         public string Name { get; init; } = string.Empty;
-        public int Sort_Order { get; init; }
-        public string Created_At { get; init; } = string.Empty;
-        public string Updated_At { get; init; } = string.Empty;
+        public int SortOrder { get; init; }
+        public string CreatedAt { get; init; } = string.Empty;
+        public string UpdatedAt { get; init; } = string.Empty;
 
-        public string? Username { get; init; }
         public string? Domain { get; init; }
-        public int? Port { get; init; }
-        public long Rdp_Tiene_Secreto { get; init; }
-        public long Ssh_Tiene_Secreto { get; init; }
-        public long Web_Tiene_Secreto { get; init; }
-        public long? Rdp_Clipboard_Enabled { get; init; }
-        public long? Rdp_Fit_To_Tab { get; init; }
-        public long? Rdp_Ignore_Certificate_Warnings { get; init; }
-        public string? Ssh_Auth_Method { get; init; }
-        public string? Ssh_Private_Key_Path { get; init; }
-        public string? Ssh_Certificate_Path { get; init; }
-        public int? Ssh_Keep_Alive_Seconds { get; init; }
-        public string? Tag_Id { get; init; }
-        public string? Custom_Fields { get; init; }
-        public string? Rdp_Username { get; init; }
-        public string? Ssh_Username { get; init; }
-        public string? Web_Username { get; init; }
-        public int? Rdp_Port { get; init; }
-        public int? Ssh_Port { get; init; }
-        public int? Web_Port { get; init; }
-        public string? Icon_Color { get; init; }
-        public string? Icon_Key { get; init; }
+        public long RdpTieneSecreto { get; init; }
+        public long SshTieneSecreto { get; init; }
+        public long WebTieneSecreto { get; init; }
+        public long? RdpClipboardEnabled { get; init; }
+        public long? RdpIgnoreCertificateWarnings { get; init; }
+        public string? SshAuthMethod { get; init; }
+        public string? SshPrivateKeyPath { get; init; }
+        public string? SshCertificatePath { get; init; }
+        public int? SshKeepAliveSeconds { get; init; }
+        public string? TagId { get; init; }
+        public string? CustomFields { get; init; }
+        public string? RdpUsername { get; init; }
+        public string? SshUsername { get; init; }
+        public string? WebUsername { get; init; }
+        public int? RdpPort { get; init; }
+        public int? SshPort { get; init; }
+        public int? WebPort { get; init; }
+        public string? IconColor { get; init; }
+        public string? IconKey { get; init; }
         public string? Description { get; init; }
 
-        public Folder ToDomain()
-        {
-            var carpeta = Crear();
-
-            return carpeta;
-        }
-
-        private Folder Crear() => new(
+        public Folder ADominio(IAppLogger? logger) => new(
             Guid.Parse(Id),
             Name,
-            Parent_Id is null ? null : Guid.Parse(Parent_Id),
-            Sort_Order)
+            ParentId is null ? null : Guid.Parse(ParentId),
+            SortOrder)
         {
-            ClaveDeColor = Icon_Color,
-            ClaveDeIcono = Icon_Key,
+            ClaveDeColor = IconColor,
+            ClaveDeIcono = IconKey,
             Description = Description,
-            CreatedAt = DateTimeOffset.Parse(Created_At, System.Globalization.CultureInfo.InvariantCulture),
+            CreatedAt = Fecha(CreatedAt),
+            UpdatedAt = Fecha(UpdatedAt),
             Settings = new FolderSettings
             {
-                UserName = Username,
                 Domain = Domain,
-                Port = Port,
-                RdpTieneSecreto = Rdp_Tiene_Secreto == 1,
-                SshTieneSecreto = Ssh_Tiene_Secreto == 1,
-                WebTieneSecreto = Web_Tiene_Secreto == 1,
-                RdpClipboardEnabled = FromDb(Rdp_Clipboard_Enabled),
-                RdpFitToTab = FromDb(Rdp_Fit_To_Tab),
-                RdpIgnoreCertificateWarnings = FromDb(Rdp_Ignore_Certificate_Warnings),
-                SshAuthMethod = Ssh_Auth_Method is null
-                    ? null
-                    : Enum.Parse<SshAuthMethod>(Ssh_Auth_Method),
-                SshPrivateKeyPath = Ssh_Private_Key_Path,
-                SshCertificatePath = Ssh_Certificate_Path,
-                SshKeepAliveSeconds = Ssh_Keep_Alive_Seconds,
-                TagId = Guid.TryParse(Tag_Id, out var etiqueta) ? etiqueta : null,
-                CustomFields = Serializacion.TextoACampos(Custom_Fields),
-                RdpUserName = Rdp_Username,
-                SshUserName = Ssh_Username,
-                WebUserName = Web_Username,
-                RdpPort = Rdp_Port,
-                SshPort = Ssh_Port,
-                WebPort = Web_Port,
+                RdpTieneSecreto = RdpTieneSecreto == 1,
+                SshTieneSecreto = SshTieneSecreto == 1,
+                WebTieneSecreto = WebTieneSecreto == 1,
+                RdpClipboardEnabled = FromDb(RdpClipboardEnabled),
+                RdpIgnoreCertificateWarnings = FromDb(RdpIgnoreCertificateWarnings),
+                SshAuthMethod = LeerMetodo(SshAuthMethod, Id, logger),
+                SshPrivateKeyPath = SshPrivateKeyPath,
+                SshCertificatePath = SshCertificatePath,
+                SshKeepAliveSeconds = SshKeepAliveSeconds,
+                TagId = Guid.TryParse(TagId, out var etiqueta) ? etiqueta : null,
+                CustomFields = Serializacion.TextoACampos(CustomFields, Id, logger),
+                RdpUserName = RdpUsername,
+                SshUserName = SshUsername,
+                WebUserName = WebUsername,
+                RdpPort = RdpPort,
+                SshPort = SshPort,
+                WebPort = WebPort,
             },
         };
+
+        private static DateTimeOffset Fecha(string valor) =>
+            DateTimeOffset.Parse(valor, System.Globalization.CultureInfo.InvariantCulture);
+
+        /// <summary>Un método de autenticación que el enum ya no tiene se registra y vuelve nulo, en vez de tirar la carga del árbol.</summary>
+        private static Domain.Connections.SshAuthMethod? LeerMetodo(
+            string? texto, string carpeta, IAppLogger? logger)
+        {
+            if (string.IsNullOrEmpty(texto))
+            {
+                return null;
+            }
+
+            if (Enum.TryParse<Domain.Connections.SshAuthMethod>(texto, out var valor)
+                && Enum.IsDefined(valor))
+            {
+                return valor;
+            }
+
+            logger?.TechnicalError(
+                $"leer ssh_auth_method de la carpeta {carpeta}: «{texto}» no es un valor conocido",
+                new InvalidOperationException(texto));
+
+            return null;
+        }
 
         private static bool? FromDb(long? value) => value is null ? null : value != 0;
     }

@@ -113,8 +113,8 @@ public sealed class ConexionRapidaTests
         var rapida = new Connection(Guid.NewGuid(), "root@192.0.2.10", Protocol.Ssh, "192.0.2.10")
         {
             UserName = "root",
+            EsRapida = true,
         };
-        rapida.SetCustomField("cmc:conexionRapida", bool.TrueString);
 
         _conexiones.GetByIdAsync(rapida.Id, Arg.Any<CancellationToken>())
             .Returns(new ConnectionRecord(rapida));
@@ -122,7 +122,7 @@ public sealed class ConexionRapidaTests
         var r = await Servicio().MarkAsSavedAsync(rapida.Id);
 
         Assert.True(r.Success);
-        Assert.DoesNotContain("cmc:conexionRapida", rapida.CustomFields.Keys);
+        Assert.False(rapida.EsRapida);
         await _conexiones.Received(1).UpdateAsync(
             Arg.Is<ConnectionRecord>(x => x.Connection.Id == rapida.Id), Arg.Any<CancellationToken>());
     }
@@ -176,7 +176,7 @@ public sealed class ConexionRapidaTests
     public async Task La_limpieza_no_toca_una_rapida_que_el_usuario_ya_guardo()
     {
         var guardada = Rapida("ya guardada");
-        guardada.SetCustomField("cmc:conexionRapida", null);
+        guardada.EsRapida = false;
 
         _conexiones.GetAllAsync(Arg.Any<CancellationToken>())
             .Returns(new List<Connection> { guardada });
@@ -188,10 +188,6 @@ public sealed class ConexionRapidaTests
             .DeleteAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
-    private static Connection Rapida(string nombre)
-    {
-        var c = new Connection(Guid.NewGuid(), nombre, Protocol.Ssh, "192.0.2.1");
-        c.SetCustomField("cmc:conexionRapida", bool.TrueString);
-        return c;
-    }
+    private static Connection Rapida(string nombre) =>
+        new(Guid.NewGuid(), nombre, Protocol.Ssh, "192.0.2.1") { EsRapida = true };
 }

@@ -38,7 +38,7 @@
                     Style="{StaticResource BotonPrimario}" MinWidth="110"
                     Click="AlAceptar" />
             <Button Content="Cancelar" Style="{StaticResource BotonSecundario}"
-                    IsCancel="True" MinWidth="100" Margin="8,0,0,0" />
+                    IsCancel="True" IsDefault="True" MinWidth="100" Margin="8,0,0,0" />
         </StackPanel>
     </StackPanel>
 </Window>

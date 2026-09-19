@@ -53,11 +53,11 @@ public sealed class CatalogoDeEtiquetasTests
     }
 
     [Fact]
-    public void Un_color_que_no_es_de_la_paleta_no_es_valido()
+    public void Un_color_que_no_es_de_la_paleta_se_rechaza_al_agregar()
     {
-        var etiqueta = new Etiqueta(Guid.NewGuid(), "PRD", "Producción", "#FF0000");
+        var catalogo = new CatalogoDeEtiquetas();
 
-        Assert.False(etiqueta.EsValida);
+        Assert.Null(catalogo.Agregar("PRD", "Producción", "#FF0000"));
     }
 
     [Fact]
@@ -144,32 +144,6 @@ public sealed class CatalogoDeEtiquetasTests
         Assert.False(catalogo.Actualizar(Guid.NewGuid(), "XXX", "Nueva", "azul"));
         Assert.Equal(4, catalogo.Todas.Count);
     }
-
-    [Fact]
-    public void Quitar_saca_solo_esa()
-    {
-        var catalogo = ConLasCuatro();
-        var cap = catalogo.Todas.First(e => e.Codigo == "CAP");
-
-        Assert.True(catalogo.Quitar(cap.Id));
-        Assert.Equal(3, catalogo.Todas.Count);
-        Assert.Null(catalogo.Por(cap.Id));
-    }
-
-    // Si no se pudiera, borrar una etiqueta dejaría su código inutilizable para siempre.
-    [Fact]
-    public void El_codigo_de_una_borrada_se_puede_reusar()
-    {
-        var catalogo = ConLasCuatro();
-
-        catalogo.Quitar(catalogo.Todas.First(e => e.Codigo == "CAP").Id);
-
-        Assert.NotNull(catalogo.Agregar("CAP", "Capacitaciones", "cyan"));
-    }
-
-    [Fact]
-    public void Quitar_algo_que_no_esta_no_es_un_error() =>
-        Assert.False(new CatalogoDeEtiquetas().Quitar(Guid.NewGuid()));
 
     [Fact]
     public void Una_etiqueta_nueva_va_al_final()

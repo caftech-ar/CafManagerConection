@@ -80,7 +80,7 @@ public sealed class ConnectionEditorWindowTests
     [Theory]
     [InlineData("60")]
     [InlineData("  60  ")]
-    [InlineData("86400")]
+    [InlineData("3600")]
     public void Un_numero_razonable_de_segundos_se_acepta(string texto)
     {
         Assert.True(ConnectionEditorWindow.ValidarKeepAliveSegundos(texto, out var valor, out _));
@@ -89,7 +89,7 @@ public sealed class ConnectionEditorWindowTests
 
     [Theory]
     [InlineData("-1")]
-    [InlineData("86401")]
+    [InlineData("3601")]
     [InlineData("no es un número")]
     [InlineData("3.5")]
     public void Un_valor_fuera_de_rango_o_no_numerico_se_rechaza_con_mensaje(string texto)

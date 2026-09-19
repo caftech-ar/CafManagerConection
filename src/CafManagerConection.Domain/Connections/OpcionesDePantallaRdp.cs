@@ -25,8 +25,6 @@ public enum BanderasDeRendimientoRdp
     SinAnimacionesDeMenu = 0x04,
 
     SinTemas = 0x08,
-
-    SinSombraDelCursor = 0x20,
 }
 
 /// <summary>Tipo de enlace declarado. Los valores son los que espera <c>NetworkConnectionType</c> del control.</summary>

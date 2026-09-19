@@ -67,19 +67,7 @@ public sealed class ActualizacionesService
     public async Task<ResultadoDeComprobacion> ComprobarAsync(CancellationToken ct = default)
     {
         var ajustes = await _ajustes.ObtenerAsync(ct).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(ajustes.Origen))
-        {
-            return new ResultadoDeComprobacion(false, null, null, false, "No hay un origen configurado.");
-        }
-
-        var partes = ajustes.Origen.Split('/', 2, StringSplitOptions.TrimEntries);
-
-        if (partes.Length != 2 || partes[0].Length == 0 || partes[1].Length == 0)
-        {
-            return new ResultadoDeComprobacion(
-                false, null, null, false, "El origen debe tener la forma propietario/repositorio.");
-        }
+        var partes = AjustesDeActualizacion.Repositorio.Split('/', 2);
 
         using var consultor = new ConsultorDeReleases(_manejador, _logger);
         var resultado = await consultor.UltimaReleaseAsync(partes[0], partes[1], ct).ConfigureAwait(false);

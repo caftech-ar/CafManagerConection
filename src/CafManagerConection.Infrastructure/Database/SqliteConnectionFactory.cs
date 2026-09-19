@@ -12,6 +12,10 @@ public interface ISqliteConnectionFactory
 // Los PRAGMA se aplican en cada conexión: foreign_keys viene apagado por omisión en SQLite y es por conexión.
 public sealed class SqliteConnectionFactory : ISqliteConnectionFactory
 {
+    // Acá y no en la raíz de composición: las pruebas instancian los repositorios sin pasar por
+    // la aplicación, y sin el mapeo leerían las columnas con guión bajo en nulo y sin error.
+    static SqliteConnectionFactory() => MapeoDeDapper.Configurar();
+
     public SqliteConnectionFactory(string databasePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databasePath);

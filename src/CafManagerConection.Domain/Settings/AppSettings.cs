@@ -62,10 +62,22 @@ public static class SettingKeys
     public const string CopiasActivas = "backup.enabled";
     public const string CopiasCarpeta = "backup.folder";
     public const string CopiasCuantas = "backup.keep";
+
+    public const string BitacoraActiva = "sessionlog.enabled";
+    public const string BitacoraCarpeta = "sessionlog.folder";
+    public const string BitacoraDias = "sessionlog.keepDays";
+
+    public const string FranjaActiva = "metricsbar.enabled";
+    public const string FranjaIntervalo = "metricsbar.sampleSeconds";
+
+    /// <summary>Que en este equipo mover una sesión RDP de ventana corta la conexión. Es del equipo, no de la conexión.</summary>
+    public const string TrasladoDeVentanaCortaLaSesion = "rdp.windowMoveBreaksSession";
+
+    /// <summary>Última versión cuyas novedades ya se avisaron.</summary>
+    public const string NovedadesAvisadas = "updates.novedadesAvisadas";
     public const string TerminalScrollbackLines = "terminal.scrollbackLines";
     public const string TerminalFontFamily = "terminal.fontFamily";
     public const string TerminalFontSize = "terminal.fontSize";
-    public const string ConnectionTimeoutSeconds = "connection.timeoutSeconds";
 
     public const string ClaveDeColorRdp = "icon.color.rdp";
     public const string ClaveDeColorSsh = "icon.color.ssh";
@@ -84,6 +96,10 @@ public static class SettingKeys
 
     public const string ArbolAjusteDeTamano = "tree.fontDelta";
     public const string ArbolMuestraHost = "tree.showHost";
+
+    public const string UltimaConsultaDeVersion = "updates.lastCheckedAt";
+    public const string VersionPospuesta = "updates.postponedVersion";
+    public const string MomentoDePosposicion = "updates.postponedAt";
 }
 
 public sealed record EstadoDelArbol(IReadOnlyList<Guid> CarpetasAbiertas, Guid? Seleccionado);

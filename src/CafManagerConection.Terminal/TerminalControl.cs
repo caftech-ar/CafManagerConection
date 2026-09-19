@@ -72,6 +72,25 @@ public sealed class TerminalControl : Control
 
     public event EventHandler<TerminalSize>? SizeChangedInCells;
 
+    /// <summary>Se dispara con cada línea que deja la pantalla y pasa al historial; la pantalla alternativa no llega acá.</summary>
+    public event EventHandler<string>? LineaArchivada
+    {
+        add => _buffer.LineaArchivada += value;
+        remove => _buffer.LineaArchivada -= value;
+    }
+
+    /// <summary>Lo que hay en pantalla ahora, sin el historial.</summary>
+    public IEnumerable<string> LineasEnPantalla
+    {
+        get
+        {
+            for (var fila = 0; fila < _buffer.Rows; fila++)
+            {
+                yield return _buffer.LineText(fila);
+            }
+        }
+    }
+
     public int Columns => _buffer.Columns;
 
     public int Rows => _buffer.Rows;
@@ -150,6 +169,34 @@ public sealed class TerminalControl : Control
         _buffer = _emulator.Buffer;
 
         _scrollOffset = 0;
+        AjustarSeleccionAlHistorial();
+    }
+
+    /// <summary>Recorta la selección a lo que el historial todavía guarda; si se fue entera, la suelta.</summary>
+    private void AjustarSeleccionAlHistorial()
+    {
+        if (_selectionStart is not { } a || _selectionEnd is not { } b)
+        {
+            return;
+        }
+
+        var primera = _buffer.PrimeraLineaViva;
+
+        if (Math.Max(a.Y, b.Y) < primera)
+        {
+            LimpiarSeleccion();
+            return;
+        }
+
+        if (a.Y < primera)
+        {
+            _selectionStart = new Point(0, primera);
+        }
+
+        if (b.Y < primera)
+        {
+            _selectionEnd = new Point(0, primera);
+        }
     }
 
     private void MeasureCell()
@@ -332,6 +379,8 @@ public sealed class TerminalControl : Control
         {
             return;
         }
+
+        LimpiarSeleccion();
 
         var proporcion = Math.Clamp(arriba / (double)recorrido, 0, 1);
         var primeraVisible = (int)Math.Round(proporcion * historial);
@@ -658,12 +707,12 @@ public sealed class TerminalControl : Control
             case AccionDeTeclado.ZoomMas: AvisarZoom(Zoom(1f)); break;
             case AccionDeTeclado.ZoomMenos: AvisarZoom(Zoom(-1f)); break;
             case AccionDeTeclado.ZoomDeOrigen: PidioZoomDeOrigen?.Invoke(this, EventArgs.Empty); break;
-            case AccionDeTeclado.HistorialPaginaArriba: ScrollBy(pagina); break;
-            case AccionDeTeclado.HistorialPaginaAbajo: ScrollBy(-pagina); break;
-            case AccionDeTeclado.HistorialLineaArriba: ScrollBy(1); break;
-            case AccionDeTeclado.HistorialLineaAbajo: ScrollBy(-1); break;
-            case AccionDeTeclado.HistorialAlPrincipio: ScrollBy(int.MaxValue / 2); break;
-            case AccionDeTeclado.HistorialAlFinal: ScrollBy(int.MinValue / 2); break;
+            case AccionDeTeclado.HistorialPaginaArriba: DesplazarElHistorial(pagina); break;
+            case AccionDeTeclado.HistorialPaginaAbajo: DesplazarElHistorial(-pagina); break;
+            case AccionDeTeclado.HistorialLineaArriba: DesplazarElHistorial(1); break;
+            case AccionDeTeclado.HistorialLineaAbajo: DesplazarElHistorial(-1); break;
+            case AccionDeTeclado.HistorialAlPrincipio: DesplazarElHistorial(int.MaxValue / 2); break;
+            case AccionDeTeclado.HistorialAlFinal: DesplazarElHistorial(int.MinValue / 2); break;
         }
     }
 
@@ -942,14 +991,23 @@ public sealed class TerminalControl : Control
             return;
         }
 
-        ScrollBy(e.Delta > 0 ? 3 : -3);
+        DesplazarElHistorial(e.Delta > 0 ? 3 : -3);
+    }
+
+    /// <summary>Desplaza el historial a pedido del usuario, soltando la selección que hubiera.</summary>
+    /// <param name="lineas">Cuántas líneas subir, o bajar si es negativo.</param>
+    internal void DesplazarElHistorial(int lineas)
+    {
+        // Va acá y no en ScrollBy: AcompanarSeleccion también lo llama, y ahí la selección se extiende.
+        LimpiarSeleccion();
+        ScrollBy(lineas);
     }
 
     public event EventHandler<float>? CambioElZoom;
 
     private void SeleccionarPalabra(Point celda)
     {
-        var (linea, _, _) = FilaEnPantalla(celda.Y);
+        var linea = _buffer.PorNumero(celda.Y);
 
         if (linea is null)
         {
@@ -968,7 +1026,7 @@ public sealed class TerminalControl : Control
 
     private void SeleccionarLinea(Point celda)
     {
-        var (linea, _, _) = FilaEnPantalla(celda.Y);
+        var linea = _buffer.PorNumero(celda.Y);
 
         if (linea is null)
         {
@@ -1008,8 +1066,8 @@ public sealed class TerminalControl : Control
 
     public void SelectAll()
     {
-        _selectionStart = new Point(0, 0);
-        _selectionEnd = new Point(_buffer.Columns - 1, _buffer.Rows - 1);
+        _selectionStart = new Point(0, NumeroDeLinea(0));
+        _selectionEnd = new Point(_buffer.Columns - 1, NumeroDeLinea(_buffer.Rows - 1));
         _seleccionRectangular = false;
         _seleccionPorClics = true;
         Invalidate();
@@ -1059,9 +1117,25 @@ public sealed class TerminalControl : Control
     private static bool Precede(Point a, Point b) =>
         a.Y < b.Y || (a.Y == b.Y && a.X <= b.X);
 
+    /// <summary>Punto del mouse a celda seleccionable: la Y es número de línea, no fila de pantalla.</summary>
+    /// <param name="p">Punto en píxeles dentro del control.</param>
     private Point ToCell(Point p) => new(
         Math.Clamp(p.X / Math.Max(1, _cellWidth), 0, _buffer.Columns - 1),
-        Math.Clamp(p.Y / Math.Max(1, _cellHeight), 0, _buffer.Rows - 1));
+        NumeroDeLinea(Math.Clamp(p.Y / Math.Max(1, _cellHeight), 0, _buffer.Rows - 1)));
+
+    /// <summary>Qué línea muestra una fila de la pantalla. Anclar la selección acá es lo que la deja sobrevivir al desplazamiento.</summary>
+    /// <param name="pantallaFila">Fila visible, de 0 a <c>Rows - 1</c>.</param>
+    private int NumeroDeLinea(int pantallaFila) =>
+        _buffer.LineasArchivadas
+        - Math.Min(_scrollOffset, _buffer.Scrollback.Count)
+        + pantallaFila;
+
+    /// <summary>En qué fila de la pantalla cae una línea; fuera de rango si no se ve.</summary>
+    /// <param name="linea">Número de línea.</param>
+    private int FilaDeLinea(int linea) =>
+        linea
+        - _buffer.LineasArchivadas
+        + Math.Min(_scrollOffset, _buffer.Scrollback.Count);
 
     // Pintado y copia resolvían la selección por separado y se copiaba algo distinto de lo marcado.
     internal static (int Desde, int Hasta)? TramoDeFila(
@@ -1091,7 +1165,9 @@ public sealed class TerminalControl : Control
         }
 
         var (inicio, fin) = Precede(a, b) ? (a, b) : (b, a);
-        var tramo = TramoDeFila(fila, inicio, fin, _buffer.Columns - 1, _seleccionRectangular);
+
+        var tramo = TramoDeFila(
+            NumeroDeLinea(fila), inicio, fin, _buffer.Columns - 1, _seleccionRectangular);
 
         return tramo is { } t && columna >= t.Desde && columna <= t.Hasta;
     }
@@ -1294,16 +1370,17 @@ public sealed class TerminalControl : Control
         var (inicio, fin) = rango;
         var sb = new StringBuilder();
 
-        for (var fila = inicio.Y; fila <= fin.Y; fila++)
+        // Recorre líneas y no filas de pantalla: la selección puede abarcar lo que ya no se ve.
+        for (var numero = inicio.Y; numero <= fin.Y; numero++)
         {
-            var (linea, _, _) = FilaEnPantalla(fila);
+            var linea = _buffer.PorNumero(numero);
 
             if (linea is null)
             {
                 continue;
             }
 
-            if (TramoDeFila(fila, inicio, fin, linea.Length - 1, _seleccionRectangular)
+            if (TramoDeFila(numero, inicio, fin, linea.Length - 1, _seleccionRectangular)
                 is not { } tramo)
             {
                 continue;
@@ -1321,7 +1398,7 @@ public sealed class TerminalControl : Control
                 sb.Length--;
             }
 
-            if (fila < fin.Y)
+            if (numero < fin.Y)
             {
                 sb.AppendLine();
             }

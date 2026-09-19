@@ -223,9 +223,13 @@ public sealed class NodoArbol : INotifyPropertyChanged
                 partes.Add(c.Description);
             }
 
+            // Una entrada web se abre por su URL: el puerto efectivo es el 443 por omisión y
+            // mostrarlo es afirmar algo que la dirección puede desmentir.
+            var conPuerto = c.Protocol == Protocol.Web ? c.Host : $"{c.Host}:{c.EffectivePort}";
+
             var destino = string.IsNullOrEmpty(c.EffectiveUserName)
-                ? $"{c.Host}:{c.EffectivePort}"
-                : $"{c.EffectiveUserName}@{c.Host}:{c.EffectivePort}";
+                ? conPuerto
+                : $"{c.EffectiveUserName}@{conPuerto}";
 
             partes.Add($"{c.Protocol} · {destino}");
 

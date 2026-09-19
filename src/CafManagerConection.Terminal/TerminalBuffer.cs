@@ -47,6 +47,9 @@ public sealed class TerminalBuffer
 
     public int Rows { get; private set; }
 
+    /// <summary>Ancho de lo que se guarda, que nunca baja: al angostarse la ventana el texto que sale del borde derecho sigue ahí y vuelve al ensanchar.</summary>
+    private int AnchoGuardado => _cells.GetLength(1);
+
     public int ScrollbackLimit { get; set; }
 
     public int CursorX { get; set; }
@@ -83,6 +86,44 @@ public sealed class TerminalBuffer
     /// <summary>Descarta el historial. Lo que está en pantalla no se toca.</summary>
     public void ClearScrollback() => _scrollback.Clear();
 
+    /// <summary>Se dispara con el texto de cada línea que deja la pantalla y pasa al historial.</summary>
+    public event EventHandler<string>? LineaArchivada;
+
+    /// <summary>Cuántas líneas dejaron la pantalla desde que arrancó. Nunca baja, aunque el historial se recorte: es el origen de la numeración con la que se ancla la selección.</summary>
+    public int LineasArchivadas { get; private set; }
+
+    /// <summary>Número de la línea viva más vieja del historial; lo anterior ya se recortó.</summary>
+    public int PrimeraLineaViva => LineasArchivadas - Scrollback.Count;
+
+    /// <summary>La línea que lleva ese número, venga del historial o de la pantalla; <c>null</c> si ya se recortó o todavía no existe.</summary>
+    /// <param name="linea">Número de línea, en la numeración de <see cref="LineasArchivadas"/>.</param>
+    public TerminalCell[]? PorNumero(int linea)
+    {
+        if (linea >= LineasArchivadas)
+        {
+            var fila = linea - LineasArchivadas;
+
+            if (fila >= Rows)
+            {
+                return null;
+            }
+
+            var salida = new TerminalCell[Columns];
+
+            for (var x = 0; x < Columns; x++)
+            {
+                salida[x] = _cells[fila, x];
+            }
+
+            return salida;
+        }
+
+        var indice = linea - PrimeraLineaViva;
+        var historial = Scrollback;
+
+        return indice >= 0 && indice < historial.Count ? historial[indice] : null;
+    }
+
     public int ScrollTop { get; set; }
 
     public int ScrollBottom { get; set; }
@@ -109,7 +150,8 @@ public sealed class TerminalBuffer
             return;
         }
 
-        var hasta = toColumn < 0 ? Columns - 1 : Math.Min(toColumn, Columns - 1);
+        // Sin columna final se borra hasta el ancho guardado: si no, lo que quedó fuera de la vista reaparecería al ensanchar.
+        var hasta = toColumn < 0 ? AnchoGuardado - 1 : Math.Min(toColumn, Columns - 1);
 
         for (var x = Math.Max(0, fromColumn); x <= hasta; x++)
         {
@@ -160,51 +202,21 @@ public sealed class TerminalBuffer
         {
             if (ScrollTop == 0 && ScrollBottom == Rows - 1)
             {
-                // Se archiva hasta la última columna con contenido: con 220 columnas y TerminalCell de 8 bytes, el relleno cuesta ~1,8 KB por línea y ~18 MB con el tope de 10.000.
-                var ultimaConContenido = 0;
-
-                for (var x = Columns - 1; x > 0; x--)
-                {
-                    var celda = _cells[0, x];
-                    var esRelleno = celda.Char is (' ' or '\0')
-                        && celda.Flags == CellFlags.None
-                        && celda.Foreground == TerminalCell.DefaultColor
-                        && celda.Background == TerminalCell.DefaultColor;
-
-                    if (!esRelleno)
-                    {
-                        ultimaConContenido = x;
-                        break;
-                    }
-                }
-
-                var salida = new TerminalCell[ultimaConContenido + 1];
-                for (var x = 0; x < salida.Length; x++)
-                {
-                    salida[x] = _cells[0, x];
-                }
-
-                _scrollback.Add(salida);
-
-                // Se recorta por tandas del 10 %: con el tope en 10.000 líneas, quitar el primer elemento en cada línea movía 10.000 elementos.
-                var margen = Math.Max(ScrollbackLimit / 10, 1);
-
-                if (_scrollback.Count > ScrollbackLimit + margen)
-                {
-                    _scrollback.RemoveRange(0, _scrollback.Count - ScrollbackLimit);
-                }
+                ArchivarFila(0);
             }
 
             var ancho = ScrollBottom - ScrollTop;
 
             if (ancho > 0)
             {
+                var guardado = AnchoGuardado;
+
                 Array.Copy(
                     _cells,
-                    (ScrollTop + 1) * Columns,
+                    (ScrollTop + 1) * guardado,
                     _cells,
-                    ScrollTop * Columns,
-                    ancho * Columns);
+                    ScrollTop * guardado,
+                    ancho * guardado);
             }
 
             ClearLine(ScrollBottom);
@@ -217,7 +229,7 @@ public sealed class TerminalBuffer
         {
             for (var y = ScrollBottom; y > ScrollTop; y--)
             {
-                for (var x = 0; x < Columns; x++)
+                for (var x = 0; x < AnchoGuardado; x++)
                 {
                     _cells[y, x] = _cells[y - 1, x];
                 }
@@ -233,7 +245,7 @@ public sealed class TerminalBuffer
         {
             for (var y = ScrollBottom; y > CursorY; y--)
             {
-                for (var x = 0; x < Columns; x++)
+                for (var x = 0; x < AnchoGuardado; x++)
                 {
                     _cells[y, x] = _cells[y - 1, x];
                 }
@@ -249,7 +261,7 @@ public sealed class TerminalBuffer
         {
             for (var y = CursorY; y < ScrollBottom; y++)
             {
-                for (var x = 0; x < Columns; x++)
+                for (var x = 0; x < AnchoGuardado; x++)
                 {
                     _cells[y, x] = _cells[y + 1, x];
                 }
@@ -261,23 +273,27 @@ public sealed class TerminalBuffer
 
     public void DeleteChars(int count)
     {
-        for (var x = CursorX; x < Columns; x++)
+        var guardado = AnchoGuardado;
+
+        for (var x = CursorX; x < guardado; x++)
         {
             var origen = x + count;
-            _cells[CursorY, x] = origen < Columns ? _cells[CursorY, origen] : TerminalCell.Empty;
+            _cells[CursorY, x] = origen < guardado ? _cells[CursorY, origen] : TerminalCell.Empty;
         }
     }
 
     public void InsertChars(int count)
     {
-        for (var x = Columns - 1; x >= CursorX; x--)
+        for (var x = AnchoGuardado - 1; x >= CursorX; x--)
         {
             var origen = x - count;
             _cells[CursorY, x] = origen >= CursorX ? _cells[CursorY, origen] : TerminalCell.Empty;
         }
     }
 
-    /// <summary>Cambia el tamaño conservando las líneas de arriba; al achicar se pierde lo de abajo.</summary>
+    /// <summary>Cambia el tamaño de la pantalla conservando las últimas filas y el ancho de lo escrito.</summary>
+    /// <param name="columns">Columnas visibles.</param>
+    /// <param name="rows">Filas visibles.</param>
     public void Resize(int columns, int rows)
     {
         columns = Math.Max(1, columns);
@@ -288,13 +304,26 @@ public sealed class TerminalBuffer
             return;
         }
 
-        var nuevo = new TerminalCell[rows, columns];
+        var primera = PrimeraFilaQueSobrevive(rows);
+
+        for (var y = 0; y < primera; y++)
+        {
+            ArchivarFila(y);
+        }
+
+        var anterior = AnchoGuardado;
+        var guardado = Math.Max(columns, anterior);
+        var nuevo = new TerminalCell[rows, guardado];
 
         for (var y = 0; y < rows; y++)
         {
-            for (var x = 0; x < columns; x++)
+            var origen = y + primera;
+
+            for (var x = 0; x < guardado; x++)
             {
-                nuevo[y, x] = y < Rows && x < Columns ? _cells[y, x] : TerminalCell.Empty;
+                nuevo[y, x] = origen < Rows && x < anterior
+                    ? _cells[origen, x]
+                    : TerminalCell.Empty;
             }
         }
 
@@ -302,9 +331,61 @@ public sealed class TerminalBuffer
         Columns = columns;
         Rows = rows;
         CursorX = Math.Min(CursorX, columns - 1);
-        CursorY = Math.Min(CursorY, rows - 1);
+        CursorY = Math.Clamp(CursorY - primera, 0, rows - 1);
         ScrollTop = 0;
         ScrollBottom = rows - 1;
+    }
+
+    /// <summary>Desde qué fila de la pantalla actual arranca la pantalla nueva al cambiar de alto.</summary>
+    /// <param name="filas">Cuántas filas va a tener la pantalla nueva.</param>
+    /// <returns>Cuántas filas de arriba salen; las de abajo, con el cursor, son las que se conservan.</returns>
+    private int PrimeraFilaQueSobrevive(int filas) =>
+        Math.Clamp(CursorY - (filas - 1), 0, Math.Max(0, Rows - filas));
+
+    /// <summary>Manda una fila de la pantalla al historial, sin el relleno de la derecha.</summary>
+    /// <param name="fila">Fila de la pantalla que se archiva.</param>
+    private void ArchivarFila(int fila)
+    {
+        // Se archiva hasta la última columna con contenido: con 220 columnas y TerminalCell de 8 bytes, el relleno cuesta ~1,8 KB por línea y ~18 MB con el tope de 10.000.
+        var ultimaConContenido = 0;
+
+        for (var x = AnchoGuardado - 1; x > 0; x--)
+        {
+            var celda = _cells[fila, x];
+            var esRelleno = celda.Char is (' ' or '\0')
+                && celda.Flags == CellFlags.None
+                && celda.Foreground == TerminalCell.DefaultColor
+                && celda.Background == TerminalCell.DefaultColor;
+
+            if (!esRelleno)
+            {
+                ultimaConContenido = x;
+                break;
+            }
+        }
+
+        var salida = new TerminalCell[ultimaConContenido + 1];
+
+        for (var x = 0; x < salida.Length; x++)
+        {
+            salida[x] = _cells[fila, x];
+        }
+
+        _scrollback.Add(salida);
+        LineasArchivadas++;
+
+        if (LineaArchivada is { } suscriptos)
+        {
+            suscriptos(this, new string([.. salida.Select(c => c.Char is '\0' ? ' ' : c.Char)]));
+        }
+
+        // Se recorta por tandas del 10 %: con el tope en 10.000 líneas, quitar el primer elemento en cada línea movía 10.000 elementos.
+        var margen = Math.Max(ScrollbackLimit / 10, 1);
+
+        if (_scrollback.Count > ScrollbackLimit + margen)
+        {
+            _scrollback.RemoveRange(0, _scrollback.Count - ScrollbackLimit);
+        }
     }
 
     public string LineText(int row)

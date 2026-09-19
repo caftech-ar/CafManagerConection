@@ -174,7 +174,8 @@ public partial class PaletaDeComandosWindow : Window
             this,
             "¿Borrar el comando?",
             $"Se borra «{elegido.Nombre}» de la lista. La sesión no se toca.",
-            "Borrar");
+            "Borrar",
+            destructivo: true);
 
         if (!confirmado)
         {

@@ -6,6 +6,10 @@ namespace CafManagerConection.UseCases.Connections;
 
 public static class ConnectionValidator
 {
+    /// <summary>El mismo texto que muestran los dos editores, para que el máximo se diga una sola vez.</summary>
+    public static string MensajeDeKeepAlive =>
+        $"El keep-alive debe estar entre 0 y {Domain.Settings.Limites.MaxKeepAliveSeconds} segundos.";
+
     // Colgar de alguien que ya cuelga, o colgar a alguien que ya tiene hijas, no está permitido.
     public static ValidationResult ValidateParent(
         Connection conexion, Connection? padre, bool conexionTieneHijas)
@@ -88,10 +92,10 @@ public static class ConnectionValidator
                 "Con autenticación por clave privada, la ruta de la clave es obligatoria."));
         }
 
-        if (record.Ssh is { KeepAliveSeconds: { } keepAlive } && (keepAlive < 0 || keepAlive > 3600))
+        if (record.Ssh is { KeepAliveSeconds: { } keepAlive }
+            && !Domain.Settings.Limites.KeepAliveAdmisible(keepAlive))
         {
-            errors.Add(new ValidationError(
-                "KeepAliveSeconds", "El keep-alive debe estar entre 0 y 3600 segundos."));
+            errors.Add(new ValidationError("KeepAliveSeconds", MensajeDeKeepAlive));
         }
 
         if (record.Web is { } web)

@@ -1,10 +1,10 @@
 using System.Globalization;
+using CafManagerConection.Domain.Settings;
 using CafManagerConection.UseCases.Abstractions;
 
 namespace CafManagerConection.Infrastructure.Database;
 
 public sealed record AjustesDeActualizacion(
-    string Origen = AjustesDeActualizacion.OrigenPorOmision,
     DateTimeOffset? UltimaConsulta = null,
     string? VersionPospuesta = null,
     DateTimeOffset? MomentoDePosposicion = null)
@@ -12,16 +12,14 @@ public sealed record AjustesDeActualizacion(
     /// <summary>El repositorio del que se leen las releases. Fijo, no configurable.</summary>
     public const string Repositorio = "caftech-ar/CafManagerConection";
 
-    public const string OrigenPorOmision = Repositorio;
-
     public static AjustesDeActualizacion Default { get; } = new();
 }
 
 public sealed class AjustesDeActualizacionStore
 {
-    private const string ClaveUltimaConsulta = "updates.lastCheckedAt";
-    private const string ClaveVersionPospuesta = "updates.postponedVersion";
-    private const string ClaveMomentoDePosposicion = "updates.postponedAt";
+    private const string ClaveUltimaConsulta = SettingKeys.UltimaConsultaDeVersion;
+    private const string ClaveVersionPospuesta = SettingKeys.VersionPospuesta;
+    private const string ClaveMomentoDePosposicion = SettingKeys.MomentoDePosposicion;
 
     private readonly ISettingsStore _store;
 
@@ -32,8 +30,6 @@ public sealed class AjustesDeActualizacionStore
         var todos = await _store.GetAllAsync(ct).ConfigureAwait(false);
 
         return new AjustesDeActualizacion(
-            // No se lee de la base: una base editada a mano no puede apuntar la comprobación de versión a otro repositorio ni apagarla.
-            AjustesDeActualizacion.Repositorio,
             Fecha(todos, ClaveUltimaConsulta),
             NuloSiVacio(todos.GetValueOrDefault(ClaveVersionPospuesta)),
             Fecha(todos, ClaveMomentoDePosposicion));

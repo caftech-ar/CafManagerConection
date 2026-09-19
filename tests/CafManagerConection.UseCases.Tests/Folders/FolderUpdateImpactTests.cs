@@ -42,7 +42,7 @@ public sealed class FolderUpdateImpactTests
         var conexion = EnCarpeta(carpeta.Id);
         Arbol([carpeta], [conexion]);
 
-        var propuesta = new FolderSettings { UserName = "root" };
+        var propuesta = new FolderSettings { SshUserName = "root" };
 
         var impacto = await Servicio().GetUpdateImpactAsync(carpeta.Id, propuesta);
 
@@ -56,7 +56,7 @@ public sealed class FolderUpdateImpactTests
         var conexion = EnCarpeta(carpeta.Id, usuario: "admin");
         Arbol([carpeta], [conexion]);
 
-        var propuesta = new FolderSettings { UserName = "root" };
+        var propuesta = new FolderSettings { SshUserName = "root" };
 
         var impacto = await Servicio().GetUpdateImpactAsync(carpeta.Id, propuesta);
 
@@ -70,7 +70,7 @@ public sealed class FolderUpdateImpactTests
         var ajena = new Folder(Guid.NewGuid(), "Otra");
         Arbol([carpeta, ajena], [EnCarpeta(ajena.Id)]);
 
-        var propuesta = new FolderSettings { UserName = "root" };
+        var propuesta = new FolderSettings { SshUserName = "root" };
 
         var impacto = await Servicio().GetUpdateImpactAsync(carpeta.Id, propuesta);
 
@@ -84,7 +84,7 @@ public sealed class FolderUpdateImpactTests
         var madre = new Folder(Guid.NewGuid(), "Norte", abuela.Id);
         Arbol([abuela, madre], [EnCarpeta(madre.Id), EnCarpeta(madre.Id, usuario: "propio")]);
 
-        var propuesta = new FolderSettings { UserName = "root" };
+        var propuesta = new FolderSettings { SshUserName = "root" };
 
         var impacto = await Servicio().GetUpdateImpactAsync(abuela.Id, propuesta);
 
@@ -95,11 +95,11 @@ public sealed class FolderUpdateImpactTests
     public async Task No_cuenta_nada_si_el_valor_efectivo_no_cambia()
     {
         var carpeta = new Folder(Guid.NewGuid(), "Producción");
-        carpeta.Settings.UserName = "root";
+        carpeta.Settings.SshUserName = "root";
         var conexion = EnCarpeta(carpeta.Id);
         Arbol([carpeta], [conexion]);
 
-        var propuesta = new FolderSettings { UserName = "root" };
+        var propuesta = new FolderSettings { SshUserName = "root" };
 
         var impacto = await Servicio().GetUpdateImpactAsync(carpeta.Id, propuesta);
 
@@ -113,7 +113,7 @@ public sealed class FolderUpdateImpactTests
         Arbol([carpeta], []);
 
         var impacto = await Servicio().GetUpdateImpactAsync(
-            carpeta.Id, new FolderSettings { UserName = "root" });
+            carpeta.Id, new FolderSettings { SshUserName = "root" });
 
         Assert.Equal(0, impacto);
     }

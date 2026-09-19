@@ -20,7 +20,8 @@ public sealed class EtiquetasDeFabricaTests
     {
         Assert.All(EtiquetasDeFabrica.Crear(), e =>
         {
-            Assert.True(e.EsValida);
+            Assert.NotEmpty(e.Codigo);
+            Assert.NotEmpty(e.Nombre);
             Assert.True(PaletaIconos.EsValido(e.ClaveDeColor));
         });
     }

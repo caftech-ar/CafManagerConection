@@ -143,7 +143,8 @@ public partial class TunnelsPanel : UserControl
                   + $"Está activo: primero se lo baja y se libera el puerto local {tunel.LocalPort}."
                 : $"Se va a borrar el túnel «{tunel.Name}». No está activo.";
 
-            if (!MessageWindow.Confirmar(ventana, "Borrar el túnel", mensaje, "Borrar"))
+            if (!MessageWindow.Confirmar(
+                ventana, "Borrar el túnel", mensaje, "Borrar", destructivo: true))
             {
                 return;
             }

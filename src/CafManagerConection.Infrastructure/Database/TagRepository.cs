@@ -17,7 +17,9 @@ public sealed class TagRepository : ITagRepository
         public string Code { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
         public string Color { get; init; } = string.Empty;
-        public int Sort_Order { get; init; }
+        public int SortOrder { get; init; }
+        public string CreatedAt { get; init; } = string.Empty;
+        public string UpdatedAt { get; init; } = string.Empty;
     }
 
     public async Task<IReadOnlyList<Etiqueta>> GetAllAsync(CancellationToken ct = default)
@@ -25,12 +27,20 @@ public sealed class TagRepository : ITagRepository
         using var cn = _factory.Create();
 
         var filas = await cn.QueryAsync<Fila>(
-            "SELECT id, code, name, color, sort_order FROM tags ORDER BY sort_order, name")
+            "SELECT id, code, name, color, sort_order, created_at, updated_at "
+            + "FROM tags ORDER BY sort_order, name")
             .ConfigureAwait(false);
 
         return [.. filas.Select(f => new Etiqueta(
-            Guid.Parse(f.Id), f.Code, f.Name, f.Color, f.Sort_Order))];
+            Guid.Parse(f.Id), f.Code, f.Name, f.Color, f.SortOrder)
+        {
+            CreatedAt = Fecha(f.CreatedAt),
+            UpdatedAt = Fecha(f.UpdatedAt),
+        })];
     }
+
+    private static DateTimeOffset Fecha(string valor) =>
+        DateTimeOffset.Parse(valor, System.Globalization.CultureInfo.InvariantCulture);
 
     public async Task AddAsync(Etiqueta etiqueta, CancellationToken ct = default)
     {
@@ -41,7 +51,7 @@ public sealed class TagRepository : ITagRepository
         await cn.ExecuteAsync(
             """
             INSERT INTO tags (id, code, name, color, sort_order, created_at, updated_at)
-            VALUES (@Id, @Code, @Name, @ClaveDeColor, @SortOrder, @Ahora, @Ahora)
+            VALUES (@Id, @Code, @Name, @ClaveDeColor, @SortOrder, @Creada, @Modificada)
             """,
             new
             {
@@ -50,7 +60,8 @@ public sealed class TagRepository : ITagRepository
                 Name = etiqueta.Nombre,
                 etiqueta.ClaveDeColor,
                 SortOrder = etiqueta.Orden,
-                Ahora = DateTimeOffset.UtcNow.ToString("O"),
+                Creada = FolderRepository.Iso(etiqueta.CreatedAt),
+                Modificada = FolderRepository.Iso(etiqueta.UpdatedAt),
             }).ConfigureAwait(false);
     }
 
@@ -64,7 +75,7 @@ public sealed class TagRepository : ITagRepository
             """
             UPDATE tags
             SET code = @Code, name = @Name, color = @ClaveDeColor,
-                sort_order = @SortOrder, updated_at = @Ahora
+                sort_order = @SortOrder, updated_at = @Modificada
             WHERE id = @Id
             """,
             new
@@ -74,7 +85,7 @@ public sealed class TagRepository : ITagRepository
                 Name = etiqueta.Nombre,
                 etiqueta.ClaveDeColor,
                 SortOrder = etiqueta.Orden,
-                Ahora = DateTimeOffset.UtcNow.ToString("O"),
+                Modificada = FolderRepository.Iso(etiqueta.UpdatedAt),
             }).ConfigureAwait(false);
     }
 

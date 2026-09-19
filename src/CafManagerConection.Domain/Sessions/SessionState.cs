@@ -14,7 +14,6 @@ public enum SessionFailureReason
     AuthenticationRejected,
     Timeout,
     HostKeyMismatch,
-    CertificateUntrusted,
     PrivateKeyNotFound,
 
     CertificateNotFound,
@@ -22,7 +21,7 @@ public enum SessionFailureReason
     CertificateMismatch,
 
     BadPassphrase,
-    CredentialMissing,
+
     UnexpectedDisconnect,
 
     /// <summary>No hubo algoritmo de intercambio, cifrado, MAC o clave de host en común.</summary>

@@ -43,12 +43,9 @@ public class OpcionesDePantallaHerenciaTests
     }
 
     [Fact]
-    public void Sin_modo_definido_se_deriva_del_ajuste_viejo_de_pestana()
+    public void Sin_modo_definido_la_sesion_escala_los_pixeles()
     {
-        var carpeta = new Folder(Guid.NewGuid(), "Producción")
-        {
-            Settings = { RdpFitToTab = true },
-        };
+        var carpeta = new Folder(Guid.NewGuid(), "Producción");
 
         var efectivo = new SettingsResolver([carpeta]).Resolve(ConexionRdp(carpeta.Id));
 

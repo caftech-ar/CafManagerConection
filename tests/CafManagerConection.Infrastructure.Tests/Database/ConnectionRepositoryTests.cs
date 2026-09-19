@@ -214,18 +214,74 @@ public class ConnectionRepositoryTests
     }
 
     [Fact]
-    public async Task SetLastConnected_registra_la_fecha()
+    public async Task La_huella_del_host_se_guarda_sin_tocar_el_resto()
     {
         var (db, repo) = await CreateAsync();
         using var _ = db;
         var c = new Connection(Guid.NewGuid(), "S", Protocol.Ssh, "h");
         await repo.AddAsync(new ConnectionRecord(c, Ssh: new SshSettings { ConnectionId = c.Id }));
-        var cuando = new DateTimeOffset(2026, 8, 24, 10, 30, 0, TimeSpan.Zero);
 
-        await repo.SetLastConnectedAsync(c.Id, cuando);
+        // Alguien edita la conexión mientras la sesión sigue abierta.
+        var editada = (await repo.GetByIdAsync(c.Id))!;
+        editada.Connection.Rename("Renombrada");
+        await repo.UpdateAsync(editada);
+
+        await repo.SetKnownHostFingerprintAsync(c.Id, "SHA256:abc");
 
         var r = await repo.GetByIdAsync(c.Id);
-        Assert.Equal(cuando, r!.Connection.LastConnectedAt);
+        Assert.Equal("SHA256:abc", r!.Ssh!.KnownHostFingerprint);
+        Assert.Equal("Renombrada", r.Connection.Name);
+    }
+
+    [Fact]
+    public async Task La_bandera_de_ventana_propia_se_guarda_sola()
+    {
+        var (db, repo) = await CreateAsync();
+        using var _ = db;
+        var c = new Connection(Guid.NewGuid(), "S", Protocol.Rdp, "h");
+        await repo.AddAsync(new ConnectionRecord(c, Rdp: new RdpSettings { ConnectionId = c.Id }));
+
+        await repo.SetAbreEnVentanaPropiaAsync(c.Id, true);
+
+        var r = await repo.GetByIdAsync(c.Id);
+        Assert.True(r!.Rdp!.AbreEnVentanaPropia);
+    }
+
+    [Fact]
+    public async Task Guardar_un_registro_sin_sus_ajustes_conserva_la_fila_del_protocolo()
+    {
+        var (db, repo) = await CreateAsync();
+        using var _ = db;
+        var c = new Connection(Guid.NewGuid(), "S", Protocol.Ssh, "h");
+
+        await repo.AddAsync(new ConnectionRecord(
+            c,
+            Ssh: new SshSettings
+            {
+                ConnectionId = c.Id,
+                KnownHostFingerprint = "SHA256:abc",
+                PrivateKeyPath = @"C:\claves\id_ed25519",
+            }));
+
+        await repo.UpdateAsync(new ConnectionRecord(c));
+
+        var r = await repo.GetByIdAsync(c.Id);
+        Assert.Equal("SHA256:abc", r!.Ssh!.KnownHostFingerprint);
+        Assert.Equal(@"C:\claves\id_ed25519", r.Ssh.PrivateKeyPath);
+    }
+
+    [Fact]
+    public async Task La_fecha_de_modificacion_vuelve_de_la_base()
+    {
+        var (db, repo) = await CreateAsync();
+        using var _ = db;
+        var c = new Connection(Guid.NewGuid(), "S", Protocol.Ssh, "h");
+        await repo.AddAsync(new ConnectionRecord(c, Ssh: new SshSettings { ConnectionId = c.Id }));
+        var guardada = c.UpdatedAt;
+
+        var r = await repo.GetByIdAsync(c.Id);
+
+        Assert.Equal(guardada, r!.Connection.UpdatedAt, TimeSpan.FromMilliseconds(1));
     }
 
     [Fact]

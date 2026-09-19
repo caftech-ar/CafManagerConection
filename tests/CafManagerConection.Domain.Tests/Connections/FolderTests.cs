@@ -79,7 +79,13 @@ public class FolderTests
     public void Una_carpeta_nueva_no_define_ningun_valor_heredable()
     {
         var folder = new Folder(Guid.NewGuid(), "Producción");
+        var s = folder.Settings;
 
-        Assert.True(folder.Settings.IsEmpty);
+        Assert.Null(s.UsuarioDe(Protocol.Ssh));
+        Assert.Null(s.PuertoDe(Protocol.Ssh));
+        Assert.Null(s.Domain);
+        Assert.Null(s.TagId);
+        Assert.Null(s.SshAuthMethod);
+        Assert.Empty(s.CustomFields);
     }
 }

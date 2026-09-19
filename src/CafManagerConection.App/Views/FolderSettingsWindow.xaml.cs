@@ -529,9 +529,6 @@ public partial class FolderSettingsWindow : Window
 
         var propuesta = new FolderSettings
         {
-            // El usuario y el puerto compartidos quedan como estaban: son sólo reserva.
-            UserName = _carpeta.Settings.UserName,
-            Port = _carpeta.Settings.Port,
             RdpUserName = Texto(_usuarioRdp.Text),
             SshUserName = Texto(_usuarioSsh.Text),
             WebUserName = Texto(_usuarioWeb.Text),
@@ -626,7 +623,7 @@ public partial class FolderSettingsWindow : Window
             }
 
             _root.Logger.TechnicalError("guardar la configuración de la carpeta", ex);
-            _error.Text = "No se pudo guardar la configuración.";
+            _error.Text = $"No se pudo guardar la configuración: {ex.Message}";
             _error.Visibility = Visibility.Visible;
         }
         finally
@@ -653,9 +650,7 @@ public partial class FolderSettingsWindow : Window
         var p = borrador.Settings;
 
         s.TagId = p.TagId;
-        s.UserName = p.UserName;
         s.Domain = p.Domain;
-        s.Port = p.Port;
         s.RdpUserName = p.RdpUserName;
         s.SshUserName = p.SshUserName;
         s.WebUserName = p.WebUserName;

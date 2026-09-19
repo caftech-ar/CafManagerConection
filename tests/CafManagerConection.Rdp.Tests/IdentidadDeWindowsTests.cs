@@ -126,11 +126,9 @@ public sealed class IdentidadDeWindowsTests
     [Theory]
     [InlineData(SessionFailureReason.AuthenticationRejected, true)]
     [InlineData(SessionFailureReason.UnexpectedDisconnect, true)]
-    [InlineData(SessionFailureReason.CredentialMissing, true)]
     [InlineData(SessionFailureReason.Other, true)]
     [InlineData(SessionFailureReason.Timeout, false)]
     [InlineData(SessionFailureReason.HostUnreachable, false)]
-    [InlineData(SessionFailureReason.CertificateUntrusted, false)]
     public void El_respaldo_se_activa_cuando_el_servidor_no_confia_y_no_cuando_no_se_llega(
         SessionFailureReason motivo, bool cae)
     {

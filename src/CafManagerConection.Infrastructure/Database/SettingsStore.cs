@@ -83,6 +83,18 @@ public sealed class AppSettingsService : IAppSettingsService
     public Task SetThemeAsync(AppTheme theme, CancellationToken ct = default) =>
         _store.SetAsync(SettingKeys.Theme, theme.ToString(), ct);
 
+    public async Task<ModoDePestana> GetTabsModeAsync(CancellationToken ct = default)
+    {
+        var valor = await _store.GetAsync(SettingKeys.ModoDePestana, ct).ConfigureAwait(false);
+
+        return Enum.TryParse<ModoDePestana>(valor, out var modo) && Enum.IsDefined(modo)
+            ? modo
+            : ModoDePestana.LinealConDesplazamiento;
+    }
+
+    public Task SetTabsModeAsync(ModoDePestana modo, CancellationToken ct = default) =>
+        _store.SetAsync(SettingKeys.ModoDePestana, modo.ToString(), ct);
+
     public async Task<PaletaDeComandos> GetCommandPaletteAsync(CancellationToken ct = default)
     {
         var texto = await _store
@@ -145,6 +157,70 @@ public sealed class AppSettingsService : IAppSettingsService
         await _store.SetAsync(SettingKeys.CopiasCuantas, Str(n.CuantasGuardar), ct)
             .ConfigureAwait(false);
     }
+
+    public async Task<AjustesDeBitacora> GetSessionLogSettingsAsync(CancellationToken ct = default)
+    {
+        var todos = await _store.GetAllAsync(ct).ConfigureAwait(false);
+        var d = AjustesDeBitacora.Default;
+
+        return new AjustesDeBitacora(
+            Bool(todos, SettingKeys.BitacoraActiva, d.Activa),
+            todos.GetValueOrDefault(SettingKeys.BitacoraCarpeta, d.Carpeta),
+            Int(todos, SettingKeys.BitacoraDias, d.DiasQueSeGuardan)).Normalizados();
+    }
+
+    public async Task SaveSessionLogSettingsAsync(
+        AjustesDeBitacora ajustes, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ajustes);
+
+        var n = ajustes.Normalizados();
+
+        await _store.SetAsync(
+            SettingKeys.BitacoraActiva, n.Activa ? "1" : "0", ct).ConfigureAwait(false);
+        await _store.SetAsync(SettingKeys.BitacoraCarpeta, n.Carpeta, ct).ConfigureAwait(false);
+        await _store.SetAsync(SettingKeys.BitacoraDias, Str(n.DiasQueSeGuardan), ct)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<AjustesDeFranja> GetMetricsBarSettingsAsync(CancellationToken ct = default)
+    {
+        var todos = await _store.GetAllAsync(ct).ConfigureAwait(false);
+        var d = AjustesDeFranja.Default;
+
+        return new AjustesDeFranja(
+            Bool(todos, SettingKeys.FranjaActiva, d.Activa),
+            Int(todos, SettingKeys.FranjaIntervalo, d.Segundos)).Normalizados();
+    }
+
+    public async Task SaveMetricsBarSettingsAsync(
+        AjustesDeFranja ajustes, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ajustes);
+
+        var n = ajustes.Normalizados();
+
+        await _store.SetAsync(
+            SettingKeys.FranjaActiva, n.Activa ? "1" : "0", ct).ConfigureAwait(false);
+        await _store.SetAsync(SettingKeys.FranjaIntervalo, Str(n.Segundos), ct)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<bool> GetWindowMoveBreaksSessionAsync(CancellationToken ct = default)
+    {
+        var todos = await _store.GetAllAsync(ct).ConfigureAwait(false);
+
+        return Bool(todos, SettingKeys.TrasladoDeVentanaCortaLaSesion, false);
+    }
+
+    public Task SaveWindowMoveBreaksSessionAsync(bool corta, CancellationToken ct = default) =>
+        _store.SetAsync(SettingKeys.TrasladoDeVentanaCortaLaSesion, corta ? "1" : "0", ct);
+
+    public Task<string?> GetAnnouncedNewsVersionAsync(CancellationToken ct = default) =>
+        _store.GetAsync(SettingKeys.NovedadesAvisadas, ct);
+
+    public Task SaveAnnouncedNewsVersionAsync(string version, CancellationToken ct = default) =>
+        _store.SetAsync(SettingKeys.NovedadesAvisadas, version ?? string.Empty, ct);
 
     public async Task<ColoresDeIconos> GetIconColorsAsync(CancellationToken ct = default)
     {

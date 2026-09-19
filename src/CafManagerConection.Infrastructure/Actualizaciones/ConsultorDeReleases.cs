@@ -5,7 +5,7 @@ using CafManagerConection.UseCases.Abstractions;
 
 namespace CafManagerConection.Infrastructure.Actualizaciones;
 
-public sealed record ActivoDeRelease(string Nombre, string UrlDeDescarga);
+public sealed record ActivoDeRelease(string Nombre, string UrlDeDescarga, long? Bytes = null);
 
 public sealed record InformacionDeRelease(
     string Version,
@@ -100,7 +100,7 @@ public sealed class ConsultorDeReleases : IDisposable
             var activos = (dto.Assets ?? [])
                 .Where(a => !string.IsNullOrWhiteSpace(a.Name)
                     && !string.IsNullOrWhiteSpace(a.BrowserDownloadUrl))
-                .Select(a => new ActivoDeRelease(a.Name!, a.BrowserDownloadUrl!))
+                .Select(a => new ActivoDeRelease(a.Name!, a.BrowserDownloadUrl!, a.Size))
                 .ToList();
 
             return ResultadoConsultaDeVersion.Ok(new InformacionDeRelease(
@@ -144,5 +144,8 @@ public sealed class ConsultorDeReleases : IDisposable
 
         [JsonPropertyName("browser_download_url")]
         public string? BrowserDownloadUrl { get; set; }
+
+        [JsonPropertyName("size")]
+        public long? Size { get; set; }
     }
 }

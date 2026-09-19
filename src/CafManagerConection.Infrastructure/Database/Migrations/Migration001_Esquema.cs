@@ -25,12 +25,14 @@ public static class Migration001_Esquema
         CREATE UNIQUE INDEX ux_tags_name ON tags(name COLLATE NOCASE);
 
         -- Identificadores fijos: permiten que dos bases distintas hablen del mismo «Produccion».
+        -- La fecha es un literal y no datetime('now'): el catalogo de fabrica es el mismo en toda
+        -- instalacion, y asi la semilla queda en el mismo formato que el resto de las fechas.
         INSERT INTO tags (id, code, name, color, sort_order, created_at, updated_at) VALUES
-            ('11111111-0000-4000-8000-000000000001', 'PRD',  'Producción',        'rojo',    1, datetime('now'), datetime('now')),
-            ('11111111-0000-4000-8000-000000000002', 'PRE',  'PreProducción',     'ambar',   2, datetime('now'), datetime('now')),
-            ('11111111-0000-4000-8000-000000000005', 'QA',   'Quality Assurance', 'violeta', 3, datetime('now'), datetime('now')),
-            ('11111111-0000-4000-8000-000000000003', 'CAPA', 'Capacitación',      'cyan',    4, datetime('now'), datetime('now')),
-            ('11111111-0000-4000-8000-000000000004', 'DESA', 'Desarrollo',        'verde',   5, datetime('now'), datetime('now'));
+            ('11111111-0000-4000-8000-000000000001', 'PRD',  'Producción',        'rojo',    1, '2026-01-01T00:00:00.0000000Z', '2026-01-01T00:00:00.0000000Z'),
+            ('11111111-0000-4000-8000-000000000002', 'PRE',  'PreProducción',     'ambar',   2, '2026-01-01T00:00:00.0000000Z', '2026-01-01T00:00:00.0000000Z'),
+            ('11111111-0000-4000-8000-000000000005', 'QA',   'Quality Assurance', 'violeta', 3, '2026-01-01T00:00:00.0000000Z', '2026-01-01T00:00:00.0000000Z'),
+            ('11111111-0000-4000-8000-000000000003', 'CAPA', 'Capacitación',      'cyan',    4, '2026-01-01T00:00:00.0000000Z', '2026-01-01T00:00:00.0000000Z'),
+            ('11111111-0000-4000-8000-000000000004', 'DESA', 'Desarrollo',        'verde',   5, '2026-01-01T00:00:00.0000000Z', '2026-01-01T00:00:00.0000000Z');
 
         CREATE TABLE connection_folders (
             id          TEXT PRIMARY KEY NOT NULL,

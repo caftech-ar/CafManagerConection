@@ -6,13 +6,15 @@ using Microsoft.Data.Sqlite;
 
 namespace CafManagerConection.Infrastructure.Database;
 
-public sealed record ResultadoDeCopia(bool Hecha, string? Ruta, string? Motivo)
+public sealed record ResultadoDeCopia(
+    bool Hecha, string? Ruta, string? Motivo, bool Fracaso = false)
 {
     public static ResultadoDeCopia Ok(string ruta) => new(true, ruta, null);
 
     public static ResultadoDeCopia NoHizoFalta(string motivo) => new(false, null, motivo);
 
-    public static ResultadoDeCopia Fallo(string error) => new(false, null, error);
+    /// <summary>La copia se intentó y no salió. Se distingue de «no hizo falta» para poder avisarlo.</summary>
+    public static ResultadoDeCopia Fallo(string error) => new(false, null, error, Fracaso: true);
 }
 
 public sealed class ServicioDeCopias

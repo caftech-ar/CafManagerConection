@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Runtime.Versioning;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -97,6 +98,11 @@ public partial class MainWindow : Window, ISessionHost
         await AplicarModoDePestanaAsync().ConfigureAwait(true);
         await RestaurarGeometriaAsync().ConfigureAwait(true);
 
+        // Antes del vault y del arbol: si la base se aparto y el usuario restaura una copia, el
+        // vault tiene que abrirse contra la base restaurada y no contra la recien creada.
+        await AtenderBaseApartadaAsync().ConfigureAwait(true);
+        ComprobarLosSecretos();
+
         // Antes del arbol: si el vault se abre, las credenciales estan listas cuando la primera
         // conexion las pida.
         await AbrirElVaultAsync().ConfigureAwait(true);
@@ -108,19 +114,12 @@ public partial class MainWindow : Window, ISessionHost
 
         await RefrescarArbolAsync().ConfigureAwait(true);
 
-        if (_root.Startup.RecoveredFromCorruptionPath is { } preservada)
-        {
-            Dialogos.Informar(
-                this,
-                "Base de datos recuperada",
-                "La base de datos anterior no se pudo leer. Se creó una nueva y la anterior "
-                + $"quedó preservada en:{Environment.NewLine}{preservada}");
-        }
-
         await OfrecerImportarEnElPrimerArranqueAsync().ConfigureAwait(true);
 
         _ = _root.Herramientas.DetectarUnaVezAsync();
         _ = CopiaDeArranqueAsync();
+        _ = PurgaDeBitacorasAsync();
+        _ = AvisarLasNovedadesAsync();
         _ = LimpiarConexionesRapidasAsync();
         _ = ComprobarActualizacionAsync();
 
@@ -194,11 +193,7 @@ public partial class MainWindow : Window, ISessionHost
     /// <summary>Aplica el modo de pestaña guardado al TabControl de sesiones.</summary>
     private async Task AplicarModoDePestanaAsync()
     {
-        var guardado = await _root.Settings.GetAsync(SettingKeys.ModoDePestana).ConfigureAwait(true);
-
-        var modo = Enum.TryParse<ModoDePestana>(guardado, out var m)
-            ? m
-            : ModoDePestana.LinealConDesplazamiento;
+        var modo = await _root.AppSettings.GetTabsModeAsync().ConfigureAwait(true);
 
         var clave = modo switch
         {
@@ -826,7 +821,7 @@ public partial class MainWindow : Window, ISessionHost
         Title = Services.TituloDeVentana.Componer(
             vista?.Nombre,
             vista?.State ?? SessionState.Disconnected,
-            _sesiones.Items.Count,
+            SesionesAbiertas(),
             Services.VersionDeLaAplicacion.Corta);
     }
 
@@ -1004,6 +999,7 @@ public partial class MainWindow : Window, ISessionHost
     {
         if (pestana.Tag is not Guid idSesion)
         {
+            CerrarHerramienta(pestana);
             return;
         }
 
@@ -1064,6 +1060,186 @@ public partial class MainWindow : Window, ISessionHost
         _puntoEstado.Visibility = Visibility.Visible;
     }
 
+    /// <summary>Avisa si el modo de cifrado de los secretos no coincide con que haya clave maestra.</summary>
+    private void ComprobarLosSecretos()
+    {
+        try
+        {
+            var estado = Infrastructure.Database.CoherenciaDeSecretos.Comprobar(_root.Sqlite);
+
+            if (estado.Coherente)
+            {
+                return;
+            }
+
+            _root.Logger.TechnicalError(
+                "comprobar el estado de las contraseñas guardadas",
+                new InvalidOperationException(estado.Motivo));
+
+            Dialogos.Advertir(this, "Contraseñas guardadas", estado.Motivo!);
+        }
+        catch (Exception ex)
+        {
+            _root.Logger.TechnicalError("comprobar el estado de las contraseñas guardadas", ex);
+        }
+    }
+
+    /// <summary>Avisa que la base anterior quedó apartada y ofrece restaurar la copia más reciente.</summary>
+    private async Task AtenderBaseApartadaAsync()
+    {
+        if (_root.Startup.RecoveredFromCorruptionPath is not { } preservada)
+        {
+            return;
+        }
+
+        var donde = "La base de datos anterior no se pudo leer. Se creó una nueva y la anterior "
+            + $"quedó preservada en:{Environment.NewLine}{preservada}";
+
+        if (await UltimaCopiaAsync().ConfigureAwait(true) is not { } copia)
+        {
+            Dialogos.Informar(this, "Base de datos recuperada", donde);
+            return;
+        }
+
+        var restaurar = Dialogos.Confirmar(
+            this,
+            "Base de datos recuperada",
+            $"{donde}{Environment.NewLine}{Environment.NewLine}"
+            + $"Hay una copia de seguridad del {Momento(copia)}. Restaurarla reemplaza la base "
+            + "vacía que se acaba de crear.",
+            "Restaurar la copia");
+
+        if (restaurar)
+        {
+            await RestaurarCopiaAsync(copia).ConfigureAwait(true);
+        }
+    }
+
+    private async Task<CopiaDeSeguridad?> UltimaCopiaAsync()
+    {
+        try
+        {
+            var ajustes = await _root.AppSettings.GetBackupSettingsAsync().ConfigureAwait(true);
+
+            return new Infrastructure.Database.ServicioDeCopias(_root.Paths, _root.Logger)
+                .Listar(ajustes)
+                .FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            _root.Logger.TechnicalError("buscar copias de seguridad para restaurar", ex);
+            return null;
+        }
+    }
+
+    /// <summary>Reemplaza la base recién creada por la copia elegida y la deja en la última versión del esquema.</summary>
+    private async Task RestaurarCopiaAsync(CopiaDeSeguridad copia)
+    {
+        try
+        {
+            // El -wal de la base vacia se aplicaria sobre la restaurada y le volveria a borrar
+            // todo, asi que se va con ella.
+            foreach (var sufijo in new[] { "-wal", "-shm" })
+            {
+                System.IO.File.Delete(_root.Paths.DatabasePath + sufijo);
+            }
+
+            System.IO.File.Copy(copia.Ruta, _root.Paths.DatabasePath, overwrite: true);
+
+            await new Infrastructure.Database.DatabaseInitializer(
+                _root.Sqlite, _root.Paths, _root.Logger).InitializeAsync().ConfigureAwait(true);
+
+            Dialogos.Informar(
+                this,
+                "Copia restaurada",
+                $"Se restauró la copia del {Momento(copia)}.");
+        }
+        catch (Exception ex)
+        {
+            _root.Logger.TechnicalError("restaurar la copia de seguridad", ex);
+
+            Dialogos.Advertir(
+                this,
+                "No se pudo restaurar",
+                $"La copia no se pudo restaurar: {ex.Message}{Environment.NewLine}"
+                + $"{Environment.NewLine}La base vacía que se creó al arrancar sigue en su lugar.");
+        }
+    }
+
+    private static string Momento(CopiaDeSeguridad copia) =>
+        copia.Momento.LocalDateTime.ToString("g", CultureInfo.CurrentCulture);
+
+    /// <summary>Cuenta una sola vez lo que trae esta versión, en el arranque que actualiza la base.</summary>
+    private async Task AvisarLasNovedadesAsync()
+    {
+        try
+        {
+            var version = Services.VersionDeLaAplicacion.Corta;
+
+            var avisada = await _root.AppSettings
+                .GetAnnouncedNewsVersionAsync().ConfigureAwait(true);
+
+            if (string.Equals(avisada, version, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            await _root.AppSettings.SaveAnnouncedNewsVersionAsync(version).ConfigureAwait(true);
+
+            // Sólo a quien ya venía usando la aplicación: en una instalación nueva no hay novedad
+            // que contar, todo es nuevo.
+            if (!_root.Startup.Migrated)
+            {
+                return;
+            }
+
+            Services.Dialogos.Informar(
+                this,
+                $"Novedades de la versión {version}",
+                "Las sesiones SSH ahora muestran al pie del terminal una franja con el uso de CPU, "
+                + "memoria y disco del servidor, y guardan una bitácora con todo lo que pasa por el "
+                + "terminal."
+                + Environment.NewLine + Environment.NewLine
+                + "Las dos vienen activas. Se apagan para todas en Preferencias → Sesiones, o para "
+                + "una conexión puntual desde su editor."
+                + Environment.NewLine + Environment.NewLine
+                + "Tené en cuenta que la bitácora guarda también lo que se tipea: una contraseña que "
+                + "el servidor no oculte queda escrita en el archivo.");
+        }
+        catch (Exception ex)
+        {
+            _root.Logger.TechnicalError("avisar las novedades de la versión", ex);
+        }
+    }
+
+    /// <summary>Borra al arrancar las bitácoras de sesión que pasaron el plazo de retención.</summary>
+    private async Task PurgaDeBitacorasAsync()
+    {
+        try
+        {
+            var ajustes = await _root.AppSettings.GetSessionLogSettingsAsync().ConfigureAwait(true);
+
+            // Con la bitácora apagada no se purga: la carpeta la elige el usuario y puede haberla
+            // apuntado a una suya antes de apagarla.
+            if (!ajustes.Activa)
+            {
+                return;
+            }
+
+            var carpeta = string.IsNullOrWhiteSpace(ajustes.Carpeta)
+                ? System.IO.Path.Combine(_root.Paths.Root, "bitacoras")
+                : ajustes.Carpeta;
+
+            await Task.Run(() => Infrastructure.Bitacora.PurgaDeBitacoras.Purgar(
+                    carpeta, ajustes.DiasQueSeGuardan, DateTimeOffset.Now, _root.Logger))
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _root.Logger.TechnicalError("purgar las bitácoras de sesión al arrancar", ex);
+        }
+    }
+
     /// <summary>Copia de seguridad al arrancar, si corresponde.</summary>
     private async Task CopiaDeArranqueAsync()
     {
@@ -1078,6 +1254,10 @@ public partial class MainWindow : Window, ISessionHost
             if (r.Hecha)
             {
                 _estado.Text = $"Copia de seguridad hecha: {System.IO.Path.GetFileName(r.Ruta)}";
+            }
+            else if (r.Fracaso)
+            {
+                _estado.Text = $"No se pudo hacer la copia de seguridad: {r.Motivo}";
             }
         }
         catch (Exception ex)
@@ -1267,12 +1447,14 @@ public partial class MainWindow : Window, ISessionHost
             tunelesActivos += await vista.ContarTunelesActivosAsync().ConfigureAwait(true);
         }
 
-        if (_sesiones.Items.Count > 0 || tunelesActivos > 0)
+        var sesionesAbiertas = SesionesAbiertas();
+
+        if (sesionesAbiertas > 0 || tunelesActivos > 0)
         {
             var confirmado = Dialogos.Confirmar(
                 this,
                 "Cerrar la aplicación",
-                TextoDeAvisoDeCierre(_sesiones.Items.Count, tunelesActivos),
+                TextoDeAvisoDeCierre(sesionesAbiertas, tunelesActivos),
                 "Cerrar igual");
 
             if (!confirmado)
@@ -1436,7 +1618,7 @@ public partial class MainWindow : Window, ISessionHost
         }
 
         var url = Services.ActualizacionesService.UrlDePagina(
-            _ajustesDeActualizacion.Origen, _releaseDisponible.Version);
+            Infrastructure.Database.AjustesDeActualizacion.Repositorio, _releaseDisponible.Version);
 
         try
         {
@@ -1471,6 +1653,44 @@ public partial class MainWindow : Window, ISessionHost
         OcultarAvisoDeActualizacion();
     }
 
+    /// <summary>Cuál de los instaladores publicados se descarga; <c>null</c> si no hay o si se canceló.</summary>
+    private Infrastructure.Actualizaciones.ActivoDeRelease? ElegirInstalador()
+    {
+        var disponibles = Services.SelectorDeInstalador.Disponibles(_releaseDisponible!.Activos);
+
+        if (disponibles.Count == 0)
+        {
+            _textoAviso.Text = "La release no publica un instalador para Windows.";
+            return null;
+        }
+
+        if (disponibles.Count == 1)
+        {
+            return disponibles[0].Activo;
+        }
+
+        if (Views.InstaladorWindow.Pedir(this, _versionDisponible?.ToString() ?? string.Empty,
+                disponibles) is not { } elegido)
+        {
+            return null;
+        }
+
+        if (!elegido.EsElInstalado
+            && disponibles.Any(d => d.EsElInstalado)
+            && !Services.Dialogos.Confirmar(
+                this,
+                "Cambia el tipo de instalación",
+                $"Tenés la instalación {(elegido.Tipo == Services.TipoDeInstalador.Liviano
+                    ? "completa" : "liviana")} y elegiste la {elegido.Nombre.ToLowerInvariant()}. "
+                + "El instalador quita la versión anterior y deja la nueva en su lugar.",
+                "Descargar"))
+        {
+            return null;
+        }
+
+        return elegido.Activo;
+    }
+
     /// <summary>«Actualizar»: descarga el instalador, lo verifica contra el hash publicado, y sólo lo ejecuta si la verificación dio bien.</summary>
     private async void AlActualizarAhora(object sender, RoutedEventArgs e)
     {
@@ -1479,11 +1699,8 @@ public partial class MainWindow : Window, ISessionHost
             return;
         }
 
-        var instalador = Services.SelectorDeInstalador.Elegir(_releaseDisponible.Activos);
-
-        if (instalador is null)
+        if (ElegirInstalador() is not { } instalador)
         {
-            _textoAviso.Text = "La release no publica un instalador para Windows.";
             return;
         }
 
@@ -1507,6 +1724,7 @@ public partial class MainWindow : Window, ISessionHost
         }
 
         var (mensaje, ejecutar) = Services.MensajesDeDescarga.Interpretar(resultado);
+
 
         if (ejecutar && resultado.RutaArchivo is not null)
         {

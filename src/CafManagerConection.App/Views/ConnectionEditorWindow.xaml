@@ -86,6 +86,10 @@
                                 <TextBlock Text="Carpeta" Style="{StaticResource Etiqueta}" />
                                 <ComboBox x:Name="_carpeta" DisplayMemberPath="Nombre"
                                           SelectionChanged="AlCambiarCarpeta" />
+                                <TextBlock x:Name="_carpetaDelPadre" Style="{StaticResource Tenue}"
+                                           FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Visibility="Collapsed"
+                                           Text="La carpeta la define la conexión de la que cuelga." />
                             </StackPanel>
                         </Border>
 
@@ -340,6 +344,12 @@
                                                TextWrapping="Wrap" Margin="0,0,0,10"
                                                Visibility="Collapsed" />
 
+                                    <CheckBox x:Name="_rdpVentanaPropia"
+                                              Content="Abrir en ventana propia" />
+                                    <TextBlock Text="La sesión abre fuera de las pestañas. Se enciende sola si el control de RDP no sobrevive al traslado."
+                                               Style="{StaticResource Tenue}" FontSize="11"
+                                               TextWrapping="Wrap" Margin="0,2,0,10" />
+
                                     <TextBlock Text="Al cambiar el tamaño de la pestaña"
                                                Margin="0,4,0,2" />
                                     <ComboBox x:Name="_rdpModoTamano"
@@ -429,7 +439,8 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="_webNavegador" Grid.Column="0" />
+                                    <TextBox x:Name="_webNavegador" Grid.Column="0"
+                                             TextChanged="AlCambiarNavegador" />
                                     <Button Grid.Column="1" Content="..."
                                             Style="{StaticResource BotonSecundario}"
                                             MinWidth="30" Margin="6,0,0,0"
@@ -439,6 +450,9 @@
 
                                 <CheckBox x:Name="_ventanaPrivada" Content="Abrir en ventana privada"
                                           Margin="0,12,0,0" Visibility="Collapsed" />
+                                <TextBlock x:Name="_avisoVentanaPrivada" Style="{StaticResource Tenue}"
+                                           FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Visibility="Collapsed" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -483,22 +497,38 @@
                                                Style="{StaticResource Tenue}" FontSize="11"
                                                TextWrapping="Wrap" Margin="0,2,0,0"
                                                Visibility="Collapsed" />
+
+                                    <CheckBox x:Name="_sshBitacora"
+                                              IsThreeState="True"
+                                              Content="Registrar la sesión en un archivo"
+                                              Margin="0,12,0,0"
+                                              Click="AlCambiarLaBitacora" />
+                                    <TextBlock x:Name="_sshBitacoraHeredado"
+                                               Style="{StaticResource Tenue}" FontSize="11"
+                                               TextWrapping="Wrap" Margin="0,2,0,0" />
+
+                                    <CheckBox x:Name="_sshFranja"
+                                              IsThreeState="True"
+                                              Content="Mostrar la franja de métricas al pie"
+                                              Margin="0,12,0,0"
+                                              Click="AlCambiarLaFranja" />
+                                    <TextBlock x:Name="_sshFranjaHeredada"
+                                               Style="{StaticResource Tenue}" FontSize="11"
+                                               TextWrapping="Wrap" Margin="0,2,0,0" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
 
                         <Border Style="{StaticResource Tarjeta}">
                             <StackPanel>
-                                <TextBlock Text="Documentación" Style="{StaticResource Titulo}"
+                                <TextBlock Text="Notas" Style="{StaticResource Titulo}"
                                            FontSize="14" Margin="0,0,0,10" />
 
-                                <TextBlock Text="Documentación (http o https)"
-                                           Style="{StaticResource Etiqueta}" />
-                                <TextBox x:Name="_documentacion" />
-
-                                <TextBlock Text="Notas" Style="{StaticResource Etiqueta}"
-                                           Margin="0,12,0,4" />
                                 <TextBox x:Name="_notas" Style="{StaticResource CampoMultilinea}" />
+
+                                <TextBlock x:Name="_fechasDeRegistro" Style="{StaticResource Tenue}"
+                                           FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"
+                                           Visibility="Collapsed" />
                             </StackPanel>
                         </Border>
                     </StackPanel>

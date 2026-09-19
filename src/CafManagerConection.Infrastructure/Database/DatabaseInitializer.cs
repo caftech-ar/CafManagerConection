@@ -9,6 +9,11 @@ namespace CafManagerConection.Infrastructure.Database;
 /// <summary>Abre la base, o la crea entera en la <c>user_version</c> 1. Lanza <see cref="InvalidOperationException"/> con cualquier otra versión, sin escribir nada.</summary>
 public sealed class DatabaseInitializer : IDatabaseInitializer
 {
+    // El archivo no es una base legible. Cualquier otro error —disco lleno, permisos, archivo en
+    // uso— no autoriza a apartar la base del usuario.
+    private const int SqliteCorrupt = 11;
+    private const int SqliteNotADatabase = 26;
+
     private readonly ISqliteConnectionFactory _factory;
     private readonly AppPaths _paths;
     private readonly IAppLogger? _logger;
@@ -26,7 +31,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         _time = time ?? TimeProvider.System;
     }
 
-    public static int LatestVersion => Migration003_UsuarioYPuertoPorProtocolo.Version;
+    public static int LatestVersion => Migration004_Saneamiento.Version;
 
     // En orden de versión: una base en 0 las corre todas; una en 1 corre de la 2 en adelante. La 1
     // es el esquema entero, la 2 en adelante son cambios incrementales sobre él.
@@ -36,6 +41,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         (Migration002_CamposDeCarpeta.Version, Migration002_CamposDeCarpeta.Sql),
         (Migration003_UsuarioYPuertoPorProtocolo.Version,
             Migration003_UsuarioYPuertoPorProtocolo.Sql),
+        (Migration004_Saneamiento.Version, Migration004_Saneamiento.Sql),
     ];
 
     public Task<DatabaseStartupResult> InitializeAsync(CancellationToken ct = default)
@@ -46,7 +52,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         {
             return Task.FromResult(Migrate());
         }
-        catch (SqliteException ex)
+        catch (SqliteException ex) when (EsBaseIlegible(ex))
         {
             var preserved = PreserveCorrupted(ex);
 
@@ -61,13 +67,17 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
                 return Task.FromResult(result);
             }
-            catch (SqliteException ex2)
+            catch (SqliteException ex2) when (EsBaseIlegible(ex2))
             {
                 _logger?.TechnicalError("migrar la base tras intentar preservar la corrupta", ex2);
                 return Task.FromResult(new DatabaseStartupResult(false, 0, 0));
             }
         }
     }
+
+    /// <summary>Distingue un archivo que no es una base legible de cualquier otro fallo de SQLite, que no autoriza a apartar los datos del usuario.</summary>
+    private static bool EsBaseIlegible(SqliteException ex) =>
+        ex.SqliteErrorCode is SqliteCorrupt or SqliteNotADatabase;
 
     private DatabaseStartupResult Migrate()
     {
@@ -92,24 +102,8 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
         if (applied)
         {
-            using var tx = connection.BeginTransaction();
-
-            foreach (var migracion in pendientes)
-            {
-                using var cmd = connection.CreateCommand();
-                cmd.Transaction = tx;
-                cmd.CommandText = migracion.Sql;
-                cmd.ExecuteNonQuery();
-            }
-
-            using (var cmd = connection.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = $"PRAGMA user_version = {LatestVersion};";
-                cmd.ExecuteNonQuery();
-            }
-
-            tx.Commit();
+            MotorDeMigraciones.Aplicar(
+                connection, [.. pendientes.Select(m => m.Sql)], LatestVersion);
         }
 
         var to = GetUserVersion(connection);

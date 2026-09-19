@@ -114,7 +114,6 @@ public sealed class DuplicarConexionTests
             ClaveDeColor = "rojo",
             IsFavorite = true,
             TagId = tagId,
-            DocumentationUrl = "https://wiki.interna/prd",
         };
         original.SetCustomField("Ticket", "OPS-123");
         Registrar(new ConnectionRecord(original, Ssh: new SshSettings()));
@@ -130,7 +129,6 @@ public sealed class DuplicarConexionTests
         Assert.Equal("rojo", copia.ClaveDeColor);
         Assert.True(copia.IsFavorite);
         Assert.Equal(tagId, copia.TagId);
-        Assert.Equal("https://wiki.interna/prd", copia.DocumentationUrl);
         Assert.Equal("OPS-123", copia.CustomFields["Ticket"]);
     }
 

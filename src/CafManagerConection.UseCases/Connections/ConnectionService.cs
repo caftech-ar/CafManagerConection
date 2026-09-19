@@ -30,9 +30,6 @@ public sealed record ConnectionSummary(
 
 public sealed class ConnectionService
 {
-    /// <summary>Campo propio que marca una conexión rápida mientras dura su sesión.</summary>
-    private const string ClaveDeConexionRapida = "cmc:conexionRapida";
-
     /// <summary>Entrada de <see cref="Exception.Data"/> con dónde quedó lo que no se pudo limpiar —la conexión, o la <see cref="ReferenciaDeSecreto"/>—; nunca el secreto.</summary>
     public const string DatoDeCredencialHuerfana = "cmc:credencialHuerfana";
 
@@ -41,19 +38,22 @@ public sealed class ConnectionService
     private readonly ICredentialStore _credentials;
     private readonly ITagRepository? _tags;
     private readonly IAppLogger? _registro;
+    private readonly IConnectionHistoryRepository? _historial;
 
     public ConnectionService(
         IConnectionRepository connections,
         IFolderRepository folders,
         ICredentialStore credentials,
         ITagRepository? tags = null,
-        IAppLogger? registro = null)
+        IAppLogger? registro = null,
+        IConnectionHistoryRepository? historial = null)
     {
         _connections = connections;
         _folders = folders;
         _credentials = credentials;
         _tags = tags;
         _registro = registro;
+        _historial = historial;
     }
 
     public async Task<SettingsResolver> CreateResolverAsync(CancellationToken ct = default) =>
@@ -64,13 +64,21 @@ public sealed class ConnectionService
         var resolver = await CreateResolverAsync(ct).ConfigureAwait(false);
         var connections = await _connections.GetAllAsync(ct).ConfigureAwait(false);
         var catalogo = await LeerCatalogoAsync(ct).ConfigureAwait(false);
+        var ultimas = await UltimasConexionesAsync(ct).ConfigureAwait(false);
 
         // La conexión rápida vive en el mismo repositorio pero no es una entrada del árbol; se filtra acá.
         return connections
-            .Where(c => !EsConexionRapida(c))
-            .Select(c => ToSummary(c, resolver, catalogo))
+            .Where(c => !c.EsRapida)
+            .Select(c => ToSummary(c, resolver, catalogo, ultimas))
             .ToList();
     }
+
+    /// <summary>Cuándo conectó bien cada conexión por última vez, según el historial.</summary>
+    private async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> UltimasConexionesAsync(
+        CancellationToken ct) =>
+        _historial is null
+            ? new Dictionary<Guid, DateTimeOffset>()
+            : await _historial.UltimaConexionExitosaPorConexionAsync(ct).ConfigureAwait(false);
 
     /// <summary>Arma el destino de una conexión rápida sin dejar rastro en el árbol.</summary>
     public async Task<OperationResult<Guid>> CreateQuickAsync(
@@ -86,14 +94,13 @@ public sealed class ConnectionService
         var conexion = new Connection(Guid.NewGuid(), nombre, Protocol.Ssh, host)
         {
             UserName = userName,
+            EsRapida = true,
         };
 
         if (port != Connection.DefaultPortFor(Protocol.Ssh))
         {
             conexion.SetPort(port);
         }
-
-        conexion.SetCustomField(ClaveDeConexionRapida, bool.TrueString);
 
         var record = new ConnectionRecord(conexion);
         var validation = ConnectionValidator.Validate(record);
@@ -117,7 +124,8 @@ public sealed class ConnectionService
             return OperationResult.Fail("La conexión ya no existe.");
         }
 
-        record.Connection.SetCustomField(ClaveDeConexionRapida, null);
+        record.Connection.EsRapida = false;
+        record.Connection.Touch();
         await _connections.UpdateAsync(record, ct).ConfigureAwait(false);
         return OperationResult.Ok();
     }
@@ -125,7 +133,7 @@ public sealed class ConnectionService
     public async Task<int> LimpiarConexionesRapidasAsync(CancellationToken ct = default)
     {
         var todas = await _connections.GetAllAsync(ct).ConfigureAwait(false);
-        var huerfanas = todas.Where(EsConexionRapida).ToList();
+        var huerfanas = todas.Where(c => c.EsRapida).ToList();
 
         foreach (var conexion in huerfanas)
         {
@@ -134,9 +142,6 @@ public sealed class ConnectionService
 
         return huerfanas.Count;
     }
-
-    private static bool EsConexionRapida(Connection c) =>
-        c.CustomFields.ContainsKey(ClaveDeConexionRapida);
 
     /// <summary>Filtra por nombre, host o usuario sin distinguir mayúsculas ni acentos.</summary>
     public async Task<IReadOnlyList<ConnectionSummary>> SearchAsync(
@@ -379,7 +384,6 @@ public sealed class ConnectionService
             ClaveDeIcono = o.ClaveDeIcono,
             IsFavorite = o.IsFavorite,
             TagId = o.TagId,
-            DocumentationUrl = o.DocumentationUrl,
         };
         copia.SetPort(o.Port);
 
@@ -431,6 +435,11 @@ public sealed class ConnectionService
             return OperationResult.Fail("La conexión ya no existe.");
         }
 
+        var hijas = (await _connections.GetAllAsync(ct).ConfigureAwait(false))
+            .Where(c => c.ParentConnectionId == id)
+            .Select(c => c.Id)
+            .ToList();
+
         record.Connection.FolderId = folderId;
         record.Connection.ParentConnectionId = null;
 
@@ -439,7 +448,28 @@ public sealed class ConnectionService
 
         record.Connection.Touch();
         await _connections.UpdateAsync(record, ct).ConfigureAwait(false);
+        await MoverHijasAsync(hijas, folderId, ct).ConfigureAwait(false);
+
         return OperationResult.Ok();
+    }
+
+    /// <summary>Arrastra las hijas a la carpeta del padre: la herencia sube por la carpeta, y dejarlas atrás les cambiaría el usuario y la contraseña con los que conectan.</summary>
+    private async Task MoverHijasAsync(
+        IReadOnlyList<Guid> hijas, Guid? folderId, CancellationToken ct)
+    {
+        foreach (var hija in hijas)
+        {
+            var registro = await _connections.GetByIdAsync(hija, ct).ConfigureAwait(false);
+
+            if (registro is null)
+            {
+                continue;
+            }
+
+            registro.Connection.FolderId = folderId;
+            registro.Connection.Touch();
+            await _connections.UpdateAsync(registro, ct).ConfigureAwait(false);
+        }
     }
 
     /// <summary>Cambia la etiqueta sin abrir el editor; <c>null</c> la quita.</summary>
@@ -466,7 +496,7 @@ public sealed class ConnectionService
             .Where(c => c.Id != conexion.Id
                         && c.FolderId == conexion.FolderId
                         && c.ParentConnectionId == conexion.ParentConnectionId
-                        && !EsConexionRapida(c))
+                        && !c.EsRapida)
             .ToList();
 
         var lugar = Math.Clamp(
@@ -550,7 +580,10 @@ public sealed class ConnectionService
             : new CatalogoDeEtiquetas(await _tags.GetAllAsync(ct).ConfigureAwait(false));
 
     private static ConnectionSummary ToSummary(
-        Connection c, SettingsResolver resolver, CatalogoDeEtiquetas catalogo)
+        Connection c,
+        SettingsResolver resolver,
+        CatalogoDeEtiquetas catalogo,
+        IReadOnlyDictionary<Guid, DateTimeOffset> ultimas)
     {
         var efectivo = resolver.Resolve(c);
 
@@ -558,7 +591,9 @@ public sealed class ConnectionService
 
         return new ConnectionSummary(
             c.Id, c.FolderId, c.Name, c.Protocol, c.Host,
-            efectivo.ResolvedPort, efectivo.UserName.Value, c.LastConnectedAt, c.SortOrder,
+            efectivo.ResolvedPort, efectivo.UserName.Value,
+            ultimas.TryGetValue(c.Id, out var cuando) ? cuando : null,
+            c.SortOrder,
             c.ParentConnectionId,
             c.Description,
             c.ClaveDeColor,
@@ -588,9 +623,8 @@ public sealed class ConnectionService
         ConnectionId = newId,
         Domain = s.Domain,
         ClipboardEnabled = s.ClipboardEnabled,
-        FitToTab = s.FitToTab,
         IgnoreCertificateWarnings = s.IgnoreCertificateWarnings,
-        StartFullScreen = s.StartFullScreen,
+        AbreEnVentanaPropia = s.AbreEnVentanaPropia,
     };
 
     private static SshSettings Clone(SshSettings s, Guid newId) => new()
@@ -601,7 +635,6 @@ public sealed class ConnectionService
         CertificatePath = s.CertificatePath,
         KnownHostFingerprint = s.KnownHostFingerprint,
         KeepAliveSeconds = s.KeepAliveSeconds,
-        Encoding = s.Encoding,
     };
 
     private static WebSettings Clone(WebSettings s, Guid newId) => new()

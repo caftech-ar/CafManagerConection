@@ -1,3 +1,4 @@
+using CafManagerConection.Domain.Connections;
 using CafManagerConection.Infrastructure;
 
 namespace CafManagerConection.Infrastructure.Tests;
@@ -79,6 +80,7 @@ public sealed class HerramientasExternasTests
     [InlineData(HerramientaExterna.Putty)]
     [InlineData(HerramientaExterna.FileZilla)]
     [InlineData(HerramientaExterna.WinScp)]
+    [InlineData(HerramientaExterna.Mstsc)]
     public void Ninguna_linea_lleva_banderas_de_contrasena(HerramientaExterna herramienta)
     {
         var linea = LineaDeComando.Para(herramienta, Destino);
@@ -200,6 +202,7 @@ public sealed class HerramientasExternasTests
     [InlineData(HerramientaExterna.Putty)]
     [InlineData(HerramientaExterna.FileZilla)]
     [InlineData(HerramientaExterna.WinScp)]
+    [InlineData(HerramientaExterna.Mstsc)]
     public void Con_clave_ninguna_linea_lleva_contrasena_ni_frase_de_paso(
         HerramientaExterna herramienta)
     {
@@ -343,4 +346,49 @@ public sealed class HerramientasExternasTests
 
         Assert.Equal([HerramientaExterna.WinScp], disponibles.Instaladas);
     }
+
+    [Fact]
+    public void Mstsc_lleva_host_y_puerto()
+    {
+        var linea = LineaDeComando.Para(
+            HerramientaExterna.Mstsc, new DestinoRemoto("srv", 3390, "operador"));
+
+        Assert.Equal("/v:srv:3390", linea);
+    }
+
+    [Fact]
+    public void Mstsc_no_lleva_el_usuario()
+    {
+        var linea = LineaDeComando.Para(HerramientaExterna.Mstsc, Destino);
+
+        Assert.DoesNotContain("operador", linea, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Mstsc_se_busca_en_la_carpeta_del_sistema()
+    {
+        var candidatas = BuscadorDeHerramientas.Candidatas(HerramientaExterna.Mstsc).ToList();
+
+        Assert.NotEmpty(candidatas);
+        Assert.All(candidatas, c => Assert.EndsWith("mstsc.exe", c, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(HerramientaExterna.Putty, Protocol.Ssh, true)]
+    [InlineData(HerramientaExterna.Putty, Protocol.Rdp, false)]
+    [InlineData(HerramientaExterna.FileZilla, Protocol.Ssh, true)]
+    [InlineData(HerramientaExterna.WinScp, Protocol.Ssh, true)]
+    [InlineData(HerramientaExterna.Mstsc, Protocol.Rdp, true)]
+    [InlineData(HerramientaExterna.Mstsc, Protocol.Ssh, false)]
+    public void Cada_herramienta_declara_los_protocolos_que_atiende(
+        HerramientaExterna herramienta, Protocol protocolo, bool atiende) =>
+        Assert.Equal(atiende, ProtocolosDeHerramienta.Atiende(herramienta, protocolo));
+
+    [Theory]
+    [InlineData(HerramientaExterna.Putty)]
+    [InlineData(HerramientaExterna.FileZilla)]
+    [InlineData(HerramientaExterna.WinScp)]
+    [InlineData(HerramientaExterna.Mstsc)]
+    public void Ninguna_herramienta_atiende_las_conexiones_web(HerramientaExterna herramienta) =>
+        Assert.False(ProtocolosDeHerramienta.Atiende(herramienta, Protocol.Web));
 }

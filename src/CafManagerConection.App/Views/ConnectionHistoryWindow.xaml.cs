@@ -30,6 +30,7 @@ public partial class ConnectionHistoryWindow : Window
     private async Task CargarAsync()
     {
         var eventos = await _root.History.GetRecentAsync().ConfigureAwait(true);
+        var total = await _root.History.ContarAsync().ConfigureAwait(true);
         var conexiones = await _root.ConnectionService.GetTreeAsync().ConfigureAwait(true);
 
         var nombres = conexiones.ToDictionary(c => c.Id, c => c.Name);
@@ -48,13 +49,17 @@ public partial class ConnectionHistoryWindow : Window
         _vacio.Visibility = filas.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var conectadas = eventos.Count(e => e.Outcome == ConnectionOutcome.Success);
-        var total = TimeSpan.FromSeconds(eventos.Sum(e => e.DurationSeconds ?? 0));
+        var enSesion = TimeSpan.FromSeconds(eventos.Sum(e => e.DurationSeconds ?? 0));
+
+        var cuantos = filas.Count < total
+            ? $"últimos {filas.Count} de {total} evento(s)"
+            : $"{filas.Count} evento(s)";
 
         _resumen.Text = filas.Count switch
         {
             0 => string.Empty,
-            _ => $"{filas.Count} evento(s) · {conectadas} conexión(es) lograda(s) · "
-                 + $"{Legible(total)} de sesión en total",
+            _ => $"{cuantos} · {conectadas} conexión(es) lograda(s) · "
+                 + $"{Legible(enSesion)} de sesión en total",
         };
     }
 
@@ -85,18 +90,19 @@ public partial class ConnectionHistoryWindow : Window
         _ => $"{(int)lapso.TotalHours} h {lapso.Minutes} min",
     };
 
-    /// <summary>Por qué falló, cuando se sabe.</summary>
-    private static string Detalle(ConnectionHistoryEntry e) => e.FailureReason switch
+    /// <summary>Por qué falló, cuando se sabe. Un resultado que no es una falla no lleva detalle.</summary>
+    private static string Detalle(ConnectionHistoryEntry e) =>
+        e.Outcome == ConnectionOutcome.Failed ? MotivoLegible(e.FailureReason) : string.Empty;
+
+    private static string MotivoLegible(SessionFailureReason? motivo) => motivo switch
     {
         null => string.Empty,
         SessionFailureReason.AuthenticationRejected => "Credenciales rechazadas",
         SessionFailureReason.HostUnreachable => "No se llegó al servidor",
         SessionFailureReason.HostKeyMismatch => "La clave del host cambió",
         SessionFailureReason.Timeout => "Tiempo de espera agotado",
-        SessionFailureReason.CertificateUntrusted => "Certificado no confiable",
         SessionFailureReason.PrivateKeyNotFound => "No se encontró la clave privada",
         SessionFailureReason.BadPassphrase => "Frase de paso incorrecta",
-        SessionFailureReason.CredentialMissing => "Falta la credencial",
         SessionFailureReason.UnexpectedDisconnect => "Desconexión inesperada",
         _ => "Sin detalle",
     };

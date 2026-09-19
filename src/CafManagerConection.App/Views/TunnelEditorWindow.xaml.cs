@@ -67,7 +67,7 @@ public partial class TunnelEditorWindow : Window
         var tuneles = await _root.Tunnels.GetForConnectionAsync(_conexionId).ConfigureAwait(true);
 
         _lista.ItemsSource = tuneles
-            .OrderBy(t => t.SortOrder)
+            .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
             .Select(t => new Fila(
                 t.Name,
                 t.LocalPort.ToString(),

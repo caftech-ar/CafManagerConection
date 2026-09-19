@@ -28,10 +28,14 @@ public sealed class CatalogoIdaYVueltaTests
             Description = "Servidor de aplicaciones de Vialidad",
             TagId = Produccion,
             IsFavorite = true,
-            DocumentationUrl = "https://wiki.interno/aplicaciones",
             ClaveDeColor = "azul",
+            ClaveDeIcono = "puertos",
+            Notes = "Se reinicia los domingos",
+            UserName = "operador",
+            SortOrder = 7,
         };
 
+        c.SetPort(2022);
         c.SetCustomField("responsable", "Infraestructura");
         c.SetCustomField("rack", "B-12");
 
@@ -51,10 +55,85 @@ public sealed class CatalogoIdaYVueltaTests
         Assert.Equal("Servidor de aplicaciones de Vialidad", leida.Description);
         Assert.Equal(Produccion, leida.TagId);
         Assert.True(leida.IsFavorite);
-        Assert.Equal("https://wiki.interno/aplicaciones", leida.DocumentationUrl);
         Assert.Equal("azul", leida.ClaveDeColor);
+        Assert.Equal("puertos", leida.ClaveDeIcono);
+        Assert.Equal("Se reinicia los domingos", leida.Notes);
+        Assert.Equal("operador", leida.UserName);
+        Assert.Equal(2022, leida.Port);
+        Assert.Equal(7, leida.SortOrder);
+        Assert.False(leida.EsRapida);
         Assert.Equal("Infraestructura", leida.CustomFields["responsable"]);
         Assert.Equal("B-12", leida.CustomFields["rack"]);
+    }
+
+    [Fact]
+    public async Task La_marca_de_conexion_rapida_sobrevive_a_guardar_y_leer()
+    {
+        using var db = new TempDatabase();
+        var repo = await RepositorioAsync(db);
+        var c = new Connection(Guid.NewGuid(), "Rápida", Protocol.Ssh, "192.0.2.5")
+        {
+            EsRapida = true,
+        };
+
+        await repo.AddAsync(new ConnectionRecord(c, Ssh: new SshSettings()));
+
+        Assert.True((await repo.GetByIdAsync(c.Id))!.Connection.EsRapida);
+    }
+
+    [Fact]
+    public async Task Los_ajustes_de_cada_protocolo_sobreviven_a_guardar_y_leer()
+    {
+        using var db = new TempDatabase();
+        var repo = await RepositorioAsync(db);
+
+        var rdp = new Connection(Guid.NewGuid(), "Escritorio", Protocol.Rdp, "192.0.2.40");
+        await repo.AddAsync(new ConnectionRecord(rdp, Rdp: new RdpSettings
+        {
+            ConnectionId = rdp.Id,
+            Domain = "VIALIDAD",
+            ClipboardEnabled = false,
+            IgnoreCertificateWarnings = true,
+            AbreEnVentanaPropia = true,
+        }));
+
+        var ssh = new Connection(Guid.NewGuid(), "Consola", Protocol.Ssh, "192.0.2.41");
+        await repo.AddAsync(new ConnectionRecord(ssh, Ssh: new SshSettings
+        {
+            ConnectionId = ssh.Id,
+            AuthMethod = SshAuthMethod.PrivateKey,
+            PrivateKeyPath = @"C:\claves\id_ed25519",
+            CertificatePath = @"C:\claves\id_ed25519-cert.pub",
+            KnownHostFingerprint = "SHA256:abc",
+            KeepAliveSeconds = 120,
+        }));
+
+        var web = new Connection(Guid.NewGuid(), "Panel", Protocol.Web, "panel.local");
+        await repo.AddAsync(new ConnectionRecord(web, Web: new WebSettings
+        {
+            ConnectionId = web.Id,
+            Url = "https://panel.local/admin",
+            Browser = "firefox",
+            PrivateWindow = true,
+        }));
+
+        var leidoRdp = (await repo.GetByIdAsync(rdp.Id))!.Rdp!;
+        Assert.Equal("VIALIDAD", leidoRdp.Domain);
+        Assert.False(leidoRdp.ClipboardEnabled);
+        Assert.True(leidoRdp.IgnoreCertificateWarnings);
+        Assert.True(leidoRdp.AbreEnVentanaPropia);
+
+        var leidoSsh = (await repo.GetByIdAsync(ssh.Id))!.Ssh!;
+        Assert.Equal(SshAuthMethod.PrivateKey, leidoSsh.AuthMethod);
+        Assert.Equal(@"C:\claves\id_ed25519", leidoSsh.PrivateKeyPath);
+        Assert.Equal(@"C:\claves\id_ed25519-cert.pub", leidoSsh.CertificatePath);
+        Assert.Equal("SHA256:abc", leidoSsh.KnownHostFingerprint);
+        Assert.Equal(120, leidoSsh.KeepAliveSeconds);
+
+        var leidoWeb = (await repo.GetByIdAsync(web.Id))!.Web!;
+        Assert.Equal("https://panel.local/admin", leidoWeb.Url);
+        Assert.Equal("firefox", leidoWeb.Browser);
+        Assert.True(leidoWeb.PrivateWindow);
     }
 
     [Fact]
@@ -88,12 +167,13 @@ public sealed class CatalogoIdaYVueltaTests
         var repo = await RepositorioAsync(db);
         var c = new Connection(Guid.NewGuid(), "Simple", Protocol.Web, "ejemplo.local");
 
-        await repo.AddAsync(new ConnectionRecord(c, Web: new WebSettings()));
+        await repo.AddAsync(new ConnectionRecord(
+            c, Web: new WebSettings { Url = "https://ejemplo.local" }));
+
         var leida = (await repo.GetByIdAsync(c.Id))!.Connection;
 
         Assert.Null(leida.Description);
         Assert.Null(leida.TagId);
-        Assert.Null(leida.DocumentationUrl);
         Assert.Null(leida.ClaveDeColor);
         Assert.False(leida.IsFavorite);
         Assert.Empty(leida.CustomFields);
@@ -113,14 +193,16 @@ public sealed class CatalogoIdaYVueltaTests
             ParentConnectionId = servidor.Id,
         };
 
-        await repo.AddAsync(new ConnectionRecord(servicio, Web: new WebSettings()));
+        await repo.AddAsync(new ConnectionRecord(
+            servicio, Web: new WebSettings { Url = "https://192.0.2.207:9443" }));
+
         var leida = (await repo.GetByIdAsync(servicio.Id))!.Connection;
 
         Assert.Equal(servidor.Id, leida.ParentConnectionId);
     }
 
     [Fact]
-    public async Task Un_json_corrupto_en_campos_propios_no_impide_cargar_la_conexion()
+    public async Task La_base_rechaza_un_json_corrupto_en_campos_propios()
     {
         using var db = new TempDatabase();
         var repo = await RepositorioAsync(db);
@@ -128,21 +210,15 @@ public sealed class CatalogoIdaYVueltaTests
 
         await repo.AddAsync(new ConnectionRecord(c, Ssh: new SshSettings()));
 
-        using (var cn = db.Factory.Create())
-        using (var cmd = cn.CreateCommand())
-        {
-            cmd.CommandText =
-                "UPDATE connections SET custom_fields = '{esto no es json' WHERE id = @id;";
-            var p = cmd.CreateParameter();
-            p.ParameterName = "@id";
-            p.Value = c.Id.ToString("D");
-            cmd.Parameters.Add(p);
-            cmd.ExecuteNonQuery();
-        }
+        using var cn = db.Factory.Create();
+        using var cmd = cn.CreateCommand();
+        cmd.CommandText =
+            "UPDATE connections SET custom_fields = '{esto no es json' WHERE id = @id;";
+        var p = cmd.CreateParameter();
+        p.ParameterName = "@id";
+        p.Value = c.Id.ToString("D");
+        cmd.Parameters.Add(p);
 
-        var leida = (await repo.GetByIdAsync(c.Id))!.Connection;
-
-        Assert.Equal("Aplicaciones", leida.Name);
-        Assert.Empty(leida.CustomFields);
+        Assert.Throws<Microsoft.Data.Sqlite.SqliteException>(() => cmd.ExecuteNonQuery());
     }
 }

@@ -44,7 +44,19 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
     private TunnelHost? _tuneles;
     private PlatformInventory? _inventario;
     private SshSessionRequest? _peticionSsh;
+    private RdpSessionRequest? _peticionRdp;
+    private Infrastructure.Bitacora.BitacoraDeSesion? _bitacora;
     private StoredCredential? _credencial;
+
+    private readonly DispatcherTimer _volcadoDeBitacora =
+        new() { Interval = TimeSpan.FromSeconds(5) };
+
+    /// <summary>Que en este equipo mover la sesión de ventana corta la conexión, aprendido en un intento anterior.</summary>
+    private bool _elTrasladoCortaLaSesion;
+
+    private Monitoring.ColectorDeFranja? _colectorDeFranja;
+    private readonly DispatcherTimer _relojDeFranja = new();
+    private CancellationTokenSource? _corteDeFranja;
     private StatusPanel? _panelEstado;
 
     /// <summary>Lo que se está tipeando ahora mismo para el pedido de contraseña, o null cuando no hay ningún pedido en curso.</summary>
@@ -183,6 +195,9 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
 
         if (_registro.Connection.Protocol == Protocol.Rdp)
         {
+            _elTrasladoCortaLaSesion = await _root.AppSettings
+                .GetWindowMoveBreaksSessionAsync().ConfigureAwait(true);
+
             ConectarRdp(efectivo, inicio, conIdentidadDeWindows);
         }
         else
@@ -315,6 +330,9 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         Aislar(() => _contenedorRdp?.Dispose());
         _contenedorRdp = null;
 
+        Aislar(CerrarBitacora);
+        Aislar(DetenerLaFranja);
+
         Aislar(() => _terminal?.Dispose());
         _terminal = null;
 
@@ -357,6 +375,10 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         var prefs = await _root.AppSettings.GetTerminalPreferencesAsync().ConfigureAwait(true);
 
         _terminal.ApplyTheme(dark: true, prefs.FontFamily, prefs.FontSize, prefs.ScrollbackLines);
+
+        MedirElTerminal();
+
+        await PrepararBitacoraAsync().ConfigureAwait(true);
 
         var peticion = new SshSessionRequest(
             ConnectionId,
@@ -422,6 +444,88 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         });
 
         await _ssh.ConnectAsync(_credencial).ConfigureAwait(true);
+    }
+
+    /// <summary>Abre la bitácora de esta sesión, si está activa para esta conexión.</summary>
+    private async Task PrepararBitacoraAsync()
+    {
+        var ajustes = await _root.AppSettings.GetSessionLogSettingsAsync().ConfigureAwait(true);
+
+        var activa = AjustesReservados.Activo(
+            _registro.Connection, AjustesReservados.BitacoraDeSesion, ajustes.Activa);
+
+        if (!activa || _terminal is not { } terminal)
+        {
+            return;
+        }
+
+        _bitacora = Infrastructure.Bitacora.BitacoraDeSesion.Abrir(
+            CarpetaDeBitacoras(ajustes.Carpeta),
+            _registro.Connection.Name,
+            DateTimeOffset.Now,
+            _root.Logger,
+            _registro.Connection.Host);
+
+        if (_bitacora is null)
+        {
+            return;
+        }
+
+        terminal.LineaArchivada += AlArchivarLinea;
+
+        _volcadoDeBitacora.Tick += AlTocarElVolcado;
+        _volcadoDeBitacora.Start();
+    }
+
+    private void AlTocarElVolcado(object? remitente, EventArgs e) => _bitacora?.Volcar();
+
+    /// <summary>Dónde van las bitácoras: lo configurado, o una subcarpeta junto a los datos de la aplicación.</summary>
+    /// <param name="configurada">Carpeta elegida en Preferencias, que puede venir vacía.</param>
+    private string CarpetaDeBitacoras(string configurada) =>
+        string.IsNullOrWhiteSpace(configurada)
+            ? System.IO.Path.Combine(_root.Paths.Root, "bitacoras")
+            : configurada;
+
+    private void AlArchivarLinea(object? remitente, string linea) => _bitacora?.Anotar(linea);
+
+    /// <summary>Guarda lo que quedaba en pantalla y cierra el archivo.</summary>
+    private void CerrarBitacora()
+    {
+        // Se desuscribe: DesarmarParaReconectar pasa por acá en cada reconexión y las suscripciones
+        // se acumulaban.
+        _volcadoDeBitacora.Stop();
+        _volcadoDeBitacora.Tick -= AlTocarElVolcado;
+
+        if (_bitacora is not { } bitacora)
+        {
+            return;
+        }
+
+        if (_terminal is { } terminal)
+        {
+            terminal.LineaArchivada -= AlArchivarLinea;
+
+            foreach (var linea in terminal.LineasEnPantalla)
+            {
+                bitacora.Anotar(linea);
+            }
+        }
+
+        bitacora.Dispose();
+        _bitacora = null;
+    }
+
+    /// <summary>Deja el terminal con su tamaño real antes de pedirle el pseudo-terminal al servidor.</summary>
+    private void MedirElTerminal()
+    {
+        // El marco se muestra recién en Connected, y un elemento colapsado no se mide: la sesion se
+        // abria con el 80x24 del constructor de TerminalControl y el servidor dimensionaba su
+        // bienvenida a 24 filas.
+        var visibilidad = _marcoSesion.Visibility;
+
+        _marcoSesion.Visibility = Visibility.Visible;
+        _marcoSesion.UpdateLayout();
+        _marcoSesion.Visibility = visibilidad;
     }
 
     /// <summary>Adaptador entre SshSession y el terminal de esta vista.</summary>
@@ -736,6 +840,7 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
             efectivo.ResolvedDirectorioDeTrabajo,
             efectivo.ResolvedComoRemoteApp);
 
+        _peticionRdp = peticion;
         _rdp = new RdpSession(peticion);
         _rdp.StateChanged += (_, cambio) =>
             Dispatcher.Invoke(() => AlCambiarEstadoRdp(cambio, inicio));
@@ -755,7 +860,7 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
 
         ArmarBarraDeRdp();
 
-        if (_registro.Rdp?.StartFullScreen == true)
+        if (_registro.Rdp?.AbreEnVentanaPropia == true || _elTrasladoCortaLaSesion)
         {
             AbrirEnVentanaPropia(conSesionViva: false);
             ConectarRdpCuandoHayVentana();
@@ -881,9 +986,46 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
                 "IconoVentanaPropia",
                 "Sacar la sesión a una ventana propia",
                 SacarAVentanaPropia);
+
+            AgregarHerramientasDeRdp();
         }
 
         _barraSesion.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>Un botón por herramienta externa instalada que atienda RDP.</summary>
+    private void AgregarHerramientasDeRdp()
+    {
+        var instaladas = _root.Herramientas.Instaladas
+            .Where(h => Infrastructure.ProtocolosDeHerramienta.Atiende(
+                h, Domain.Connections.Protocol.Rdp));
+
+        foreach (var herramienta in instaladas)
+        {
+            var nombre = Services.LanzadorExterno.Nombre(herramienta);
+            var cual = herramienta;
+
+            AgregarAccionDeRdp(
+                "IconoTerminalExterna",
+                $"Abrir este servidor en {nombre}",
+                () => AbrirRdpEn(cual));
+        }
+    }
+
+    /// <summary>Lanza la herramienta con el host y el puerto de esta sesión, nunca con la contraseña.</summary>
+    private void AbrirRdpEn(Infrastructure.HerramientaExterna herramienta)
+    {
+        if (_peticionRdp is not { } peticion
+            || _root.Herramientas.Ruta(herramienta) is not { } ejecutable)
+        {
+            return;
+        }
+
+        var destino = new Infrastructure.DestinoRemoto(peticion.Host, peticion.Port);
+
+        var error = Services.LanzadorExterno.Abrir(herramienta, ejecutable, destino);
+
+        Informar(error ?? $"{Services.LanzadorExterno.Nombre(herramienta)} abierto");
     }
 
     private System.Windows.Shapes.Path AgregarAccionDeRdp(
@@ -1062,7 +1204,7 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         reloj.Start();
     }
 
-    /// <summary>El intercambio en caliente no sobrevivió en este equipo: de acá en más la conexión arranca en su ventana propia y no se mueve.</summary>
+    /// <summary>El intercambio en caliente no sobrevivió en este equipo: de acá en más las sesiones arrancan en su ventana propia y no se mueven.</summary>
     private void AnotarQueElTrasladoNoSobrevive()
     {
         Aislar(() => _ventanaPropia?.SoltarYCerrar());
@@ -1081,23 +1223,10 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
             SessionFailureReason.UnexpectedDisconnect,
             "El control de RDP no sobrevivió al cambio de ventana.");
 
-        if (_registro.Rdp is { StartFullScreen: false } rdp)
-        {
-            rdp.StartFullScreen = true;
-            _ = RecordarQueAbreEnVentanaPropiaAsync();
-        }
-    }
-
-    private async Task RecordarQueAbreEnVentanaPropiaAsync()
-    {
-        try
-        {
-            await _root.Connections.UpdateAsync(_registro).ConfigureAwait(true);
-        }
-        catch (Exception ex)
-        {
-            _root.Logger.TechnicalError("recordar que la sesión abre en ventana propia", ex);
-        }
+        // Va a los ajustes de la aplicación y no a la conexión: que el control de RDP no sobreviva
+        // al cambio de ventana es propiedad de este equipo, y la bandera de la conexión es la
+        // preferencia que el usuario marca en el editor.
+        _ = _root.AppSettings.SaveWindowMoveBreaksSessionAsync(true);
     }
 
     private void AlCambiarElTamanoDeLaSesion(object sender, SizeChangedEventArgs e)
@@ -1271,11 +1400,10 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
             if (_ssh?.FingerprintToRemember is { } huella && _registro.Ssh is { } ssh)
             {
                 ssh.KnownHostFingerprint = huella;
-                await _root.Connections.UpdateAsync(_registro).ConfigureAwait(true);
-            }
 
-            await _root.Connections
-                .SetLastConnectedAsync(ConnectionId, DateTimeOffset.UtcNow).ConfigureAwait(true);
+                await _root.Connections
+                    .SetKnownHostFingerprintAsync(ConnectionId, huella).ConfigureAwait(true);
+            }
         }
         catch (Exception ex)
         {
@@ -1293,6 +1421,11 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         _dispuesto = true;
         _demoraBusqueda.Stop();
         _demoraDeResolucion.Stop();
+
+        // Cerrar la pestaña es el final normal de una sesión: sin esto la bitácora perdía su cola
+        // —vuelca cada 5 s— y el reloj de la franja seguía muestreando sobre el canal ya dispuesto.
+        Aislar(CerrarBitacora);
+        Aislar(DetenerLaFranja);
 
         Aislar(() => _recorte?.Deshacer());
         _recorte = null;

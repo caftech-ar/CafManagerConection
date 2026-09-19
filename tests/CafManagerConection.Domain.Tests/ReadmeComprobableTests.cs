@@ -29,6 +29,11 @@ public sealed class ReadmeComprobableTests
     private static readonly Regex VersionDelProyecto = new(
         @"<Version>(?<valor>[^<]+)</Version>", RegexOptions.Compiled);
 
+    private static readonly Regex TituloDeVersion = new(
+        @"^## (?<valor>[0-9]+\.[0-9]+\.[0-9]+[^\s]*)\s*$", RegexOptions.Compiled);
+
+    private const string Historial = "CHANGELOG.md";
+
     [Fact]
     public void La_version_que_declara_el_readme_es_la_del_proyecto()
     {
@@ -111,7 +116,7 @@ public sealed class ReadmeComprobableTests
     }
 
     [Fact]
-    public void El_readme_es_el_unico_documento_del_proyecto()
+    public void Los_unicos_documentos_del_proyecto_son_el_readme_y_el_historial()
     {
         var raiz = Repositorio.Raiz();
 
@@ -119,13 +124,42 @@ public sealed class ReadmeComprobableTests
             .EnumerateFiles(raiz, "*.md", SearchOption.AllDirectories)
             .Where(a => !EsDeHerramienta(Path.GetRelativePath(raiz, a)))
             .Select(a => Path.GetRelativePath(raiz, a).Replace(Path.DirectorySeparatorChar, '/'))
-            .Where(r => r != "README.md")
+            .Where(r => r is not ("README.md" or Historial))
             .ToArray();
 
         Assert.True(
             otros.Length == 0,
-            "Además del README hay estos documentos, y cada uno es algo más que se puede desfasar: "
-            + string.Join(", ", otros));
+            "Además del README y el historial hay estos documentos, y cada uno es algo más que se "
+            + "puede desfasar: " + string.Join(", ", otros));
+    }
+
+    [Fact]
+    public void El_historial_encabeza_con_la_version_del_proyecto()
+    {
+        var ruta = Path.Combine(Repositorio.Raiz(), Historial);
+
+        if (!File.Exists(ruta))
+        {
+            return;
+        }
+
+        var esperada = VersionDelProyecto
+            .Match(File.ReadAllText(Path.Combine(Repositorio.Raiz(), "Directory.Build.props")))
+            .Groups["valor"].Value;
+
+        var primera = File.ReadLines(ruta)
+            .Select(l => TituloDeVersion.Match(l))
+            .FirstOrDefault(m => m.Success);
+
+        Assert.True(
+            primera is not null,
+            $"{Historial} no tiene ningún título «## X.Y.Z».");
+
+        Assert.True(
+            primera!.Groups["valor"].Value == esperada,
+            $"{Historial} encabeza con {primera.Groups["valor"].Value} y el proyecto está en "
+            + $"{esperada}. La release publica la versión del proyecto: el historial tiene que "
+            + "traer sus novedades.");
     }
 
     internal static IEnumerable<string> AtajosCitadosEn(string texto) =>

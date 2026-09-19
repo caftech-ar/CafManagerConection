@@ -153,26 +153,38 @@ public partial class EtiquetasPanel : UserControl
             return;
         }
 
-        if (_editando is { } id)
+        try
         {
-            if (_catalogo.Por(id) is not { } etiqueta
-                || !_catalogo.Actualizar(id, _codigo.Text, _nombre.Text, _colorElegido))
+            if (_editando is { } id)
+            {
+                if (_catalogo.Por(id) is not { } etiqueta
+                    || !_catalogo.Actualizar(id, _codigo.Text, _nombre.Text, _colorElegido))
+                {
+                    return;
+                }
+
+                await root.Tags.UpdateAsync(etiqueta).ConfigureAwait(true);
+                await CargarAsync(id).ConfigureAwait(true);
+                return;
+            }
+
+            if (_catalogo.Agregar(_codigo.Text, _nombre.Text, _colorElegido) is not { } nueva)
             {
                 return;
             }
 
-            await root.Tags.UpdateAsync(etiqueta).ConfigureAwait(true);
-            await CargarAsync(id).ConfigureAwait(true);
-            return;
+            await root.Tags.AddAsync(nueva).ConfigureAwait(true);
+            await CargarAsync(nueva.Id).ConfigureAwait(true);
         }
-
-        if (_catalogo.Agregar(_codigo.Text, _nombre.Text, _colorElegido) is not { } nueva)
+        catch (Exception ex)
         {
-            return;
-        }
+            root.Logger.TechnicalError("guardar la etiqueta", ex);
 
-        await root.Tags.AddAsync(nueva).ConfigureAwait(true);
-        await CargarAsync(nueva.Id).ConfigureAwait(true);
+            if (Window.GetWindow(this) is { } ventana)
+            {
+                MessageWindow.Avisar(ventana, "No se pudo guardar", ex.Message);
+            }
+        }
     }
 
     /// <summary>Borra una etiqueta, avisando a cuántos elementos deja sin marca.</summary>
@@ -193,8 +205,15 @@ public partial class EtiquetasPanel : UserControl
                   : $"{usos} elementos la usan y van a quedar sin etiqueta.")
               + " No se borra ninguna conexión ni carpeta.";
 
+        if (EtiquetasDeFabrica.EsDeFabrica(id))
+        {
+            mensaje += "\n\nEs una etiqueta de fábrica: «Restablecer» la vuelve a crear, "
+                + "pero sin recuperar las marcas que se pierden ahora.";
+        }
+
         if (Window.GetWindow(this) is not { } ventana
-            || !MessageWindow.Confirmar(ventana, "Borrar la etiqueta", mensaje, "Borrar"))
+            || !MessageWindow.Confirmar(
+                ventana, "Borrar la etiqueta", mensaje, "Borrar", destructivo: true))
         {
             return;
         }

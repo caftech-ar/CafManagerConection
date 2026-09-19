@@ -1,5 +1,7 @@
 using CafManagerConection.Domain.Connections;
+using CafManagerConection.Domain.Settings;
 using CafManagerConection.UseCases.Abstractions;
+using CafManagerConection.UseCases.Connections;
 using CafManagerConection.UseCases.Inheritance;
 
 namespace CafManagerConection.UseCases.Folders;
@@ -161,8 +163,40 @@ public sealed class FolderService
         return OperationResult.Ok();
     }
 
-    public async Task UpdateSettingsAsync(Folder folder, CancellationToken ct = default) =>
+    /// <summary>Guarda los ajustes heredables de la carpeta.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">Un puerto o el keep-alive caen fuera de rango.</exception>
+    public async Task UpdateSettingsAsync(Folder folder, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+        ExigirAjustesAdmisibles(folder.Settings);
+
         await _folders.UpdateAsync(folder, ct).ConfigureAwait(false);
+    }
+
+    // Sin esto, el CHECK del esquema llega como una SqliteException cruda y la ventana de carpeta
+    // sólo puede decir «no se pudo guardar».
+    private static void ExigirAjustesAdmisibles(FolderSettings ajustes)
+    {
+        foreach (var protocolo in new[] { Protocol.Rdp, Protocol.Ssh, Protocol.Web })
+        {
+            if (!Limites.PuertoAdmisible(ajustes.PuertoDe(protocolo)))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(ajustes),
+                    ajustes.PuertoDe(protocolo),
+                    $"El puerto de {protocolo} debe estar entre {Limites.PuertoMinimo} y "
+                    + $"{Limites.PuertoMaximo}.");
+            }
+        }
+
+        if (!Limites.KeepAliveAdmisible(ajustes.SshKeepAliveSeconds))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(ajustes),
+                ajustes.SshKeepAliveSeconds,
+                ConnectionValidator.MensajeDeKeepAlive);
+        }
+    }
 
     // Cuántas conexiones descendientes cambian de valor efectivo con estos ajustes.
     public async Task<int> GetUpdateImpactAsync(

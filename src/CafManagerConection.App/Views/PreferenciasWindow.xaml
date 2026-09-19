@@ -143,9 +143,12 @@
                                            Text="Qué hacen las pestañas cuando no entran a lo ancho." />
                                 <ComboBox x:Name="_modoPestana" Width="320" HorizontalAlignment="Left"
                                           SelectionChanged="AlElegirModoDePestana">
-                                    <ComboBoxItem Content="Una fila, con desplazamiento" />
-                                    <ComboBoxItem Content="Una fila, con desplegable para el resto" />
-                                    <ComboBoxItem Content="Envolver en varias filas" />
+                                    <ComboBoxItem Content="Una fila, con desplazamiento"
+                                                  Tag="LinealConDesplazamiento" />
+                                    <ComboBoxItem Content="Una fila, con desplegable para el resto"
+                                                  Tag="LinealConDesplegable" />
+                                    <ComboBoxItem Content="Envolver en varias filas"
+                                                  Tag="EnvueltoEnFilas" />
                                 </ComboBox>
                             </StackPanel>
                         </Border>
@@ -195,6 +198,42 @@
 
             <TabItem x:Name="_pestanaImportar" Header="Importar">
                 <v:PanelImportacion x:Name="_panelImportacion" Margin="0,12,0,0" />
+            </TabItem>
+
+            <TabItem Header="Sesiones">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,0,0">
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14">
+                            <StackPanel>
+                                <TextBlock Text="Franja de métricas"
+                                           Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,14"
+                                           Text="Muestra al pie del terminal el uso de CPU, memoria y disco del servidor, con su distribución, la red y el tiempo encendido. Sólo para sesiones SSH contra Linux. No avisa ni interrumpe: sólo muestra. Cada conexión puede encenderla o apagarla por su cuenta." />
+
+                                <CheckBox x:Name="_franjaActiva"
+                                          Content="Mostrar la franja en las sesiones SSH"
+                                          Margin="0,0,0,14" Click="AlCambiarFranja" />
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Refrescar cada (segundos)"
+                                               Style="{StaticResource Etiqueta}"
+                                               VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <TextBox x:Name="_segundosFranja" Width="70"
+                                             TextAlignment="Center"
+                                             PreviewTextInput="AlEscribirNumero"
+                                             TextChanged="AlCambiarFranja" />
+                                    <TextBlock Style="{StaticResource Tenue}" VerticalAlignment="Center"
+                                               Margin="10,0,0,0"
+                                               Text="El espacio en disco se lee una vez por minuto." />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Copias">
@@ -273,6 +312,55 @@
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Tarjeta}" Padding="16,14" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Bitácora de las sesiones SSH"
+                                           Style="{StaticResource Titulo}"
+                                           FontSize="15" Margin="0,0,0,4" />
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,0,0,14"
+                                           Text="Guarda en un archivo todo lo que pasa por el terminal, a medida que ocurre, sin depender del historial de desplazamiento. Guarda también lo que se tipea: una contraseña que el servidor no oculte queda escrita. Lo que se hace dentro de vim o htop no se registra. Cada conexión puede encenderla o apagarla por su cuenta." />
+
+                                <CheckBox x:Name="_bitacoraActiva"
+                                          Content="Registrar las sesiones SSH"
+                                          Margin="0,0,0,14" Click="AlCambiarBitacora" />
+
+                                <TextBlock Text="Carpeta de las bitácoras"
+                                           Style="{StaticResource Etiqueta}" />
+                                <Grid Margin="0,4,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" x:Name="_carpetaBitacora"
+                                             Style="{StaticResource Ruta}" />
+                                    <Button Grid.Column="1" Content="Elegir…"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="8,0,0,0" Padding="12,0"
+                                            Click="AlElegirCarpetaDeBitacora" />
+                                    <Button Grid.Column="2" Content="Abrir"
+                                            Style="{StaticResource BotonSecundario}"
+                                            Margin="6,0,0,0" Padding="12,0"
+                                            Click="AlAbrirCarpetaDeBitacora" />
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Días que se guardan"
+                                               Style="{StaticResource Etiqueta}"
+                                               VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <TextBox x:Name="_diasBitacora" Width="70"
+                                             TextAlignment="Center"
+                                             PreviewTextInput="AlEscribirNumero"
+                                             TextChanged="AlCambiarBitacora" />
+                                    <TextBlock Style="{StaticResource Tenue}" VerticalAlignment="Center"
+                                               Margin="10,0,0,0"
+                                               Text="Se borran al abrir la aplicación. Cero no borra nada." />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>

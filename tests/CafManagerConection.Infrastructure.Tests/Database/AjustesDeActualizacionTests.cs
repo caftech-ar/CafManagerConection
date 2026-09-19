@@ -12,48 +12,16 @@ public sealed class AjustesDeActualizacionTests
     }
 
     [Fact]
-    public async Task Sin_nada_guardado_el_origen_es_el_repositorio_del_proyecto()
+    public async Task Sin_nada_guardado_no_hay_consulta_ni_posposicion()
     {
         using var db = new TempDatabase();
         var ajustes = await ServicioAsync(db);
 
         var actual = await ajustes.ObtenerAsync();
 
-        Assert.Equal(AjustesDeActualizacion.OrigenPorOmision, actual.Origen);
         Assert.Null(actual.UltimaConsulta);
         Assert.Null(actual.VersionPospuesta);
         Assert.Null(actual.MomentoDePosposicion);
-    }
-
-    [Fact]
-    public async Task El_origen_es_fijo_y_no_se_puede_cambiar_guardando_otro()
-    {
-        using var db = new TempDatabase();
-        var ajustes = await ServicioAsync(db);
-
-        await ajustes.GuardarAsync(new AjustesDeActualizacion(Origen: "otro/repositorio"));
-
-        Assert.Equal(AjustesDeActualizacion.Repositorio, (await ajustes.ObtenerAsync()).Origen);
-    }
-
-    [Fact]
-    public async Task Vaciar_el_origen_no_apaga_la_funcion_porque_el_origen_es_fijo()
-    {
-        using var db = new TempDatabase();
-        var ajustes = await ServicioAsync(db);
-
-        await ajustes.GuardarAsync(new AjustesDeActualizacion(Origen: string.Empty));
-
-        Assert.Equal(AjustesDeActualizacion.Repositorio, (await ajustes.ObtenerAsync()).Origen);
-    }
-
-    [Fact]
-    public async Task Una_base_recien_creada_ya_trae_el_repositorio_del_proyecto()
-    {
-        using var db = new TempDatabase();
-        var ajustes = await ServicioAsync(db);
-
-        Assert.Equal("caftech-ar/CafManagerConection", (await ajustes.ObtenerAsync()).Origen);
     }
 
     /// <remarks>Se guarda en formato "O", con el desfase incluido.</remarks>
@@ -64,7 +32,7 @@ public sealed class AjustesDeActualizacionTests
         var ajustes = await ServicioAsync(db);
         var momento = new DateTimeOffset(2026, 3, 1, 10, 30, 0, TimeSpan.FromHours(-3));
 
-        await ajustes.GuardarAsync(new AjustesDeActualizacion("operador/cmc", momento));
+        await ajustes.GuardarAsync(new AjustesDeActualizacion(momento));
 
         var actual = await ajustes.ObtenerAsync();
 
@@ -79,8 +47,8 @@ public sealed class AjustesDeActualizacionTests
         var ajustes = await ServicioAsync(db);
         var momento = DateTimeOffset.Now;
 
-        await ajustes.GuardarAsync(new AjustesDeActualizacion(
-            "operador/cmc", DateTimeOffset.Now, "1.4.0", momento));
+        await ajustes.GuardarAsync(
+            new AjustesDeActualizacion(DateTimeOffset.Now, "1.4.0", momento));
 
         var actual = await ajustes.ObtenerAsync();
 
@@ -94,9 +62,10 @@ public sealed class AjustesDeActualizacionTests
         using var db = new TempDatabase();
         var ajustes = await ServicioAsync(db);
 
-        await ajustes.GuardarAsync(new AjustesDeActualizacion(
-            "operador/cmc", DateTimeOffset.Now, "1.4.0", DateTimeOffset.Now));
-        await ajustes.GuardarAsync(new AjustesDeActualizacion("operador/cmc"));
+        await ajustes.GuardarAsync(
+            new AjustesDeActualizacion(DateTimeOffset.Now, "1.4.0", DateTimeOffset.Now));
+
+        await ajustes.GuardarAsync(new AjustesDeActualizacion(DateTimeOffset.Now));
 
         var actual = await ajustes.ObtenerAsync();
 

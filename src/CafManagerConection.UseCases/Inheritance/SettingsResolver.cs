@@ -57,7 +57,6 @@ public sealed class SettingsResolver
             Domain = ResolveRef(rdp?.Domain, ancestry, s => s.Domain),
 
             ClipboardEnabled = Resolve(rdp?.ClipboardEnabled, ancestry, s => s.RdpClipboardEnabled),
-            FitToTab = Resolve(rdp?.FitToTab, ancestry, s => s.RdpFitToTab),
             IgnoreCertificateWarnings = Resolve(
                 rdp?.IgnoreCertificateWarnings, ancestry, s => s.RdpIgnoreCertificateWarnings),
             UseWindowsIdentity = AjustesReservados.UsaIdentidadDeWindows(connection)

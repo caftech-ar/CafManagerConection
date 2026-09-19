@@ -58,29 +58,6 @@ public sealed class ConexionCatalogoTests
     }
 
     [Fact]
-    public void La_documentacion_acepta_una_direccion_web_absoluta()
-    {
-        var c = Nueva();
-
-        c.DocumentationUrl = "https://wiki.interno/aplicaciones";
-
-        Assert.Equal("https://wiki.interno/aplicaciones", c.DocumentationUrl);
-    }
-
-    [Theory]
-    [InlineData("wiki.interno/aplicaciones")]
-    [InlineData("no es una url")]
-    [InlineData("file:///c:/secretos.txt")]
-    public void La_documentacion_rechaza_lo_que_no_sea_http(string valor)
-    {
-        // Se restringe a http y https a propósito: abrir un `file://` o un esquema arbitrario
-        // desde un campo guardado es una forma de ejecutar algo sin quererlo.
-        var c = Nueva();
-
-        Assert.Throws<ArgumentException>(() => c.DocumentationUrl = valor);
-    }
-
-    [Fact]
     public void Una_conexion_nace_sin_campos_propios()
     {
         Assert.Empty(Nueva().CustomFields);

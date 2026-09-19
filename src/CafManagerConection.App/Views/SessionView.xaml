@@ -105,6 +105,24 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Padding vertical y alto del contenido copian a _barraSesion (2 y los 22 del
+                         estilo AccionDeSesion): las dos barras tienen que medir lo mismo -->
+                    <Border x:Name="_franjaMetricas" DockPanel.Dock="Bottom"
+                            Margin="6,0,6,5"
+                            Padding="10,2"
+                            CornerRadius="7"
+                            Background="{DynamicResource SuperficieConsola}"
+                            BorderBrush="{DynamicResource BordeConsola}" BorderThickness="1"
+                            Visibility="Collapsed">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="3"
+                                              Opacity="0.55" Color="Black" />
+                        </Border.Effect>
+
+                        <StackPanel x:Name="_medidas" Orientation="Horizontal"
+                                    Height="22" VerticalAlignment="Center" />
+                    </Border>
+
                     <wf:WindowsFormsHost x:Name="_host" />
                 </DockPanel>
             </Border>

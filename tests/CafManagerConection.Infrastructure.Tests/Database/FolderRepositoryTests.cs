@@ -83,8 +83,8 @@ public class FolderRepositoryTests
         {
             Settings =
             {
-                UserName = "root",
-                Port = 2222,
+                SshUserName = "root",
+                SshPort = 2222,
                 SshTieneSecreto = true,
                 RdpTieneSecreto = true,
                 SshAuthMethod = SshAuthMethod.PrivateKey,
@@ -97,8 +97,8 @@ public class FolderRepositoryTests
         var r = await repo.GetByIdAsync(folder.Id);
 
         Assert.NotNull(r);
-        Assert.Equal("root", r.Settings.UserName);
-        Assert.Equal(2222, r.Settings.Port);
+        Assert.Equal("root", r.Settings.SshUserName);
+        Assert.Equal(2222, r.Settings.SshPort);
         // Los llega en falso: el repositorio de carpetas no escribe secretos, los escribe el vault.
         Assert.False(r.Settings.SshTieneSecreto);
         Assert.False(r.Settings.RdpTieneSecreto);
@@ -167,18 +167,22 @@ public class FolderRepositoryTests
         using var _ = db;
         var folder = new Folder(Guid.NewGuid(), "F")
         {
-            Settings = { RdpClipboardEnabled = false, RdpFitToTab = null },
+            Settings =
+            {
+                RdpClipboardEnabled = false,
+                RdpIgnoreCertificateWarnings = null,
+            },
         };
 
         await repo.AddAsync(folder);
         var r = await repo.GetByIdAsync(folder.Id);
 
         Assert.False(r!.Settings.RdpClipboardEnabled);
-        Assert.Null(r.Settings.RdpFitToTab);
+        Assert.Null(r.Settings.RdpIgnoreCertificateWarnings);
     }
 
     [Fact]
-    public async Task Una_carpeta_sin_configuracion_no_escribe_fila_de_settings()
+    public async Task Una_carpeta_sin_configuracion_vuelve_con_todo_sin_definir()
     {
         var (db, repo) = await CreateAsync();
         using var _ = db;
@@ -187,7 +191,11 @@ public class FolderRepositoryTests
         await repo.AddAsync(folder);
         var r = await repo.GetByIdAsync(folder.Id);
 
-        Assert.True(r!.Settings.IsEmpty);
+        Assert.Null(r!.Settings.SshUserName);
+        Assert.Null(r.Settings.SshPort);
+        Assert.Null(r.Settings.Domain);
+        Assert.Null(r.Settings.TagId);
+        Assert.Empty(r.Settings.CustomFields);
     }
 
     [Fact]
@@ -195,14 +203,14 @@ public class FolderRepositoryTests
     {
         var (db, repo) = await CreateAsync();
         using var _ = db;
-        var folder = new Folder(Guid.NewGuid(), "F") { Settings = { UserName = "antes" } };
+        var folder = new Folder(Guid.NewGuid(), "F") { Settings = { SshUserName = "antes" } };
         await repo.AddAsync(folder);
 
-        var actualizada = new Folder(folder.Id, "F") { Settings = { UserName = "después" } };
+        var actualizada = new Folder(folder.Id, "F") { Settings = { SshUserName = "después" } };
         await repo.UpdateAsync(actualizada);
 
         var r = await repo.GetByIdAsync(folder.Id);
-        Assert.Equal("después", r!.Settings.UserName);
+        Assert.Equal("después", r!.Settings.SshUserName);
     }
 
     [Fact]

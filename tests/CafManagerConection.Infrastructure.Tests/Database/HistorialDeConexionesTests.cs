@@ -42,7 +42,7 @@ public sealed class HistorialDeConexionesTests
         await repo.AddAsync(Evento(
             c.Id, cuando, ConnectionOutcome.Failed, null, SessionFailureReason.AuthenticationRejected));
 
-        var leidos = await repo.GetForConnectionAsync(c.Id);
+        var leidos = await DeLaConexionAsync(repo, c.Id);
         var e = Assert.Single(leidos);
 
         Assert.Equal(c.Id, e.ConnectionId);
@@ -61,7 +61,7 @@ public sealed class HistorialDeConexionesTests
 
         await repo.AddAsync(Evento(c.Id, DateTimeOffset.UtcNow, segundos: 7384));
 
-        Assert.Equal(7384, (await repo.GetForConnectionAsync(c.Id))[0].DurationSeconds);
+        Assert.Equal(7384, (await DeLaConexionAsync(repo, c.Id))[0].DurationSeconds);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class HistorialDeConexionesTests
         await repo.AddAsync(Evento(c.Id, base_.AddDays(2)));
         await repo.AddAsync(Evento(c.Id, base_.AddDays(1)));
 
-        var leidos = await repo.GetForConnectionAsync(c.Id);
+        var leidos = await DeLaConexionAsync(repo, c.Id);
 
         Assert.Equal(base_.AddDays(2), leidos[0].AttemptedAt.ToUniversalTime());
         Assert.Equal(base_, leidos[2].AttemptedAt.ToUniversalTime());
@@ -97,7 +97,7 @@ public sealed class HistorialDeConexionesTests
             await repo.AddAsync(Evento(c.Id, base_.AddMinutes(i)));
         }
 
-        var leidos = await repo.GetForConnectionAsync(c.Id, limit: 1000);
+        var leidos = await DeLaConexionAsync(repo, c.Id);
 
         Assert.Equal(limite, leidos.Count);
 
@@ -125,7 +125,7 @@ public sealed class HistorialDeConexionesTests
 
         await repo.AddAsync(Evento(otra.Id, base_));
 
-        Assert.Single(await repo.GetForConnectionAsync(otra.Id));
+        Assert.Single(await DeLaConexionAsync(repo, otra.Id));
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public sealed class HistorialDeConexionesTests
         await repo.AddAsync(Evento(c.Id, masVieja));
         await repo.AddAsync(Evento(c.Id, masNueva));
 
-        var leidos = await repo.GetForConnectionAsync(c.Id);
+        var leidos = await DeLaConexionAsync(repo, c.Id);
 
         Assert.Equal(masNueva.ToUniversalTime(), leidos[0].AttemptedAt.ToUniversalTime());
         Assert.Equal(masVieja.ToUniversalTime(), leidos[1].AttemptedAt.ToUniversalTime());
@@ -201,4 +201,60 @@ public sealed class HistorialDeConexionesTests
 
         Assert.Empty(await repo.GetRecentAsync());
     }
+
+    [Fact]
+    public async Task El_total_no_depende_del_limite_que_lea_la_ventana()
+    {
+        var (db, repo, c) = await ArmarAsync();
+        using var _ = db;
+
+        var base_ = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        for (var i = 0; i < 7; i++)
+        {
+            await repo.AddAsync(Evento(c.Id, base_.AddMinutes(i)));
+        }
+
+        Assert.Equal(3, (await repo.GetRecentAsync(3)).Count);
+        Assert.Equal(7, await repo.ContarAsync());
+    }
+
+    [Fact]
+    public async Task La_ultima_conexion_exitosa_sale_del_historial()
+    {
+        var (db, repo, c) = await ArmarAsync();
+        using var _ = db;
+
+        var exito = new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero);
+
+        await repo.AddAsync(Evento(c.Id, exito, ConnectionOutcome.Success));
+        await repo.AddAsync(Evento(
+            c.Id,
+            exito.AddDays(1),
+            ConnectionOutcome.Failed,
+            motivo: SessionFailureReason.HostUnreachable));
+
+        var ultimas = await repo.UltimaConexionExitosaPorConexionAsync();
+
+        Assert.Equal(exito, ultimas[c.Id].ToUniversalTime());
+    }
+
+    [Fact]
+    public async Task Una_conexion_sin_exitos_no_figura_en_las_ultimas()
+    {
+        var (db, repo, c) = await ArmarAsync();
+        using var _ = db;
+
+        await repo.AddAsync(Evento(
+            c.Id,
+            DateTimeOffset.UtcNow,
+            ConnectionOutcome.Failed,
+            motivo: SessionFailureReason.HostUnreachable));
+
+        Assert.Empty(await repo.UltimaConexionExitosaPorConexionAsync());
+    }
+
+    private static async Task<IReadOnlyList<ConnectionHistoryEntry>> DeLaConexionAsync(
+        ConnectionHistoryRepository repo, Guid id) =>
+        [.. (await repo.GetRecentAsync(1000)).Where(e => e.ConnectionId == id)];
 }

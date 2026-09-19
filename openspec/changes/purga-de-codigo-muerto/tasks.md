@@ -61,8 +61,8 @@ Bloqueado. El estimado con el que se decidió cablear no contemplaba lo que hace
 `RdpClientHost` es reflexión tardía pura sobre el OCX y no tiene sumidero de eventos COM, y los
 códigos de `OnDisconnected` no se leen como propiedad.
 
-- [ ] 5.1 Resolver la pregunta abierta del diseño
-- [ ] 5.2 Según la salida: cablear `OnDisconnected`, o cortar `MapDisconnect` con el valor del enum
+- [x] 5.1 Resolver la pregunta abierta del diseño
+- [x] 5.2 Según la salida: cablear `OnDisconnected`, o cortar `MapDisconnect` con el valor del enum
 
 ## 6. Cierre
 

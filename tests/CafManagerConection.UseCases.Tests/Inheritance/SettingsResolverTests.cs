@@ -34,7 +34,7 @@ public class SettingsResolverTests
     {
         var carpeta = new Folder(Guid.NewGuid(), "Producción")
         {
-            Settings = { Port = 2222, UserName = "root" },
+            Settings = { SshPort = 2222, SshUserName = "root" },
         };
         var conexion = Conexion(carpeta.Id);
         conexion.SetPort(2022);
@@ -50,7 +50,7 @@ public class SettingsResolverTests
     {
         var carpeta = new Folder(Guid.NewGuid(), "Producción")
         {
-            Settings = { Port = 2222, UserName = "root" },
+            Settings = { SshPort = 2222, SshUserName = "root" },
         };
 
         var efectivo = new SettingsResolver([carpeta]).Resolve(Conexion(carpeta.Id));
@@ -66,7 +66,7 @@ public class SettingsResolverTests
     {
         var raiz = new Folder(Guid.NewGuid(), "Producción")
         {
-            Settings = { UserName = "root", Port = 2222 },
+            Settings = { SshUserName = "root", SshPort = 2222 },
         };
         var media = new Folder(Guid.NewGuid(), "DMZ", raiz.Id);
         var hoja = new Folder(Guid.NewGuid(), "Web", media.Id);
@@ -80,8 +80,8 @@ public class SettingsResolverTests
     [Fact]
     public void La_carpeta_mas_cercana_gana_sobre_la_mas_lejana()
     {
-        var raiz = new Folder(Guid.NewGuid(), "Producción") { Settings = { Port = 22 } };
-        var hoja = new Folder(Guid.NewGuid(), "DMZ", raiz.Id) { Settings = { Port = 2222 } };
+        var raiz = new Folder(Guid.NewGuid(), "Producción") { Settings = { SshPort = 22 } };
+        var hoja = new Folder(Guid.NewGuid(), "DMZ", raiz.Id) { Settings = { SshPort = 2222 } };
 
         var efectivo = new SettingsResolver([raiz, hoja]).Resolve(Conexion(hoja.Id));
 
@@ -169,7 +169,7 @@ public class SettingsResolverTests
     {
         var carpeta = new Folder(Guid.NewGuid(), "Producción")
         {
-            Settings = { SshTieneSecreto = true, UserName = "admin", Port = 22 },
+            Settings = { SshTieneSecreto = true, SshUserName = "admin", SshPort = 22 },
         };
         var resolver = new SettingsResolver([carpeta]);
         var conexiones = Enumerable.Range(0, 20).Select(_ => Conexion(carpeta.Id)).ToArray();
@@ -191,7 +191,7 @@ public class SettingsResolverTests
         var efectivo = new SettingsResolver([]).Resolve(Conexion(protocol: Protocol.Rdp));
 
         Assert.True(efectivo.ResolvedClipboardEnabled);
-        Assert.True(efectivo.ResolvedFitToTab);
+        Assert.Equal(ModoDeTamanoRdp.EscalarPixeles, efectivo.ResolvedModoDeTamano);
         Assert.False(efectivo.ResolvedIgnoreCertificateWarnings);
         Assert.Equal(SshAuthMethod.Password, efectivo.ResolvedAuthMethod);
         Assert.Equal(60, efectivo.ResolvedKeepAliveSeconds);
@@ -216,7 +216,7 @@ public class SettingsResolverTests
     [Fact]
     public void Una_cadena_vacia_se_trata_como_no_definida()
     {
-        var carpeta = new Folder(Guid.NewGuid(), "Producción") { Settings = { UserName = "root" } };
+        var carpeta = new Folder(Guid.NewGuid(), "Producción") { Settings = { SshUserName = "root" } };
         var conexion = Conexion(carpeta.Id);
         conexion.UserName = "";
 
@@ -242,11 +242,11 @@ public class SettingsResolverTests
     {
         var origen = new Folder(Guid.NewGuid(), "Desarrollo")
         {
-            Settings = { SshTieneSecreto = true, UserName = "dev", Port = 22 },
+            Settings = { SshTieneSecreto = true, SshUserName = "dev", SshPort = 22 },
         };
         var destino = new Folder(Guid.NewGuid(), "Producción")
         {
-            Settings = { SshTieneSecreto = true, UserName = "root", Port = 2222 },
+            Settings = { SshTieneSecreto = true, SshUserName = "root", SshPort = 2222 },
         };
         var conexion = Conexion(origen.Id);
         var resolver = new SettingsResolver([origen, destino]);
@@ -261,8 +261,8 @@ public class SettingsResolverTests
     [Fact]
     public void Mover_entre_carpetas_equivalentes_no_reporta_cambios()
     {
-        var origen = new Folder(Guid.NewGuid(), "A") { Settings = { UserName = "root" } };
-        var destino = new Folder(Guid.NewGuid(), "B") { Settings = { UserName = "root" } };
+        var origen = new Folder(Guid.NewGuid(), "A") { Settings = { SshUserName = "root" } };
+        var destino = new Folder(Guid.NewGuid(), "B") { Settings = { SshUserName = "root" } };
         var conexion = Conexion(origen.Id);
 
         var cambios = new SettingsResolver([origen, destino]).DiffOnMove(conexion, destino.Id);

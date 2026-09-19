@@ -216,7 +216,6 @@ public sealed class RdpSession : IDisposable
         usoIdentidadDeWindows
         && !llegoAConectar
         && motivo is SessionFailureReason.AuthenticationRejected
-                  or SessionFailureReason.CredentialMissing
                   or SessionFailureReason.UnexpectedDisconnect
                   or SessionFailureReason.Other;
 
@@ -596,41 +595,6 @@ public sealed class RdpSession : IDisposable
             "No se pudo iniciar la sesión RDP.",
             "Revisá los datos de la conexión.",
             ex.GetType().Name),
-    };
-
-    /// <summary>Traduce el código de desconexión del control a una causa.</summary>
-    public static SessionFailure MapDisconnect(int reason) => reason switch
-    {
-        1 or 2 or 3 => new SessionFailure(
-            SessionFailureReason.UnexpectedDisconnect,
-            "La sesión se cerró.",
-            "Podés reconectar desde la pestaña."),
-
-        260 or 264 or 516 => new SessionFailure(
-            SessionFailureReason.HostUnreachable,
-            "No se pudo alcanzar el servidor.",
-            "Verificá el host, el puerto y la conectividad de red."),
-
-        2308 or 2311 => new SessionFailure(
-            SessionFailureReason.UnexpectedDisconnect,
-            "Se perdió la conexión con el servidor.",
-            "Podés reconectar desde la pestaña."),
-
-        2825 or 3079 or 3847 => new SessionFailure(
-            SessionFailureReason.AuthenticationRejected,
-            "El servidor rechazó las credenciales.",
-            "Revisá el usuario, el dominio y la contraseña."),
-
-        1288 or 1289 or 3591 => new SessionFailure(
-            SessionFailureReason.CertificateUntrusted,
-            "El certificado del servidor no es de confianza.",
-            "Podés aceptarlo para esta conexión desde su edición."),
-
-        _ => new SessionFailure(
-            SessionFailureReason.UnexpectedDisconnect,
-            "La sesión se cerró.",
-            "Podés reconectar desde la pestaña.",
-            $"Código {reason}"),
     };
 
     private void SetState(SessionState state)

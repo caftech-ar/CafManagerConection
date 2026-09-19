@@ -40,5 +40,5 @@
 - [x] 4.1 `openspec validate opciones-de-pantalla-rdp --strict`.
 - [x] 4.2 Suite de los proyectos afectados en verde (Domain 1030, UseCases 205, Infrastructure 370,
   Rdp 51; 0 fallos).
-- [ ] 4.3 Verificar contra el control instalado que escala y RemoteApp no quedan en
+- [x] 4.3 Verificar contra el control instalado que escala y RemoteApp no quedan en
   `PropiedadesNoAceptadas` en una máquina de referencia; si quedan, dejarlo anotado en la conexión.

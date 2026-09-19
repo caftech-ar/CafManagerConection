@@ -108,6 +108,8 @@ public partial class MainWindow
             case { EsCarpeta: false, Conexion: { } conexion }:
                 Agregar("Conectar", () => AbrirSesion(conexion), destacado: true);
                 Agregar("Abrir otra sesión", () => AbrirSesion(conexion, forzarNueva: true));
+                Agregar("Hacer ping", () => HacerPing(conexion.Name, [conexion]));
+                Agregar("Ver bitácoras", () => VerBitacoras(conexion.Name));
 
                 AgregarHerramientasExternas(conexion, Agregar, Separar);
 
@@ -118,9 +120,15 @@ public partial class MainWindow
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
                 Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconoEditar);
-                Agregar(
-                    "Túneles…", () => _ = EditarTunelesAsync(nodo),
-                    icono: (Geometry)FindResource("IconoPanelTuneles"));
+
+                // Sólo SSH: un túnel definido en una conexión RDP no lo levanta nadie.
+                if (conexion.Protocol == Protocol.Ssh)
+                {
+                    Agregar(
+                        "Túneles…", () => _ = EditarTunelesAsync(nodo),
+                        icono: (Geometry)FindResource("IconoPanelTuneles"));
+                }
+
                 Agregar(
                     "Duplicar", () => _ = DuplicarAsync(nodo),
                     icono: (Geometry)FindResource("IconoCopiarTodo"));
@@ -131,6 +139,7 @@ public partial class MainWindow
 
             case { EsCarpeta: true }:
                 Agregar("Abrir todas las conexiones", () => AbrirTodasAsync(nodo), destacado: true);
+                Agregar("Hacer ping", () => HacerPing(nodo.Nombre, DelSubarbol(nodo)));
                 Separar();
                 Agregar(
                     "Nueva conexión aquí…", () => _ = NuevaConexionAsync(nodo.Id),
@@ -270,12 +279,9 @@ public partial class MainWindow
         ConnectionSummary conexion, Action<string, Action, bool, Geometry?, Brush?> agregar,
         Action separar)
     {
-        if (conexion.Protocol != Protocol.Ssh)
-        {
-            return;
-        }
-
-        var instaladas = _root.Herramientas.Instaladas.ToList();
+        var instaladas = _root.Herramientas.Instaladas
+            .Where(h => ProtocolosDeHerramienta.Atiende(h, conexion.Protocol))
+            .ToList();
 
         if (instaladas.Count == 0)
         {
@@ -295,6 +301,42 @@ public partial class MainWindow
                 $"Abrir en {nombre}", () => _ = AbrirExternaAsync(cual, conexion), false,
                 iconoExterna, null);
         }
+    }
+
+    /// <summary>Las conexiones de una carpeta y de todas sus subcarpetas.</summary>
+    /// <param name="carpeta">Nodo de carpeta desde el que se baja.</param>
+    private static List<ConnectionSummary> DelSubarbol(NodoArbol carpeta) =>
+        [.. carpeta.Recorrer().Where(n => !n.EsCarpeta).Select(n => n.Conexion!).Where(c => c is not null)];
+
+    /// <summary>Abre la ventana de ping sobre un conjunto de conexiones.</summary>
+    /// <param name="origen">Nombre de la carpeta o de la conexión, para el título.</param>
+    /// <param name="conexiones">Las conexiones a sondear.</param>
+    private void HacerPing(string origen, IReadOnlyList<ConnectionSummary> conexiones)
+    {
+        if (!conexiones.Any(SondeoDeHosts.SePuedeSondear))
+        {
+            _estado.Text = $"«{origen}» no tiene conexiones que se puedan sondear";
+            return;
+        }
+
+        AbrirHerramienta($"Ping · {origen}", new PingView(_root, conexiones));
+    }
+
+    /// <summary>Abre el visor de bitácoras, filtrado por una conexión.</summary>
+    /// <param name="conexion">Nombre de la conexión con la que arranca el filtro.</param>
+    private void VerBitacoras(string conexion) =>
+        _ = VerBitacorasAsync(conexion);
+
+    private async Task VerBitacorasAsync(string conexion)
+    {
+        var ajustes = await _root.AppSettings.GetSessionLogSettingsAsync().ConfigureAwait(true);
+
+        var carpeta = string.IsNullOrWhiteSpace(ajustes.Carpeta)
+            ? System.IO.Path.Combine(_root.Paths.Root, "bitacoras")
+            : ajustes.Carpeta;
+
+        AbrirHerramienta(
+            $"Bitácoras · {conexion}", new BitacorasView(_root, carpeta, conexion));
     }
 
     /// <summary>Lanza la herramienta con host, usuario y puerto —y la clave si hay—, nunca la contraseña.</summary>
@@ -584,7 +626,8 @@ public partial class MainWindow
                         this,
                         "Eliminar carpeta",
                         $"Se va a eliminar la carpeta «{nodo.Nombre}», que está vacía.",
-                        "Eliminar"))
+                        "Eliminar",
+                        destructivo: true))
                 {
                     return;
                 }
@@ -637,7 +680,8 @@ public partial class MainWindow
                     return;
                 }
             }
-            else if (!Dialogos.Confirmar(this, "Eliminar conexión", aviso, "Eliminar"))
+            else if (!Dialogos.Confirmar(
+                this, "Eliminar conexión", aviso, "Eliminar", destructivo: true))
             {
                 return;
             }
@@ -851,8 +895,13 @@ public partial class MainWindow
                 WebLauncher.Open(web);
                 _estado.Text = $"Abierto en el navegador · {web.Url}";
 
-                await _root.Connections
-                    .SetLastConnectedAsync(conexion.Id, DateTimeOffset.UtcNow)
+                // Queda anotado como cualquier otra sesion: la ultima conexion del arbol sale del
+                // historial, y sin esta fila una entrada web no tendria ninguna.
+                await _root.History.AddAsync(new ConnectionHistoryEntry(
+                        Guid.NewGuid(),
+                        conexion.Id,
+                        DateTimeOffset.UtcNow,
+                        ConnectionOutcome.Success))
                     .ConfigureAwait(true);
             }
         }

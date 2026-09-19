@@ -65,6 +65,9 @@ public partial class ConnectionEditorWindow : Window
     /// <summary>Los campos propios de la conexión, en edición. Observable porque la grilla tiene que enterarse de las altas y las bajas sin reasignar ItemsSource.</summary>
     private readonly ObservableCollection<CampoPropio> _camposPropios = new();
 
+    /// <summary>En qué carpeta está cada conexión que puede ser padre, para derivar la de la hija.</summary>
+    private readonly Dictionary<Guid, Guid> _carpetaDeLasConexiones = [];
+
     public ConnectionEditorWindow(
         CompositionRoot root, Guid? editando = null, Guid? carpetaInicial = null)
     {
@@ -136,6 +139,11 @@ public partial class ConnectionEditorWindow : Window
                                     ?? opciones[0];
         }
 
+        // Fuera de Volcar, que sólo corre al editar: en un alta con padre elegido la carpeta quedaba
+        // suelta y se guardaba distinta de la del padre.
+        _padre.SelectionChanged += AlCambiarPadre;
+        AplicarLaCarpetaDelPadre();
+
         ActualizarVisibilidad();
         ActualizarHeredados();
         await ActualizarNombreDuplicadoAsync().ConfigureAwait(true);
@@ -152,6 +160,13 @@ public partial class ConnectionEditorWindow : Window
             .Where(c => c.Id != _editando && c.ParentConnectionId is null)
             .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
             .Select(c => new OpcionPadre(c.Id, $"{c.Name} — {c.Host}")));
+
+        _carpetaDeLasConexiones.Clear();
+
+        foreach (var c in todas.Where(c => c.FolderId is not null))
+        {
+            _carpetaDeLasConexiones[c.Id] = c.FolderId!.Value;
+        }
 
         _padre.ItemsSource = opciones;
         _padre.SelectedIndex = 0;
@@ -353,9 +368,14 @@ public partial class ConnectionEditorWindow : Window
         _claveGuardada.Visibility = c.TieneSecreto ? Visibility.Visible : Visibility.Collapsed;
 
         _rdpPortapapeles.IsChecked = registro.Rdp?.ClipboardEnabled;
+        _rdpVentanaPropia.IsChecked = registro.Rdp?.AbreEnVentanaPropia ?? false;
         _rdpIgnorarCertificado.IsChecked = registro.Rdp?.IgnoreCertificateWarnings;
         VolcarOpcionesDePantalla(c);
         _rdpIdentidadDeWindows.IsChecked = AjustesReservados.UsaIdentidadDeWindows(c);
+        _sshBitacora.IsChecked = AjustesReservados.Decision(c, AjustesReservados.BitacoraDeSesion);
+        _sshFranja.IsChecked = AjustesReservados.Decision(c, AjustesReservados.BarraDeMetricas);
+        DescribirLaBitacora();
+        DescribirLaFranja();
         AplicarLaIdentidadDeWindowsAlFormulario();
 
         _sshMetodoAuth.SelectedIndex = IndiceDeMetodoAuth(registro.Ssh?.AuthMethod);
@@ -368,7 +388,6 @@ public partial class ConnectionEditorWindow : Window
         ArmarIconos();
 
         _descripcion.Text = c.Description ?? string.Empty;
-        _documentacion.Text = c.DocumentationUrl ?? string.Empty;
         _favorita.IsChecked = c.IsFavorite;
 
         var deEtiqueta = (List<OpcionEtiqueta>)_etiqueta.ItemsSource;
@@ -377,6 +396,8 @@ public partial class ConnectionEditorWindow : Window
         var padres = (List<OpcionPadre>)_padre.ItemsSource;
         _padre.SelectedItem = padres.FirstOrDefault(o => o.Id == c.ParentConnectionId)
                               ?? padres[0];
+
+        MostrarFechasDeRegistro(c);
 
         var opciones = (List<OpcionCarpeta>)_carpeta.ItemsSource;
         _carpeta.SelectedItem = opciones.FirstOrDefault(o => o.Id == c.FolderId) ?? opciones[0];
@@ -418,6 +439,7 @@ public partial class ConnectionEditorWindow : Window
         _seccionAutenticacion.Visibility = esSsh ? Visibility.Visible : Visibility.Collapsed;
         _bloqueKeepAliveSsh.Visibility = esSsh ? Visibility.Visible : Visibility.Collapsed;
         _ventanaPrivada.Visibility = esWeb ? Visibility.Visible : Visibility.Collapsed;
+        ActualizarVentanaPrivada();
 
         _etiquetaPuerto.Text = esRdp
             ? "Puerto (vacío = heredar; por omisión 3389)"
@@ -603,6 +625,29 @@ public partial class ConnectionEditorWindow : Window
     /// <summary>Un solo handler para todos los campos heredables; <c>RoutedEventArgs</c> alcanza porque <c>TextChangedEventArgs</c> y <c>SelectionChangedEventArgs</c> derivan de él.</summary>
     private void AlCambiarCampoHeredable(object sender, RoutedEventArgs e) => ActualizarHeredados();
 
+    private void AlCambiarNavegador(object sender, TextChangedEventArgs e) =>
+        ActualizarVentanaPrivada();
+
+    /// <summary>Sin navegador elegido no hay a quién pedirle el modo privado, y con uno desconocido no se sabe cómo pedírselo.</summary>
+    private void ActualizarVentanaPrivada()
+    {
+        var navegador = _webNavegador.Text.Trim();
+        var hay = navegador.Length > 0;
+
+        _ventanaPrivada.IsEnabled = hay;
+
+        var desconocido = hay && !WebLauncher.ConoceModoPrivado(navegador);
+
+        _avisoVentanaPrivada.Text = hay
+            ? "No se sabe cómo abrir ese navegador en modo privado: se va a abrir normal."
+            : "Elegí un navegador para poder pedir la ventana privada.";
+
+        _avisoVentanaPrivada.Visibility =
+            _ventanaPrivada.Visibility == Visibility.Visible && (!hay || desconocido)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+    }
+
     private void AlCambiarCarpeta(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded)
@@ -612,6 +657,39 @@ public partial class ConnectionEditorWindow : Window
 
         ActualizarHeredados();
         _ = ActualizarNombreDuplicadoAsync();
+    }
+
+    /// <summary>Una conexión hija hereda por la carpeta de su padre, así que la carpeta la manda el padre y deja de elegirse.</summary>
+    private void AlCambiarPadre(object sender, SelectionChangedEventArgs e) =>
+        AplicarLaCarpetaDelPadre();
+
+    private void AplicarLaCarpetaDelPadre()
+    {
+        var padre = (_padre.SelectedItem as OpcionPadre)?.Id;
+        var tienePadre = padre is not null;
+
+        _carpeta.IsEnabled = !tienePadre;
+        _carpetaDelPadre.Visibility = tienePadre ? Visibility.Visible : Visibility.Collapsed;
+
+        if (padre is not { } id || !_carpetaDeLasConexiones.TryGetValue(id, out var carpeta))
+        {
+            return;
+        }
+
+        var opciones = (List<OpcionCarpeta>)_carpeta.ItemsSource;
+        _carpeta.SelectedItem = opciones.FirstOrDefault(o => o.Id == carpeta) ?? opciones[0];
+    }
+
+    /// <summary>Cuándo se creó y cuándo se modificó por última vez; en un alta todavía no hay nada que mostrar.</summary>
+    private void MostrarFechasDeRegistro(Connection c)
+    {
+        _fechasDeRegistro.Text =
+            $"Creada el {Fecha(c.CreatedAt)} · modificada el {Fecha(c.UpdatedAt)}";
+
+        _fechasDeRegistro.Visibility = Visibility.Visible;
+
+        static string Fecha(DateTimeOffset cuando) => cuando.ToLocalTime()
+            .ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture);
     }
 
     private void AlCambiarNombre(object sender, TextChangedEventArgs e) =>
@@ -839,6 +917,8 @@ public partial class ConnectionEditorWindow : Window
                 return;
             }
 
+            // Escrito es escrito, aunque coincida con el de omisión: descartarlo dejaba sin forma de
+            // forzar el 22 en una conexión cuya carpeta hereda otro puerto.
             puerto = valor;
         }
 
@@ -848,6 +928,15 @@ public partial class ConnectionEditorWindow : Window
             && !ValidarKeepAliveSegundos(_sshKeepAlive.Text, out keepAlive, out var errorKeepAlive))
         {
             MostrarErrorEnPestana(errorKeepAlive!, _pestanaAvanzado, _avisoErrorAvanzado);
+            return;
+        }
+
+        if (_notas.Text.Trim().Length > Connection.MaxNotesLength)
+        {
+            MostrarErrorEnPestana(
+                $"Las notas no pueden superar los {Connection.MaxNotesLength} caracteres.",
+                _pestanaAvanzado,
+                _avisoErrorAvanzado);
             return;
         }
 
@@ -884,7 +973,6 @@ public partial class ConnectionEditorWindow : Window
     private void AplicarCatalogo(Connection c)
     {
         c.Description = _descripcion.Text;
-        c.DocumentationUrl = _documentacion.Text;
         c.IsFavorite = _favorita.IsChecked == true;
         c.TagId = (_etiqueta.SelectedItem as OpcionEtiqueta)?.Id;
         c.ParentConnectionId = (_padre.SelectedItem as OpcionPadre)?.Id;
@@ -908,6 +996,16 @@ public partial class ConnectionEditorWindow : Window
         }
 
         AjustesReservados.FijarIdentidadDeWindows(c, UsaLaIdentidadDeWindows);
+
+        AjustesReservados.FijarDecision(
+            c,
+            AjustesReservados.BitacoraDeSesion,
+            Elegido == Protocol.Ssh ? _sshBitacora.IsChecked : null);
+
+        AjustesReservados.FijarDecision(
+            c,
+            AjustesReservados.BarraDeMetricas,
+            Elegido == Protocol.Ssh ? _sshFranja.IsChecked : null);
 
         if (Elegido == Protocol.Rdp)
         {
@@ -978,6 +1076,28 @@ public partial class ConnectionEditorWindow : Window
 
     private void AlCambiarLaIdentidadDeWindows(object sender, RoutedEventArgs e) =>
         AplicarLaIdentidadDeWindowsAlFormulario();
+
+    private void AlCambiarLaBitacora(object sender, RoutedEventArgs e) => DescribirLaBitacora();
+
+    private void AlCambiarLaFranja(object sender, RoutedEventArgs e) => DescribirLaFranja();
+
+    /// <summary>Dice qué hace cada uno de los tres estados de la franja de esta conexión.</summary>
+    private void DescribirLaFranja() =>
+        _sshFranjaHeredada.Text = _sshFranja.IsChecked switch
+        {
+            true => "Esta sesión muestra la franja aunque esté apagada en Preferencias.",
+            false => "Esta sesión no muestra la franja aunque esté activa en Preferencias.",
+            _ => "Sigue lo que diga Preferencias.",
+        };
+
+    /// <summary>Dice qué hace cada uno de los tres estados de la bitácora de esta conexión.</summary>
+    private void DescribirLaBitacora() =>
+        _sshBitacoraHeredado.Text = _sshBitacora.IsChecked switch
+        {
+            true => "Esta conexión deja bitácora aunque esté apagada en Preferencias.",
+            false => "Esta conexión no deja bitácora aunque esté activa en Preferencias.",
+            _ => "Sigue lo que diga Preferencias.",
+        };
 
     private void AplicarLaIdentidadDeWindowsAlFormulario()
     {
@@ -1083,6 +1203,7 @@ public partial class ConnectionEditorWindow : Window
             rdp.Domain = _dominio.Text.Trim().Length > 0 ? _dominio.Text.Trim() : null;
             rdp.ClipboardEnabled = _rdpPortapapeles.IsChecked;
             rdp.IgnoreCertificateWarnings = _rdpIgnorarCertificado.IsChecked;
+            rdp.AbreEnVentanaPropia = _rdpVentanaPropia.IsChecked == true;
         }
 
         if (existente.Web is { } web)
@@ -1122,6 +1243,7 @@ public partial class ConnectionEditorWindow : Window
         Domain = _dominio.Text.Trim().Length > 0 ? _dominio.Text.Trim() : null,
         ClipboardEnabled = _rdpPortapapeles.IsChecked,
         IgnoreCertificateWarnings = _rdpIgnorarCertificado.IsChecked,
+        AbreEnVentanaPropia = _rdpVentanaPropia.IsChecked == true,
     };
 
     /// <summary>Método de autenticación SSH elegido, o null para "automático" (índice 0): la primera opción del desplegable no es un método más, es la ausencia de valor propio.</summary>
@@ -1156,11 +1278,12 @@ public partial class ConnectionEditorWindow : Window
             return true;
         }
 
-        if (!int.TryParse(recortado, out var numero) || numero < 0 || numero > 86_400)
+        if (!int.TryParse(recortado, out var numero)
+            || !Domain.Settings.Limites.KeepAliveAdmisible(numero))
         {
             valor = null;
-            error = "El keep-alive SSH debe ser un número de segundos entre 0 y 86400 (24 horas). "
-                + "0 desactiva las señales de keep-alive.";
+            error = UseCases.Connections.ConnectionValidator.MensajeDeKeepAlive
+                + " 0 desactiva las señales de keep-alive.";
             return false;
         }
 

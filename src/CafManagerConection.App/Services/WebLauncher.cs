@@ -34,6 +34,10 @@ public static class WebLauncher
         Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
     }
 
+    /// <summary>Si se sabe cómo pedirle a ese navegador que abra en una ventana privada.</summary>
+    public static bool ConoceModoPrivado(string? browserPath) =>
+        !string.IsNullOrWhiteSpace(browserPath) && ModificadorPrivado(browserPath).Length > 0;
+
     /// <summary>Cada familia de navegadores nombra distinto el modo privado. Se detecta por el nombre del ejecutable, que es lo único disponible sin consultar el registro.</summary>
     internal static string BuildArguments(string browserPath, string url, bool privateWindow)
     {
@@ -44,16 +48,17 @@ public static class WebLauncher
             return quotedUrl;
         }
 
-        var exe = Path.GetFileNameWithoutExtension(browserPath).ToLowerInvariant();
+        var flag = ModificadorPrivado(browserPath);
 
-        var flag = exe switch
+        return flag.Length == 0 ? quotedUrl : $"{flag} {quotedUrl}";
+    }
+
+    private static string ModificadorPrivado(string browserPath) =>
+        Path.GetFileNameWithoutExtension(browserPath).ToLowerInvariant() switch
         {
             "firefox" or "waterfox" or "librewolf" => "-private-window",
             "msedge" => "-inprivate",
             "chrome" or "brave" or "vivaldi" or "opera" or "chromium" => "--incognito",
             _ => string.Empty,
         };
-
-        return string.IsNullOrEmpty(flag) ? quotedUrl : $"{flag} {quotedUrl}";
-    }
 }

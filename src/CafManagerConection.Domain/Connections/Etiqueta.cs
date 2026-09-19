@@ -8,6 +8,8 @@ public sealed class Etiqueta
 
     public const int LargoMaximoDeNombre = 40;
 
+    private DateTimeOffset _updatedAt = DateTimeOffset.UtcNow;
+
     public Etiqueta(Guid id, string codigo, string nombre, string claveDeColor, int orden = 0)
     {
         Id = id;
@@ -28,16 +30,21 @@ public sealed class Etiqueta
 
     public int Orden { get; set; }
 
-    public bool EsValida =>
-        Codigo.Length > 0
-        && Nombre.Length > 0
-        && PaletaIconos.EsValido(ClaveDeColor);
+    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Cuándo cambió por última vez el código, el nombre o el color.</summary>
+    public DateTimeOffset UpdatedAt
+    {
+        get => _updatedAt;
+        init => _updatedAt = value;
+    }
 
     public void Renombrar(string codigo, string nombre, string claveDeColor)
     {
         Codigo = Normalizar(codigo, LargoMaximoDeCodigo).ToUpperInvariant();
         Nombre = Normalizar(nombre, LargoMaximoDeNombre);
         ClaveDeColor = claveDeColor;
+        _updatedAt = DateTimeOffset.UtcNow;
     }
 
     public string ClaveDePincel => PaletaIconos.ClaveDeRecurso(ClaveDeColor);
@@ -118,5 +125,4 @@ public sealed class CatalogoDeEtiquetas
         return true;
     }
 
-    public bool Quitar(Guid id) => _etiquetas.RemoveAll(e => e.Id == id) > 0;
 }

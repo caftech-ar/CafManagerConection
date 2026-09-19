@@ -26,6 +26,8 @@ public partial class PreferenciasWindow : Window
     private readonly Services.ActualizacionesService _actualizaciones;
 
     private AjustesDeCopia _ajustes = AjustesDeCopia.Default;
+    private AjustesDeBitacora _bitacora = AjustesDeBitacora.Default;
+    private AjustesDeFranja _franja = AjustesDeFranja.Default;
     private Infrastructure.Database.AjustesDeActualizacion _ajustesDeActualizacion = new();
 
     /// <summary>El usuario buscó actualizaciones a mano y hay una nueva: la ventana principal tiene que volver a mostrar el aviso aunque se hubiera pospuesto.</summary>
@@ -58,6 +60,17 @@ public partial class PreferenciasWindow : Window
         _ajustes = await _root.AppSettings.GetBackupSettingsAsync().ConfigureAwait(true);
 
         _copiasActivas.IsChecked = _ajustes.Activas;
+        _franja = await _root.AppSettings.GetMetricsBarSettingsAsync().ConfigureAwait(true);
+        _franjaActiva.IsChecked = _franja.Activa;
+        _segundosFranja.Text = _franja.Segundos.ToString(
+            System.Globalization.CultureInfo.CurrentCulture);
+
+        _bitacora = await _root.AppSettings.GetSessionLogSettingsAsync().ConfigureAwait(true);
+        _bitacoraActiva.IsChecked = _bitacora.Activa;
+        _carpetaBitacora.Text = CarpetaDeBitacoras();
+        _diasBitacora.Text = _bitacora.DiasQueSeGuardan.ToString(
+            System.Globalization.CultureInfo.CurrentCulture);
+
         _cuantas.Text = _ajustes.CuantasGuardar.ToString(
             System.Globalization.CultureInfo.CurrentCulture);
 
@@ -70,10 +83,7 @@ public partial class PreferenciasWindow : Window
         var tema = await _root.AppSettings.GetThemeAsync().ConfigureAwait(true);
         MarcarTema(tema);
 
-        var modoPestana = await _root.Settings.GetAsync(SettingKeys.ModoDePestana)
-            .ConfigureAwait(true);
-        _modoPestana.SelectedIndex =
-            Enum.TryParse<ModoDePestana>(modoPestana, out var mp) ? (int)mp : 0;
+        MarcarModoDePestana(await _root.AppSettings.GetTabsModeAsync().ConfigureAwait(true));
 
         _ajustesDelArbol = await _root.AppSettings.GetTreeAppearanceAsync().ConfigureAwait(true);
         _mostrarHost.IsChecked = _ajustesDelArbol.MuestraHost;
@@ -206,6 +216,76 @@ public partial class PreferenciasWindow : Window
 
     private void AlEscribirNumero(object sender, System.Windows.Input.TextCompositionEventArgs e) =>
         e.Handled = !e.Text.All(char.IsAsciiDigit);
+
+    private async void AlCambiarFranja(object sender, RoutedEventArgs e)
+    {
+        if (_cargando)
+        {
+            return;
+        }
+
+        var segundos = int.TryParse(_segundosFranja.Text, out var n)
+            ? n
+            : AjustesDeFranja.Default.Segundos;
+
+        _franja = new AjustesDeFranja(_franjaActiva.IsChecked == true, segundos).Normalizados();
+
+        await _root.AppSettings.SaveMetricsBarSettingsAsync(_franja).ConfigureAwait(true);
+    }
+
+    private async void AlCambiarBitacora(object sender, RoutedEventArgs e)
+    {
+        if (_cargando)
+        {
+            return;
+        }
+
+        await GuardarBitacoraAsync().ConfigureAwait(true);
+    }
+
+    private async Task GuardarBitacoraAsync()
+    {
+        var dias = int.TryParse(_diasBitacora.Text, out var n)
+            ? n
+            : AjustesDeBitacora.Default.DiasQueSeGuardan;
+
+        _bitacora = new AjustesDeBitacora(
+            _bitacoraActiva.IsChecked == true,
+            _bitacora.Carpeta,
+            dias).Normalizados();
+
+        await _root.AppSettings.SaveSessionLogSettingsAsync(_bitacora).ConfigureAwait(true);
+    }
+
+    private async void AlElegirCarpetaDeBitacora(object sender, RoutedEventArgs e)
+    {
+        var dialogo = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "Dónde guardar las bitácoras de sesión",
+            InitialDirectory = Directory.Exists(_carpetaBitacora.Text)
+                ? _carpetaBitacora.Text
+                : null,
+        };
+
+        if (dialogo.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        _bitacora = _bitacora with { Carpeta = dialogo.FolderName };
+        _carpetaBitacora.Text = CarpetaDeBitacoras();
+
+        await GuardarBitacoraAsync().ConfigureAwait(true);
+    }
+
+    private void AlAbrirCarpetaDeBitacora(object sender, RoutedEventArgs e) =>
+        Mostrar(_carpetaBitacora.Text);
+
+    /// <summary>La carpeta configurada, o la que se usa cuando no se eligió ninguna.</summary>
+    private string CarpetaDeBitacoras() =>
+        string.IsNullOrWhiteSpace(_bitacora.Carpeta)
+            ? Path.Combine(_root.Paths.Root, "bitacoras")
+            : _bitacora.Carpeta;
 
     private async void AlElegirCarpeta(object sender, RoutedEventArgs e)
     {
@@ -442,9 +522,22 @@ public partial class PreferenciasWindow : Window
             return;
         }
 
-        var modo = (ModoDePestana)Math.Max(_modoPestana.SelectedIndex, 0);
-        await _root.Settings.SetAsync(SettingKeys.ModoDePestana, modo.ToString())
-            .ConfigureAwait(true);
+        await _root.AppSettings.SetTabsModeAsync(ModoElegido()).ConfigureAwait(true);
+    }
+
+    /// <summary>El modo que el usuario eligió, leído del <c>Tag</c> del elemento y no de su posición en la lista.</summary>
+    private ModoDePestana ModoElegido() =>
+        _modoPestana.SelectedItem is ComboBoxItem { Tag: string clave }
+        && Enum.TryParse<ModoDePestana>(clave, out var modo)
+            ? modo
+            : ModoDePestana.LinealConDesplazamiento;
+
+    private void MarcarModoDePestana(ModoDePestana modo)
+    {
+        _modoPestana.SelectedItem = _modoPestana.Items
+            .OfType<ComboBoxItem>()
+            .FirstOrDefault(i => Equals(i.Tag, modo.ToString()))
+            ?? _modoPestana.Items[0];
     }
 
     private async void AlPersonalizarColores(object sender, RoutedEventArgs e)

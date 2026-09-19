@@ -17,13 +17,11 @@ public sealed class RdpSettings
 
     public bool? ClipboardEnabled { get; set; }
 
-    public bool? FitToTab { get; set; }
-
     /// <summary><c>null</c> hereda; si nadie lo define, se validan.</summary>
     public bool? IgnoreCertificateWarnings { get; set; }
 
-    // No es pantalla completa: la sesión arranca en su ventana propia (SessionView.xaml.cs:ConectarRdp).
-    public bool StartFullScreen { get; set; }
+    /// <summary>La sesión arranca en su ventana propia en vez de en una pestaña.</summary>
+    public bool AbreEnVentanaPropia { get; set; }
 }
 
 /// <summary>Ajustes que viven en los campos propios de la conexión, que ya se serializan enteros: sumar uno no pide columna ni migración.</summary>
@@ -48,6 +46,51 @@ public static class AjustesReservados
     public const string DirectorioDeTrabajo = Prefijo + "rdpDirectorioTrabajo";
 
     public const string ComoRemoteApp = Prefijo + "rdpRemoteApp";
+
+    /// <summary>Bitácora de la sesión: ausente hereda lo global, <c>1</c> la enciende y <c>0</c> la apaga.</summary>
+    public const string BitacoraDeSesion = Prefijo + "sshBitacora";
+
+    /// <summary>Franja de métricas: ausente hereda lo global, <c>1</c> la enciende y <c>0</c> la apaga.</summary>
+    public const string BarraDeMetricas = Prefijo + "sshBarraDeMetricas";
+
+    /// <summary>Lo que la conexión decide sobre un ajuste de tres estados, o <c>null</c> si hereda.</summary>
+    /// <param name="conexion">La conexión a consultar.</param>
+    /// <param name="campo">Nombre del campo reservado.</param>
+    public static bool? Decision(Connection conexion, string campo)
+    {
+        ArgumentNullException.ThrowIfNull(conexion);
+
+        return conexion.CustomFields.TryGetValue(campo, out var valor)
+               && bool.TryParse(Normalizar(valor), out var decidido)
+            ? decidido
+            : null;
+    }
+
+    /// <summary>Guarda lo que la conexión decide sobre un ajuste de tres estados.</summary>
+    /// <param name="conexion">La conexión a modificar.</param>
+    /// <param name="campo">Nombre del campo reservado.</param>
+    /// <param name="decision">Encendido, apagado, o <c>null</c> para heredar lo global.</param>
+    public static void FijarDecision(Connection conexion, string campo, bool? decision)
+    {
+        ArgumentNullException.ThrowIfNull(conexion);
+
+        conexion.SetCustomField(
+            campo, decision is { } valor ? valor.ToString() : null);
+    }
+
+    /// <summary>Si el ajuste queda activo para una conexión, con lo global de reserva.</summary>
+    /// <param name="conexion">La conexión a consultar.</param>
+    /// <param name="campo">Nombre del campo reservado.</param>
+    /// <param name="global">Lo que dice el ajuste global.</param>
+    public static bool Activo(Connection conexion, string campo, bool global) =>
+        Decision(conexion, campo) ?? global;
+
+    private static string Normalizar(string? valor) => valor?.Trim().ToLowerInvariant() switch
+    {
+        "1" or "si" or "sí" or "true" => "true",
+        "0" or "no" or "false" => "false",
+        var otro => otro ?? string.Empty,
+    };
 
     /// <summary>Los campos reservados no se muestran en la grilla de campos propios ni se borran al guardarla.</summary>
     public static bool EsReservado(string nombre) =>
@@ -140,8 +183,6 @@ public sealed class SshSettings
     public string? KnownHostFingerprint { get; set; }
 
     public int? KeepAliveSeconds { get; set; }
-
-    public string Encoding { get; set; } = "UTF-8";
 }
 
 public sealed class WebSettings

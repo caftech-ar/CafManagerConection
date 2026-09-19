@@ -60,8 +60,8 @@ public class FlujoCompletoTests : IDisposable
     public async Task Veinte_conexiones_heredan_usuario_y_puerto_de_su_carpeta()
     {
         var carpeta = (await _folders.CreateAsync("Producción", null)).Value!;
-        carpeta.Settings.UserName = "root";
-        carpeta.Settings.Port = 2222;
+        carpeta.Settings.SshUserName = "root";
+        carpeta.Settings.SshPort = 2222;
         await _folders.UpdateSettingsAsync(carpeta);
 
         for (var i = 0; i < 20; i++)
@@ -101,7 +101,7 @@ public class FlujoCompletoTests : IDisposable
     public async Task La_busqueda_encuentra_por_host_y_por_usuario_efectivo()
     {
         var carpeta = (await _folders.CreateAsync("Prod", null)).Value!;
-        carpeta.Settings.UserName = "administrador";
+        carpeta.Settings.SshUserName = "administrador";
         await _folders.UpdateSettingsAsync(carpeta);
 
         var c = new Connection(Guid.NewGuid(), "Servidor", Protocol.Ssh, "192.0.2.20")
@@ -120,13 +120,13 @@ public class FlujoCompletoTests : IDisposable
     public async Task Mover_una_conexion_a_otra_carpeta_avisa_los_cambios()
     {
         var dev = (await _folders.CreateAsync("Desarrollo", null)).Value!;
-        dev.Settings.UserName = "dev";
-        dev.Settings.Port = 22;
+        dev.Settings.SshUserName = "dev";
+        dev.Settings.SshPort = 22;
         await _folders.UpdateSettingsAsync(dev);
 
         var prod = (await _folders.CreateAsync("Producción", null)).Value!;
-        prod.Settings.UserName = "root";
-        prod.Settings.Port = 2222;
+        prod.Settings.SshUserName = "root";
+        prod.Settings.SshPort = 2222;
         await _folders.UpdateSettingsAsync(prod);
 
         var c = new Connection(Guid.NewGuid(), "S", Protocol.Ssh, "h") { FolderId = dev.Id };

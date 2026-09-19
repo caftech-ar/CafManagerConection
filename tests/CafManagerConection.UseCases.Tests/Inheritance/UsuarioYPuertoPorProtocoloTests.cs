@@ -36,17 +36,16 @@ public class UsuarioYPuertoPorProtocoloTests
     }
 
     [Fact]
-    public void El_compartido_queda_de_reserva_cuando_el_protocolo_no_lo_define()
+    public void Un_protocolo_sin_usuario_propio_no_hereda_el_de_otro()
     {
         var carpeta = new Folder(Guid.NewGuid(), "Producción")
         {
-            Settings = { UserName = "operador", SshUserName = "root" },
+            Settings = { SshUserName = "root" },
         };
         var resolver = new SettingsResolver([carpeta]);
 
-        // SSH tiene el suyo; RDP no, así que cae en el compartido.
         Assert.Equal("root", resolver.Resolve(Conexion(carpeta.Id, Protocol.Ssh)).UserName.Value);
-        Assert.Equal("operador", resolver.Resolve(Conexion(carpeta.Id, Protocol.Rdp)).UserName.Value);
+        Assert.False(resolver.Resolve(Conexion(carpeta.Id, Protocol.Rdp)).UserName.IsDefined);
     }
 
     [Fact]

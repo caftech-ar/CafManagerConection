@@ -59,6 +59,18 @@ public sealed class SessionManagerTests
             State = estado;
             StateChanged?.Invoke(this, new SessionStateChanged(estado));
         }
+
+        /// <summary>Simula una caída después de haber conectado, con su motivo.</summary>
+        public void Caerse(SessionFailureReason motivo)
+        {
+            State = SessionState.Error;
+
+            StateChanged?.Invoke(
+                this,
+                new SessionStateChanged(
+                    SessionState.Error,
+                    new SessionFailure(motivo, "Se cortó la sesión", "Volvé a conectar")));
+        }
     }
 
     private sealed class AnfitrionFalso : ISessionHost
@@ -116,10 +128,16 @@ public sealed class SessionManagerTests
             return Task.CompletedTask;
         }
 
-        public Task<IReadOnlyList<ConnectionHistoryEntry>> GetForConnectionAsync(
-            Guid connectionId, int limit = 50, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<ConnectionHistoryEntry>>(
-                [.. Anotados.Where(a => a.ConnectionId == connectionId)]);
+        public Task<int> ContarAsync(CancellationToken ct = default) =>
+            Task.FromResult(Anotados.Count);
+
+        public Task<IReadOnlyDictionary<Guid, DateTimeOffset>>
+            UltimaConexionExitosaPorConexionAsync(CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, DateTimeOffset>>(
+                Anotados
+                    .Where(a => a.Outcome == ConnectionOutcome.Success)
+                    .GroupBy(a => a.ConnectionId)
+                    .ToDictionary(g => g.Key, g => g.Max(a => a.AttemptedAt)));
 
         public Task<IReadOnlyList<ConnectionHistoryEntry>> GetRecentAsync(
             int limit = 500, CancellationToken ct = default) =>
@@ -446,6 +464,38 @@ public sealed class SessionManagerTests
         var anotado = Assert.Single(banco.Historial.Anotados);
         Assert.Equal(ConnectionOutcome.Failed, anotado.Outcome);
         Assert.Null(anotado.DurationSeconds);
+    }
+
+    [Fact]
+    public async Task Un_fallo_sin_motivo_identificado_se_anota_como_otro()
+    {
+        var banco = new Banco();
+        banco.Anfitrion.Preparar(new SuperficieFalsa
+        {
+            FalloAlConectar = new TimeoutException("no respondió"),
+        });
+
+        var gestor = banco.Crear();
+
+        await gestor.OpenAsync(banco.Conexion.Id);
+
+        var anotado = Assert.Single(banco.Historial.Anotados);
+        Assert.Equal(SessionFailureReason.Other, anotado.FailureReason);
+    }
+
+    [Fact]
+    public async Task Una_sesion_que_conecto_no_arrastra_el_motivo_de_una_caida()
+    {
+        var banco = new Banco();
+        var gestor = banco.Crear();
+
+        var abierta = await gestor.OpenAsync(banco.Conexion.Id);
+        banco.Anfitrion.Creadas[^1].Caerse(SessionFailureReason.UnexpectedDisconnect);
+        await gestor.CloseAsync(abierta.Value);
+
+        var anotado = Assert.Single(banco.Historial.Anotados);
+        Assert.Equal(ConnectionOutcome.Success, anotado.Outcome);
+        Assert.Null(anotado.FailureReason);
     }
 
     [Fact]

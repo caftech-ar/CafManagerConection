@@ -134,6 +134,8 @@ public partial class SessionView
 
             if (capacidades.IsLinux)
             {
+                await PrepararFranjaAsync().ConfigureAwait(true);
+
                 Registrar(TipoPanel.Estado, "Estado", "Estado del servidor");
                 Registrar(TipoPanel.Procesos, "Procesos", "Procesos del servidor", "IconoAplicacion");
                 Registrar(TipoPanel.Puertos, "Puertos", "Puertos a la escucha");

@@ -4,6 +4,8 @@ public sealed class Folder
 {
     public const int MaxNameLength = 100;
 
+    private DateTimeOffset _updatedAt = DateTimeOffset.UtcNow;
+
     public Folder(Guid id, string name, Guid? parentId = null, int sortOrder = 0)
     {
         Id = id;
@@ -36,7 +38,12 @@ public sealed class Folder
 
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
-    public DateTimeOffset UpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
+    /// <summary>Cuándo cambió por última vez algún dato de la carpeta. El repositorio la restituye al cargar.</summary>
+    public DateTimeOffset UpdatedAt
+    {
+        get => _updatedAt;
+        init => _updatedAt = value;
+    }
 
     public FolderSettings Settings { get; init; } = new();
 
@@ -59,7 +66,7 @@ public sealed class Folder
         Touch();
     }
 
-    private void Touch() => UpdatedAt = DateTimeOffset.UtcNow;
+    private void Touch() => _updatedAt = DateTimeOffset.UtcNow;
 
     private static string Validate(string name)
     {

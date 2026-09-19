@@ -6,6 +6,10 @@ namespace CafManagerConection.Infrastructure.Database;
 
 public sealed class TunnelRepository : ITunnelRepository
 {
+    private const string Columnas =
+        "SELECT id, connection_id, name, local_port, remote_host, remote_port, auto_start "
+        + "FROM ssh_tunnels";
+
     private readonly ISqliteConnectionFactory _factory;
 
     public TunnelRepository(ISqliteConnectionFactory factory) => _factory = factory;
@@ -15,19 +19,10 @@ public sealed class TunnelRepository : ITunnelRepository
     {
         using var db = _factory.Create();
         var rows = db.Query<TunnelRow>(
-            "SELECT * FROM ssh_tunnels WHERE connection_id = @Id ORDER BY sort_order;",
+            Columnas + " WHERE connection_id = @Id ORDER BY name;",
             new { Id = connectionId.ToString("D") }).ToList();
 
-        return Task.FromResult<IReadOnlyList<SshTunnel>>(rows.Select(r => r.ToDomain()).ToList());
-    }
-
-    public Task<IReadOnlyList<SshTunnel>> GetAllAsync(CancellationToken ct = default)
-    {
-        using var db = _factory.Create();
-        var rows = db.Query<TunnelRow>(
-            "SELECT * FROM ssh_tunnels ORDER BY connection_id, sort_order;").ToList();
-
-        return Task.FromResult<IReadOnlyList<SshTunnel>>(rows.Select(r => r.ToDomain()).ToList());
+        return Task.FromResult<IReadOnlyList<SshTunnel>>(rows.Select(r => r.ADominio()).ToList());
     }
 
     public Task AddAsync(SshTunnel tunnel, CancellationToken ct = default)
@@ -35,10 +30,8 @@ public sealed class TunnelRepository : ITunnelRepository
         using var db = _factory.Create();
         db.Execute("""
             INSERT INTO ssh_tunnels (
-                id, connection_id, name, local_port, remote_host, remote_port,
-                auto_start, sort_order)
-            VALUES (@Id, @ConnectionId, @Name, @LocalPort, @RemoteHost, @RemotePort,
-                    @AutoStart, @SortOrder);
+                id, connection_id, name, local_port, remote_host, remote_port, auto_start)
+            VALUES (@Id, @ConnectionId, @Name, @LocalPort, @RemoteHost, @RemotePort, @AutoStart);
             """, ToParams(tunnel));
 
         return Task.CompletedTask;
@@ -50,7 +43,7 @@ public sealed class TunnelRepository : ITunnelRepository
         db.Execute("""
             UPDATE ssh_tunnels SET
                 name = @Name, local_port = @LocalPort, remote_host = @RemoteHost,
-                remote_port = @RemotePort, auto_start = @AutoStart, sort_order = @SortOrder
+                remote_port = @RemotePort, auto_start = @AutoStart
             WHERE id = @Id;
             """, ToParams(tunnel));
 
@@ -73,25 +66,22 @@ public sealed class TunnelRepository : ITunnelRepository
         t.RemoteHost,
         t.RemotePort,
         AutoStart = t.AutoStart ? 1 : 0,
-        t.SortOrder,
     };
 
     private sealed class TunnelRow
     {
         public string Id { get; init; } = string.Empty;
-        public string Connection_Id { get; init; } = string.Empty;
+        public string ConnectionId { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
-        public int Local_Port { get; init; }
-        public string Remote_Host { get; init; } = string.Empty;
-        public int Remote_Port { get; init; }
-        public long Auto_Start { get; init; }
-        public int Sort_Order { get; init; }
+        public int LocalPort { get; init; }
+        public string RemoteHost { get; init; } = string.Empty;
+        public int RemotePort { get; init; }
+        public long AutoStart { get; init; }
 
-        public SshTunnel ToDomain() => new(
-            Guid.Parse(Id), Guid.Parse(Connection_Id), Name, Local_Port, Remote_Host, Remote_Port)
+        public SshTunnel ADominio() => new(
+            Guid.Parse(Id), Guid.Parse(ConnectionId), Name, LocalPort, RemoteHost, RemotePort)
         {
-            AutoStart = Auto_Start != 0,
-            SortOrder = Sort_Order,
+            AutoStart = AutoStart != 0,
         };
     }
 }

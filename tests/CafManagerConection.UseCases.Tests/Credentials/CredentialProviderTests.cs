@@ -119,7 +119,7 @@ public sealed class CredentialProviderTests
     {
         var carpeta = new Folder(Guid.NewGuid(), "Trabajo")
         {
-            Settings = new FolderSettings { SshTieneSecreto = true, UserName = "heredado" },
+            Settings = new FolderSettings { SshTieneSecreto = true, SshUserName = "heredado" },
         };
 
         _carpetas.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<Folder> { carpeta });

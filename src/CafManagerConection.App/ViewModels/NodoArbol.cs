@@ -69,22 +69,13 @@ public sealed class NodoArbol : INotifyPropertyChanged
     /// <summary>Clave del icono elegido a mano, o null si usa el que le toca por omisión. Nunca sale de la carpeta contenedora.</summary>
     public string? IconoElegido { get; }
 
-    /// <summary>Recurso de geometría que gana: el elegido le gana al del protocolo.</summary>
+    /// <summary>Clave del catálogo que gana: la elegida le gana a la del protocolo.</summary>
+    /// <remarks>Una clave que el catálogo no reconoce cae en la del protocolo, que es lo que pasa
+    /// con las que guardó el juego de iconos anterior.</remarks>
     public string ClaveDeIcono =>
-        JuegoDeIconos.ClaveDeRecurso(IconoElegido) ?? IconoDeLaAplicacion;
-
-    public Geometry? Icono =>
-        Application.Current?.TryFindResource(ClaveDeIcono) as Geometry;
-
-    private string IconoDeLaAplicacion => EsCarpeta
-        ? "IconoCarpeta"
-        : Protocolo switch
-        {
-            Protocol.Rdp => "IconoRdp",
-            Protocol.Ssh => "IconoSsh",
-            Protocol.Web => "IconoWeb",
-            _ => "IconoAplicacion",
-        };
+        CatalogoDeIconos.EsValido(IconoElegido)
+            ? IconoElegido!
+            : IconosPorOmision.DelArbol(EsCarpeta, Protocolo);
 
     public string ClaveDePincel
     {

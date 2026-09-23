@@ -200,6 +200,15 @@ public sealed class SinDatosRealesTests
             return false;
         }
 
+        // Los diccionarios de iconos son coordenadas de dibujo generadas desde Assets/Iconos, y una
+        // tira como «10.221.931.931» se lee igual que una IPv4. No puede esconderse un dato real:
+        // CatalogoDeIconosTests exige que cada geometría venga de un SVG del catálogo.
+        if (Path.GetFileName(ruta).StartsWith("Iconos.", StringComparison.Ordinal)
+            && Path.GetExtension(ruta) == ".xaml")
+        {
+            return false;
+        }
+
         return Path.GetExtension(ruta) is ".cs" or ".xaml" or ".md" or ".yml" or ".yaml"
             or ".json" or ".ps1" or ".nsi" or ".props" or ".xml" or ".sql";
     }

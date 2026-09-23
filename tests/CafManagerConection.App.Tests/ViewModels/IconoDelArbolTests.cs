@@ -25,13 +25,13 @@ public sealed class IconoDelArbolTests
     [Fact]
     public void Una_carpeta_sin_icono_elegido_usa_el_de_la_aplicacion()
     {
-        Assert.Equal("IconoCarpeta", Carpeta().ClaveDeIcono);
+        Assert.Equal(IconosPorOmision.Carpeta, Carpeta().ClaveDeIcono);
     }
 
     [Theory]
-    [InlineData(Protocol.Rdp, "IconoRdp")]
-    [InlineData(Protocol.Ssh, "IconoSsh")]
-    [InlineData(Protocol.Web, "IconoWeb")]
+    [InlineData(Protocol.Rdp, IconosPorOmision.Rdp)]
+    [InlineData(Protocol.Ssh, IconosPorOmision.Ssh)]
+    [InlineData(Protocol.Web, IconosPorOmision.Web)]
     public void Una_conexion_sin_icono_elegido_usa_el_de_su_protocolo(
         Protocol protocolo, string esperado)
     {
@@ -41,50 +41,64 @@ public sealed class IconoDelArbolTests
     [Fact]
     public void El_icono_elegido_le_gana_al_del_protocolo()
     {
-        var nodo = Conexion(Protocol.Ssh, icono: "base-de-datos");
+        var nodo = Conexion(Protocol.Ssh, icono: "database");
 
-        Assert.Equal("IconoBaseDeDatos", nodo.ClaveDeIcono);
+        Assert.Equal("database", nodo.ClaveDeIcono);
     }
 
     [Fact]
     public void El_icono_elegido_le_gana_al_de_la_carpeta_por_omision()
     {
-        Assert.Equal("IconoPanelDocker", Carpeta(icono: "contenedor").ClaveDeIcono);
+        Assert.Equal("container", Carpeta(icono: "container").ClaveDeIcono);
     }
 
+    // «carpeta», «base-de-datos» y «contenedor» son claves del juego de iconos anterior: quedaron
+    // guardadas en conexiones reales y el catálogo no las tiene.
     [Theory]
     [InlineData("dinosaurio")]
     [InlineData("")]
-    public void Una_clave_que_ya_no_esta_en_el_juego_cae_en_el_del_protocolo(string clave)
+    [InlineData("carpeta")]
+    [InlineData("base-de-datos")]
+    [InlineData("contenedor")]
+    public void Una_clave_que_el_catalogo_no_tiene_cae_en_la_del_protocolo(string clave)
     {
-        Assert.Equal("IconoSsh", Conexion(Protocol.Ssh, icono: clave).ClaveDeIcono);
+        Assert.Equal(IconosPorOmision.Ssh, Conexion(Protocol.Ssh, icono: clave).ClaveDeIcono);
+    }
+
+    [Fact]
+    public void Toda_clave_del_catalogo_le_gana_a_la_del_protocolo()
+    {
+        foreach (var icono in CatalogoDeIconos.Iconos)
+        {
+            Assert.Equal(icono.Clave, Conexion(Protocol.Ssh, icono: icono.Clave).ClaveDeIcono);
+        }
     }
 
     [Fact]
     public void Una_conexion_dentro_de_una_carpeta_con_icono_no_toma_el_de_la_carpeta()
     {
-        var carpeta = Carpeta(icono: "cortafuegos", color: "rojo");
+        var carpeta = Carpeta(icono: "wall", color: "rojo");
         var hija = Conexion(Protocol.Rdp);
 
         carpeta.Agregar(hija);
 
-        Assert.Equal("IconoRdp", hija.ClaveDeIcono);
+        Assert.Equal(IconosPorOmision.Rdp, hija.ClaveDeIcono);
         Assert.Equal("ProtocoloRdp", hija.ClaveDePincel);
     }
 
     [Fact]
     public void Dos_conexiones_hermanas_conservan_cada_una_su_icono()
     {
-        var carpeta = Carpeta(icono: "carpeta");
-        var una = Conexion(Protocol.Ssh, icono: "correo");
-        var otra = Conexion(Protocol.Ssh, icono: "respaldo");
+        var carpeta = Carpeta(icono: "folder");
+        var una = Conexion(Protocol.Ssh, icono: "mail");
+        var otra = Conexion(Protocol.Ssh, icono: "archive");
 
         carpeta.Agregar(una);
         carpeta.Agregar(otra);
 
-        Assert.Equal("IconoCorreo", una.ClaveDeIcono);
-        Assert.Equal("IconoRespaldo", otra.ClaveDeIcono);
-        Assert.Equal("IconoCarpeta", carpeta.ClaveDeIcono);
+        Assert.Equal("mail", una.ClaveDeIcono);
+        Assert.Equal("archive", otra.ClaveDeIcono);
+        Assert.Equal(IconosPorOmision.Carpeta, carpeta.ClaveDeIcono);
     }
 
     [Fact]
@@ -102,9 +116,9 @@ public sealed class IconoDelArbolTests
     [Fact]
     public void El_icono_y_el_color_son_independientes()
     {
-        var nodo = Conexion(Protocol.Ssh, icono: "monitoreo", color: "rosa");
+        var nodo = Conexion(Protocol.Ssh, icono: "activity", color: "rosa");
 
-        Assert.Equal("IconoPanelEstado", nodo.ClaveDeIcono);
+        Assert.Equal("activity", nodo.ClaveDeIcono);
         Assert.Equal("IconoRosa", nodo.ClaveDePincel);
     }
 
@@ -122,16 +136,5 @@ public sealed class IconoDelArbolTests
 
         Assert.DoesNotContain("ClaveDeIcono", nombres);
         Assert.DoesNotContain("ClaveDeColor", nombres);
-    }
-
-    [Fact]
-    public void Toda_clave_del_juego_resuelve_a_su_recurso()
-    {
-        foreach (var icono in JuegoDeIconos.Iconos)
-        {
-            var nodo = Conexion(Protocol.Ssh, icono: icono.Clave);
-
-            Assert.Equal(icono.Recurso, nodo.ClaveDeIcono);
-        }
     }
 }

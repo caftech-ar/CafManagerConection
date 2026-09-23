@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using CafManagerConection.Platform;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Views;
 
@@ -48,17 +49,15 @@ public partial class ProcesoWindow : Window
             Margin = new Thickness(0, 0, 0, 6),
         };
 
-        var glifo = new System.Windows.Shapes.Path
+        var glifo = new IconoVectorial
         {
-            Width = 14,
-            Height = 14,
-            Stretch = Stretch.Uniform,
+            Clave = IconosDeLaInterfaz.Alerta,
+            Tamano = 14,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 7, 0),
         };
 
-        glifo.SetResourceReference(System.Windows.Shapes.Path.DataProperty, "IconoAlerta");
-        glifo.SetResourceReference(System.Windows.Shapes.Path.FillProperty, "MedidaAdvertencia");
+        glifo.SetResourceReference(IconoVectorial.PincelProperty, "MedidaAdvertencia");
 
         var titulo = new TextBlock
         {
@@ -98,7 +97,7 @@ public partial class ProcesoWindow : Window
 
     private void Datos(DetalleDeProceso p)
     {
-        Titulo("Identidad", "IconoAplicacion", "IconoCyan", primero: true);
+        Titulo("Identidad", IconosDeLaInterfaz.Aplicacion, "IconoCyan", primero: true);
         Dato("Binario", p.Binario ?? "—", p.Binario is null ? "TextoTenue" : null);
 
         Dato(
@@ -106,13 +105,13 @@ public partial class ProcesoWindow : Window
             p.Usuario ?? "—",
             p.Usuario is "root" ? "IconoAmbar" : null);
 
-        Titulo("Ejecución", "IconoPanelEstado", "IconoAzul");
+        Titulo("Ejecución", IconosDeLaInterfaz.PanelEstado, "IconoAzul");
         Dato("Corriendo hace", p.Corriendo is { } t ? Duracion(t) : "—");
         Dato("Directorio de trabajo", p.Directorio ?? "—", p.Directorio is null ? "TextoTenue" : null);
         Dato("Proceso padre", p.Padre?.ToString() ?? "—");
         Dato("Hilos", p.Hilos?.ToString() ?? "—");
 
-        Titulo("Línea de comando", "IconoTerminalExterna", "IconoLima");
+        Titulo("Línea de comando", IconosDeLaInterfaz.TerminalExterna, "IconoLima");
         Dato("Comando", p.Comando ?? "—");
     }
 
@@ -124,17 +123,15 @@ public partial class ProcesoWindow : Window
             Margin = new Thickness(0, primero ? 0 : 16, 0, 7),
         };
 
-        var glifo = new System.Windows.Shapes.Path
+        var glifo = new IconoVectorial
         {
-            Width = 13,
-            Height = 13,
-            Stretch = Stretch.Uniform,
+            Clave = icono,
+            Tamano = 13,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 7, 0),
         };
 
-        glifo.SetResourceReference(System.Windows.Shapes.Path.DataProperty, icono);
-        glifo.SetResourceReference(System.Windows.Shapes.Path.FillProperty, color);
+        glifo.SetResourceReference(IconoVectorial.PincelProperty, color);
 
         var t = new TextBlock
         {

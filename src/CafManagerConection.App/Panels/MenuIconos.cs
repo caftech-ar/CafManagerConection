@@ -1,28 +1,27 @@
 using System.Runtime.Versioning;
 using System.Windows.Controls;
 using System.Windows.Media;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Panels;
 
-/// <summary>Entradas de menú con icono, con el Path de 14x14 armado en un solo lugar.</summary>
+/// <summary>Entradas de menú con icono, con el tamaño y el alto armados en un solo lugar.</summary>
 [SupportedOSPlatform("windows")]
 internal static class MenuIconos
 {
-    /// <summary>Iniciar (triángulo de reproducción), para el menú de Docker y de supervisord.</summary>
-    public static readonly Geometry IconoIniciar = Geometry.Parse(
-        "F1 M6.5 5.5C6.5 4.68 7.4 4.18 8.1 4.6L15.6 9.1C16.27 9.5 16.27 10.5 15.6 10.9L8.1 15.4"
-        + "C7.4 15.82 6.5 15.32 6.5 14.5V5.5Z");
+    private const double TamanoDelIcono = 14;
 
-    /// <summary>Detener (cuadrado), para el menú de Docker y de supervisord. Va con el pincel «Destructivo».</summary>
-    public static readonly Geometry IconoDetener = Geometry.Parse(
-        "F1 M7 6C6.45 6 6 6.45 6 7V13C6 13.55 6.45 14 7 14H13C13.55 14 14 13.55 14 13V7C14 6.45"
-        + " 13.55 6 13 6H7Z");
-
+    /// <summary>Una entrada de menú que corre una acción, con su icono del catálogo.</summary>
+    /// <param name="texto">Lo que se lee en el menú.</param>
+    /// <param name="accion">Qué corre al elegirla.</param>
+    /// <param name="destacado">Si va en negrita, para la acción principal del menú.</param>
+    /// <param name="icono">Clave del catálogo, o null para no dibujar ninguno.</param>
+    /// <param name="color">Con qué se pinta el icono.</param>
     public static MenuItem Item(
         string texto,
         Action accion,
         bool destacado = false,
-        Geometry? icono = null,
+        string? icono = null,
         Brush? color = null)
     {
         var item = new MenuItem { Header = texto };
@@ -34,13 +33,11 @@ internal static class MenuIconos
 
         if (icono is not null)
         {
-            item.Icon = new System.Windows.Shapes.Path
+            item.Icon = new IconoVectorial
             {
-                Data = icono,
-                Fill = color,
-                Width = 14,
-                Height = 14,
-                Stretch = Stretch.Uniform,
+                Clave = icono,
+                Tamano = TamanoDelIcono,
+                Pincel = color,
             };
         }
 

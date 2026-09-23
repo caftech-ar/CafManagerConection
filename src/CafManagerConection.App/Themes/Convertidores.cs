@@ -61,23 +61,6 @@ public sealed class PincelPorClave : IValueConverter
         throw new NotSupportedException();
 }
 
-/// <summary>Convierte la clave de un icono en su geometría. Devuelve una geometría vacía si la clave no existe: un icono que falta no puede tirar abajo la fila entera.</summary>
-public sealed class GeometriaPorClave : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is not string clave || clave.Length == 0)
-        {
-            return Geometry.Empty;
-        }
-
-        return Application.Current?.TryFindResource(clave) as Geometry ?? Geometry.Empty;
-    }
-
-    public object ConvertBack(object? value, Type t, object? p, CultureInfo c) =>
-        throw new NotSupportedException();
-}
-
 public sealed class ColorDeEstado : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>

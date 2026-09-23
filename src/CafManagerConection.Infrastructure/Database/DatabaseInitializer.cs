@@ -31,7 +31,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         _time = time ?? TimeProvider.System;
     }
 
-    public static int LatestVersion => Migration004_Saneamiento.Version;
+    public static int LatestVersion => Migration005_ClavesDeIconoDelCatalogo.Version;
 
     // En orden de versión: una base en 0 las corre todas; una en 1 corre de la 2 en adelante. La 1
     // es el esquema entero, la 2 en adelante son cambios incrementales sobre él.
@@ -42,6 +42,8 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         (Migration003_UsuarioYPuertoPorProtocolo.Version,
             Migration003_UsuarioYPuertoPorProtocolo.Sql),
         (Migration004_Saneamiento.Version, Migration004_Saneamiento.Sql),
+        (Migration005_ClavesDeIconoDelCatalogo.Version,
+            Migration005_ClavesDeIconoDelCatalogo.Sql),
     ];
 
     public Task<DatabaseStartupResult> InitializeAsync(CancellationToken ct = default)

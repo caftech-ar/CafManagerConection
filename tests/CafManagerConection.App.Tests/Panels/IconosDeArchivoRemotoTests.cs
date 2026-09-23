@@ -101,7 +101,9 @@ public sealed class IconosDeArchivoRemotoTests
         var iconos = tipos.Select(IconosDeArchivoRemoto.ClaveDeIcono).ToList();
         var pinceles = tipos.Select(IconosDeArchivoRemoto.ClaveDePincel).ToList();
 
-        Assert.All(iconos, i => Assert.StartsWith("Icono", i, StringComparison.Ordinal));
+        Assert.All(iconos, i => Assert.True(
+            CafManagerConection.Domain.Settings.CatalogoDeIconos.EsValido(i),
+            $"«{i}» no está en el catálogo."));
         Assert.All(pinceles, p => Assert.StartsWith("Icono", p, StringComparison.Ordinal));
         Assert.Equal(tipos.Length, pinceles.Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(tipos.Length, iconos.Distinct(StringComparer.Ordinal).Count());

@@ -52,12 +52,13 @@ public sealed class GeometriasDibujablesTests
             + string.Join(Environment.NewLine, fallas));
     }
 
+    // Los 250 del catálogo, en los Themes/Iconos.*.xaml generados: ya no queda ninguno a mano.
     [Fact]
-    public void El_guardian_alcanza_a_los_cuarenta_trazados_del_proyecto()
+    public void El_guardian_alcanza_a_los_doscientos_cincuenta_trazados_del_proyecto()
     {
         var cuantos = Xaml().Sum(a => Trazados(File.ReadAllText(a)).Count);
 
-        Assert.True(cuantos >= 40, $"Sólo se encontraron {cuantos} trazados; el patrón dejó de reconocerlos.");
+        Assert.True(cuantos >= 250, $"Sólo se encontraron {cuantos} trazados; el patrón dejó de reconocerlos.");
     }
 
     private static List<(string Clave, string Trazado)> Trazados(string xaml)

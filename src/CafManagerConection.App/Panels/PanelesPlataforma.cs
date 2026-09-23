@@ -7,6 +7,7 @@ using CafManagerConection.App.Services;
 using CafManagerConection.App.Views;
 using CafManagerConection.Platform;
 using CafManagerConection.UseCases.Abstractions;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Panels;
 
@@ -24,7 +25,7 @@ public sealed class DockerPanel : PanelInventario
         string Puertos,
         bool EsCabecera,
         bool Corriendo,
-        Geometry Icono,
+        string Icono,
         Brush Color,
         string Real = "");
 
@@ -115,7 +116,7 @@ public sealed class DockerPanel : PanelInventario
 
         var menu = new ContextMenu();
 
-        void Item(string texto, Action accion, Geometry? icono = null, Brush? color = null) =>
+        void Item(string texto, Action accion, string? icono = null, Brush? color = null) =>
             menu.Items.Add(MenuIconos.Item(texto, accion, icono: icono, color: color));
 
         Item("Ver detalle…", AbrirFicha);
@@ -123,21 +124,21 @@ public sealed class DockerPanel : PanelInventario
         Item(
             "Reiniciar contenedor…",
             () => _ = EjecutarAsync(AccionDeContenedor.Reiniciar, elegido),
-            (Geometry)FindResource("IconoReconectar"), (Brush)FindResource("Texto"));
+            IconosDeLaInterfaz.Reconectar, (Brush)FindResource("Texto"));
 
         if (elegido.Corriendo)
         {
             Item(
                 "Detener contenedor…",
                 () => _ = EjecutarAsync(AccionDeContenedor.Detener, elegido),
-                MenuIconos.IconoDetener, (Brush)FindResource("Destructivo"));
+                IconosDeLaInterfaz.Detener, (Brush)FindResource("Destructivo"));
         }
         else
         {
             Item(
                 "Iniciar contenedor…",
                 () => _ = EjecutarAsync(AccionDeContenedor.Iniciar, elegido),
-                MenuIconos.IconoIniciar, (Brush)FindResource("EstadoConectado"));
+                IconosDeLaInterfaz.Iniciar, (Brush)FindResource("EstadoConectado"));
         }
 
         return menu;
@@ -221,14 +222,12 @@ public sealed class DockerPanel : PanelInventario
         var fila = new FrameworkElementFactory(typeof(StackPanel));
         fila.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
 
-        var icono = new FrameworkElementFactory(typeof(System.Windows.Shapes.Path));
-        icono.SetValue(FrameworkElement.WidthProperty, 13.0);
-        icono.SetValue(FrameworkElement.HeightProperty, 13.0);
-        icono.SetValue(System.Windows.Shapes.Path.StretchProperty, Stretch.Uniform);
+        var icono = new FrameworkElementFactory(typeof(IconoVectorial));
+        icono.SetValue(IconoVectorial.TamanoProperty, 13.0);
         icono.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 6, 0));
         icono.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
-        icono.SetBinding(System.Windows.Shapes.Path.DataProperty, new Binding(nameof(Fila.Icono)));
-        icono.SetBinding(System.Windows.Shapes.Path.FillProperty, new Binding(nameof(Fila.Color)));
+        icono.SetBinding(IconoVectorial.ClaveProperty, new Binding(nameof(Fila.Icono)));
+        icono.SetBinding(IconoVectorial.PincelProperty, new Binding(nameof(Fila.Color)));
         fila.AppendChild(icono);
 
         var texto = new FrameworkElementFactory(typeof(TextBlock));
@@ -270,19 +269,19 @@ public sealed class DockerPanel : PanelInventario
     }
 
     /// <summary>Glifo y pincel que le corresponden a una gravedad, ya resueltos contra el tema.</summary>
-    private (Geometry Icono, Brush Color) EstiloDeGravedad(GravedadDeContenedor gravedad) =>
+    private (string Icono, Brush Color) EstiloDeGravedad(GravedadDeContenedor gravedad) =>
         gravedad switch
         {
             GravedadDeContenedor.Corriendo =>
-                ((Geometry)FindResource("IconoOk"), (Brush)FindResource("EstadoConectado")),
+                (IconosDeLaInterfaz.Ok, (Brush)FindResource("EstadoConectado")),
 
             GravedadDeContenedor.Advertencia =>
-                ((Geometry)FindResource("IconoAlerta"), (Brush)FindResource("IconoAmbar")),
+                (IconosDeLaInterfaz.Alerta, (Brush)FindResource("IconoAmbar")),
 
             GravedadDeContenedor.Falla =>
-                ((Geometry)FindResource("IconoAlerta"), (Brush)FindResource("EstadoError")),
+                (IconosDeLaInterfaz.Alerta, (Brush)FindResource("EstadoError")),
 
-            _ => ((Geometry)FindResource("IconoAlerta"), (Brush)FindResource("TextoTenue")),
+            _ => (IconosDeLaInterfaz.Alerta, (Brush)FindResource("TextoTenue")),
         };
 
     /// <summary>Gravedad de un grupo compose, a partir de la de sus contenedores.</summary>
@@ -629,7 +628,7 @@ public sealed class SupervisorPanel : PanelInventario
         string Estado,
         string Detalle,
         bool Fallido,
-        Geometry Icono,
+        string Icono,
         Brush Color);
 
     private readonly PlatformInventory _inventario;
@@ -690,14 +689,12 @@ public sealed class SupervisorPanel : PanelInventario
         var fila = new FrameworkElementFactory(typeof(StackPanel));
         fila.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
 
-        var icono = new FrameworkElementFactory(typeof(System.Windows.Shapes.Path));
-        icono.SetValue(FrameworkElement.WidthProperty, 14.0);
-        icono.SetValue(FrameworkElement.HeightProperty, 14.0);
-        icono.SetValue(System.Windows.Shapes.Path.StretchProperty, Stretch.Uniform);
+        var icono = new FrameworkElementFactory(typeof(IconoVectorial));
+        icono.SetValue(IconoVectorial.TamanoProperty, 14.0);
         icono.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 7, 0));
         icono.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
-        icono.SetBinding(System.Windows.Shapes.Path.DataProperty, new Binding(nameof(Fila.Icono)));
-        icono.SetBinding(System.Windows.Shapes.Path.FillProperty, new Binding(nameof(Fila.Color)));
+        icono.SetBinding(IconoVectorial.ClaveProperty, new Binding(nameof(Fila.Icono)));
+        icono.SetBinding(IconoVectorial.PincelProperty, new Binding(nameof(Fila.Color)));
         fila.AppendChild(icono);
 
         var texto = new FrameworkElementFactory(typeof(TextBlock));
@@ -734,26 +731,26 @@ public sealed class SupervisorPanel : PanelInventario
 
         var menu = new ContextMenu();
 
-        void Item(string texto, Action accion, Geometry? icono = null, Brush? color = null) =>
+        void Item(string texto, Action accion, string? icono = null, Brush? color = null) =>
             menu.Items.Add(MenuIconos.Item(texto, accion, icono: icono, color: color));
 
         Item("Ver registro…", () => _ = VerRegistroAsync());
         menu.Items.Add(new Separator());
         Item(
             "Reiniciar proceso…", () => _ = EjecutarAsync(AccionDeProceso.Reiniciar, elegida),
-            (Geometry)FindResource("IconoReconectar"), (Brush)FindResource("Texto"));
+            IconosDeLaInterfaz.Reconectar, (Brush)FindResource("Texto"));
 
         if (elegida.Estado.Equals("RUNNING", StringComparison.OrdinalIgnoreCase))
         {
             Item(
                 "Detener proceso…", () => _ = EjecutarAsync(AccionDeProceso.Detener, elegida),
-                MenuIconos.IconoDetener, (Brush)FindResource("Destructivo"));
+                IconosDeLaInterfaz.Detener, (Brush)FindResource("Destructivo"));
         }
         else
         {
             Item(
                 "Iniciar proceso…", () => _ = EjecutarAsync(AccionDeProceso.Iniciar, elegida),
-                MenuIconos.IconoIniciar, (Brush)FindResource("EstadoConectado"));
+                IconosDeLaInterfaz.Iniciar, (Brush)FindResource("EstadoConectado"));
         }
 
         return menu;
@@ -867,18 +864,11 @@ public sealed class SupervisorPanel : PanelInventario
         _ => "IconoAmbar",
     };
 
-    // No hay glifo de falla en Themes/Estilos.xaml; mismo lienzo de 20x20 que el resto.
-    /// <summary>Equis para Falla, para que no comparta glifo con Advertencia.</summary>
-    private static readonly Geometry IconoFalla = Geometry.Parse(
-        "F1 M10 2C14.42 2 18 5.58 18 10S14.42 18 10 18S2 14.42 2 10S5.58 2 10 2Z "
-        + "M6.96 6.04L13.96 13.04L13.04 13.96L6.04 6.96Z "
-        + "M13.04 6.04L6.04 13.04L6.96 13.96L13.96 6.96Z");
-
-    private Geometry IconoDeGravedad(GravedadDeProceso gravedad) => gravedad switch
+    private static string IconoDeGravedad(GravedadDeProceso gravedad) => gravedad switch
     {
-        GravedadDeProceso.Corriendo => (Geometry)FindResource("IconoOk"),
-        GravedadDeProceso.Falla => IconoFalla,
-        _ => (Geometry)FindResource("IconoAlerta"),
+        GravedadDeProceso.Corriendo => IconosDeLaInterfaz.Ok,
+        GravedadDeProceso.Falla => IconosDeLaInterfaz.Falla,
+        _ => IconosDeLaInterfaz.Alerta,
     };
 }
 
@@ -891,7 +881,7 @@ public sealed class PuertosPanel : PanelInventario
         string Protocolo,
         string Escucha,
         string Proceso,
-        Geometry? Icono,
+        string? Icono,
         Brush? Color,
         string? Aplicacion,
         int? Pid,
@@ -987,7 +977,7 @@ public sealed class PuertosPanel : PanelInventario
 
         var menu = new ContextMenu();
 
-        void Item(string texto, Action accion, Geometry? icono = null, Brush? color = null) =>
+        void Item(string texto, Action accion, string? icono = null, Brush? color = null) =>
             menu.Items.Add(MenuIconos.Item(texto, accion, icono: icono, color: color));
 
         if (elegida.Pid is not null && _consultor is not null)
@@ -995,7 +985,7 @@ public sealed class PuertosPanel : PanelInventario
             Item(
                 "Ver el proceso…",
                 () => _ = AbrirFichaAsync(),
-                (Geometry)FindResource("IconoAplicacion"),
+                IconosDeLaInterfaz.Aplicacion,
                 (Brush)FindResource("IconoCyan"));
 
             menu.Items.Add(new Separator());
@@ -1012,13 +1002,13 @@ public sealed class PuertosPanel : PanelInventario
             Item(
                 $"Abrir https://localhost:{vivo.PuertoLocal}  (por el túnel)",
                 () => Abrir($"https://localhost:{vivo.PuertoLocal}"),
-                (Geometry)FindResource("IconoWeb"),
+                IconosDeLaInterfaz.Web,
                 (Brush)FindResource("ProtocoloWeb"));
 
             Item(
                 $"Abrir http://localhost:{vivo.PuertoLocal}  (por el túnel)",
                 () => Abrir($"http://localhost:{vivo.PuertoLocal}"),
-                (Geometry)FindResource("IconoWeb"),
+                IconosDeLaInterfaz.Web,
                 (Brush)FindResource("IconoGris"));
         }
         else if (web && alcanzable)
@@ -1026,13 +1016,13 @@ public sealed class PuertosPanel : PanelInventario
             Item(
                 $"Abrir {Url(elegida, seguro: true)}",
                 () => Abrir(Url(elegida, seguro: true)),
-                (Geometry)FindResource("IconoWeb"),
+                IconosDeLaInterfaz.Web,
                 (Brush)FindResource("ProtocoloWeb"));
 
             Item(
                 $"Abrir {Url(elegida, seguro: false)}",
                 () => Abrir(Url(elegida, seguro: false)),
-                (Geometry)FindResource("IconoWeb"),
+                IconosDeLaInterfaz.Web,
                 (Brush)FindResource("IconoGris"));
         }
         else if (web)
@@ -1042,7 +1032,7 @@ public sealed class PuertosPanel : PanelInventario
                     ? "Escucha sólo en el servidor: no hay ruta desde este equipo"
                     : "Hay un túnel definido pero está parado: levantalo en el panel de túneles",
                 () => { },
-                icono: (Geometry)FindResource("IconoAlerta"),
+                icono: IconosDeLaInterfaz.Alerta,
                 color: (Brush)FindResource("TextoTenue"));
 
             aviso.IsEnabled = false;
@@ -1054,7 +1044,7 @@ public sealed class PuertosPanel : PanelInventario
             Item(
                 "Crear un túnel a este puerto…",
                 () => _ = crear(numero, elegida.Aplicacion ?? elegida.Proceso),
-                (Geometry)FindResource("IconoPanelTuneles"),
+                IconosDeLaInterfaz.PanelTuneles,
                 (Brush)FindResource("IconoVioleta"));
         }
 
@@ -1065,14 +1055,14 @@ public sealed class PuertosPanel : PanelInventario
             Item(
                 "Copiar la línea ssh -L",
                 () => Copiar(linea(numero)),
-                (Geometry)FindResource("IconoTerminalExterna"),
+                IconosDeLaInterfaz.TerminalExterna,
                 (Brush)FindResource("Texto"));
         }
 
         Item(
             $"Copiar {Destino(elegida)}",
             () => Copiar(Destino(elegida)),
-            (Geometry)FindResource("IconoCopiarTodo"),
+            IconosDeLaInterfaz.CopiarTodo,
             (Brush)FindResource("Texto"));
 
         return menu;
@@ -1211,14 +1201,12 @@ public sealed class PuertosPanel : PanelInventario
         var fila = new FrameworkElementFactory(typeof(StackPanel));
         fila.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
 
-        var icono = new FrameworkElementFactory(typeof(System.Windows.Shapes.Path));
-        icono.SetValue(FrameworkElement.WidthProperty, 14.0);
-        icono.SetValue(FrameworkElement.HeightProperty, 14.0);
-        icono.SetValue(System.Windows.Shapes.Path.StretchProperty, Stretch.Uniform);
+        var icono = new FrameworkElementFactory(typeof(IconoVectorial));
+        icono.SetValue(IconoVectorial.TamanoProperty, 14.0);
         icono.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 7, 0));
         icono.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
-        icono.SetBinding(System.Windows.Shapes.Path.DataProperty, new Binding(nameof(Fila.Icono)));
-        icono.SetBinding(System.Windows.Shapes.Path.FillProperty, new Binding(nameof(Fila.Color)));
+        icono.SetBinding(IconoVectorial.ClaveProperty, new Binding(nameof(Fila.Icono)));
+        icono.SetBinding(IconoVectorial.PincelProperty, new Binding(nameof(Fila.Color)));
         fila.AppendChild(icono);
 
         var texto = new FrameworkElementFactory(typeof(TextBlock));
@@ -1283,8 +1271,8 @@ public sealed class PuertosPanel : PanelInventario
 
                     p.Process ?? "(sin permiso para verlo)",
                     contenedor is not null
-                        ? (Geometry)FindResource("IconoPanelDocker")
-                        : app is null ? null : (Geometry)FindResource(IconosDeAplicacion.Glifo(app.Clase)),
+                        ? IconosDeLaInterfaz.PanelDocker
+                        : app is null ? null : IconosDeAplicacion.Glifo(app),
                     contenedor is not null
                         ? (Brush)FindResource("IconoAzul")
                         : app is null ? null : (Brush)FindResource(IconosDeAplicacion.Color(app)),

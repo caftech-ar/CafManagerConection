@@ -8,12 +8,33 @@
                 <!-- La paleta va primera: Services/Temas.cs reemplaza el diccionario en el índice 0 -->
                 <ResourceDictionary Source="Themes/Paleta.Claro.xaml" />
                 <ResourceDictionary Source="Themes/Estilos.xaml" />
+
+                <!-- Generados por build/convertir-iconos.ps1 desde Assets/Iconos -->
+                <ResourceDictionary Source="Themes/Iconos.ConexionesYSesion.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.TerminalYAcceso.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.ServidoresYHosts.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.EscritorioRemotoYArchivos.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.Red.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.InfraestructuraYServicios.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.SeguridadYCredenciales.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.UsuariosYPermisos.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.AlmacenamientoYBackups.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.MonitoreoYDiagnostico.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.EstadosYSeveridad.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.CicloDeVidaYTareas.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.OrganizacionYNavegacion.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.Acciones.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.SistemasOperativos.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.MotoresDeDatos.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.VirtualizacionYContenedores.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.ServiciosYOperacion.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.RedYPerimetro.xaml" />
+                <ResourceDictionary Source="Themes/Iconos.StacksYRepositorios.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <temas:SiNegrita x:Key="ASiNegrita" />
             <temas:ColorDeEstado x:Key="ColorEstado" />
             <temas:PincelPorClave x:Key="PincelClave" />
-            <temas:GeometriaPorClave x:Key="GeometriaClave" />
             <temas:TextoDeEstado x:Key="TextoEstado" />
         </ResourceDictionary>
     </Application.Resources>

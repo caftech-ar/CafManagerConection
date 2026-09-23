@@ -6,25 +6,25 @@ namespace CafManagerConection.Domain.Tests.Monitoring;
 public sealed class IconoDeProcesoTests
 {
     [Theory]
-    [InlineData("dockerd", "IconoPanelDocker")]
-    [InlineData("nginx", "IconoPanelNginx")]
-    [InlineData("supervisord", "IconoPanelSupervisor")]
-    [InlineData("sshd", "IconoSsh")]
-    [InlineData("postgres", "IconoBaseDeDatos")]
-    [InlineData("php-fpm", "IconoWeb")]
-    [InlineData("bash", "IconoTerminalExterna")]
-    [InlineData("dotnet", "IconoAplicacion")]
-    [InlineData("java", "IconoAplicacion")]
-    [InlineData("javaw", "IconoAplicacion")]
+    [InlineData("dockerd", "brand-docker")]
+    [InlineData("nginx", "nginx")]
+    [InlineData("supervisord", "settings-automation")]
+    [InlineData("sshd", "terminal-2")]
+    [InlineData("postgres", "postgresql")]
+    [InlineData("php-fpm", "brand-php")]
+    [InlineData("bash", "gnubash")]
+    [InlineData("dotnet", "dotnet")]
+    [InlineData("java", "openjdk")]
+    [InlineData("javaw", "openjdk")]
     public void Los_conocidos_tienen_su_icono(string nombre, string esperada) =>
         Assert.Equal(esperada, IconoDeProceso.ClaveDeIcono(nombre));
 
     // Las dos formas en que aparecen de verdad en /proc: el nombre del binario a secas, y con
     // la version pegada de un paquete distribuido asi.
     [Theory]
-    [InlineData("dotnet", "IconoAplicacion")]
-    [InlineData("dotnet-8", "IconoAplicacion")]
-    [InlineData("java-17", "IconoAplicacion")]
+    [InlineData("dotnet", "dotnet")]
+    [InlineData("dotnet-8", "dotnet")]
+    [InlineData("java-17", "openjdk")]
     public void Dotnet_y_java_se_reconocen_con_o_sin_version(string nombre, string esperada) =>
         Assert.Equal(esperada, IconoDeProceso.ClaveDeIcono(nombre));
 
@@ -36,15 +36,15 @@ public sealed class IconoDeProcesoTests
 
     // «nginx: worker process» y «php-fpm: pool www» son el mismo binario con el rol pegado.
     [Theory]
-    [InlineData("nginx: worker process", "IconoPanelNginx")]
-    [InlineData("php-fpm: pool www", "IconoWeb")]
-    [InlineData("postgres: checkpointer", "IconoBaseDeDatos")]
+    [InlineData("nginx: worker process", "nginx")]
+    [InlineData("php-fpm: pool www", "brand-php")]
+    [InlineData("postgres: checkpointer", "postgresql")]
     public void El_rol_pegado_al_nombre_no_lo_esconde(string nombre, string esperada) =>
         Assert.Equal(esperada, IconoDeProceso.ClaveDeIcono(nombre));
 
     [Theory]
-    [InlineData("python3.11", "IconoAplicacion")]
-    [InlineData("postgres-16", "IconoBaseDeDatos")]
+    [InlineData("python3.11", "brand-python")]
+    [InlineData("postgres-16", "postgresql")]
     public void La_version_pegada_al_nombre_no_lo_esconde(string nombre, string esperada) =>
         Assert.Equal(esperada, IconoDeProceso.ClaveDeIcono(nombre));
 
@@ -68,7 +68,7 @@ public sealed class IconoDeProcesoTests
 
     [Fact]
     public void El_nombre_llega_con_espacios_y_se_reconoce_igual() =>
-        Assert.Equal("IconoPanelDocker", IconoDeProceso.ClaveDeIcono("  dockerd  "));
+        Assert.Equal("brand-docker", IconoDeProceso.ClaveDeIcono("  dockerd  "));
 
     [Fact]
     public void No_entra_en_recursion_infinita_con_dos_puntos_al_principio() =>

@@ -243,14 +243,66 @@ Que un secreto no llegue en claro a la base ni al registro no lo ataja un guardi
 
 ## Licencias de terceros
 
+### Iconos
+
+Toda la iconografía sale del catálogo: no queda ni una geometría escrita a mano en el
+repositorio, y hay una prueba que lo vigila. Los SVG de `src/CafManagerConection.App/Assets/Iconos` se tomaron sin modificar de tres paquetes, y
+cada archivo lleva en su primera línea un comentario con paquete, versión, ruta original y licencia.
+
+| Paquete | Licencia | Cuántos |
+|---|---|---|
+| [`@tabler/icons`](https://github.com/tabler/tabler-icons) | MIT | 217 |
+| [`simple-icons`](https://github.com/simple-icons/simple-icons) | CC0-1.0 | 31 |
+| [`devicon`](https://github.com/devicons/devicon) | MIT | 2 |
+
+La versión exacta de la que salió cada icono no se repite acá —el README sólo nombra la versión del
+producto—: está en el comentario de cada SVG y en los constructores de origen de `CatalogoDeIconos`,
+y una prueba exige que los dos coincidan.
+
+No se referencia ninguno de los tres: `build/convertir-iconos.ps1` los traduce a las geometrías de
+`src/CafManagerConection.App/Themes` y ese XAML se versiona, así que no hay dependencia ni en
+compilación ni en ejecución. Devicon entra sólo por SQL Server y Oracle, que Simple Icons no
+distribuye por ser marcas de Microsoft y de Oracle.
+
+Los logos de `Assets/Iconos/logos` identifican al producto que está del otro lado de una conexión.
+No se usan para la aplicación, ni en sus ventanas, ni en el instalador.
+
+**Al agregar un icono**, dejar el SVG en la carpeta de su grupo con su comentario de origen, correr
+`build/convertir-iconos.ps1` y sumar la entrada a `CatalogoDeIconos`. Una prueba corre el script en
+modo verificación y falla si un diccionario quedó atrás de sus SVG.
+
+#### Aviso de Tabler Icons y de Devicon
+
+Las dos son MIT y exigen conservar este aviso. Simple Icons es CC0-1.0 y no pide ninguno.
+
+```
+Copyright (c) 2020-2024 Paweł Kuna
+Copyright (c) 2015 konpa
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+```
+
 ### Fluent UI System Icons
 
-Los iconos del árbol y de los paneles, y el icono de la aplicación
-(`src/CafManagerConection.App/Assets/cmc.ico`), son geometrías tomadas de
+El icono de la aplicación (`src/CafManagerConection.App/Assets/cmc.ico`) se dibujó a partir de
 [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons), de Microsoft, bajo
-licencia MIT. No se usa el paquete ni la fuente tipográfica: se copiaron los datos del `path` de
-cada SVG al diccionario de recursos, así que no hay dependencia en tiempo de ejecución. La licencia
-exige conservar este aviso.
+licencia MIT, y se sigue distribuyendo con el ejecutable. Los glifos de la interfaz que también
+venían de ahí se reemplazaron por el catálogo; el `.ico` no, así que la licencia sigue exigiendo
+conservar este aviso.
 
 ```
 Copyright (c) 2020 Microsoft Corporation
@@ -271,12 +323,6 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
-
-**Al agregar un icono nuevo**, usar la familia de 20px estilo `filled`. Fluent redibuja cada tamaño
-en lugar de escalarlo: los de 16 tienen menos detalle y otro peso óptico, y mezclarlos deja grosores
-distintos en la misma columna. Al copiar el `path`, anteponer el prefijo F1 a los datos: SVG rellena con la
-regla *nonzero* y WPF usa *EvenOdd* por omisión, así que sin ese prefijo las partes macizas que se
-solapan salen como agujeros.
 
 ### Paquetes
 

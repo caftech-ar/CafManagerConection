@@ -1,3 +1,4 @@
+using CafManagerConection.App.Themes;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -88,14 +89,14 @@ public static class IconosDeArchivoRemoto
 
     public static string ClaveDeIcono(TipoDeArchivoRemoto tipo) => tipo switch
     {
-        TipoDeArchivoRemoto.Carpeta => "IconoCarpeta",
-        TipoDeArchivoRemoto.Texto => "IconoArchivoTexto",
-        TipoDeArchivoRemoto.Comprimido => "IconoArchivoComprimido",
-        TipoDeArchivoRemoto.Ejecutable => "IconoAplicacion",
-        TipoDeArchivoRemoto.Imagen => "IconoArchivoImagen",
-        TipoDeArchivoRemoto.Registro => "IconoArchivoRegistro",
-        TipoDeArchivoRemoto.Configuracion => "IconoAjustes",
-        _ => "IconoPanelArchivos",
+        TipoDeArchivoRemoto.Carpeta => IconosDeLaInterfaz.Carpeta,
+        TipoDeArchivoRemoto.Texto => IconosDeLaInterfaz.ArchivoTexto,
+        TipoDeArchivoRemoto.Comprimido => IconosDeLaInterfaz.ArchivoComprimido,
+        TipoDeArchivoRemoto.Ejecutable => IconosDeLaInterfaz.Aplicacion,
+        TipoDeArchivoRemoto.Imagen => IconosDeLaInterfaz.ArchivoImagen,
+        TipoDeArchivoRemoto.Registro => IconosDeLaInterfaz.ArchivoRegistro,
+        TipoDeArchivoRemoto.Configuracion => IconosDeLaInterfaz.Ajustes,
+        _ => IconosDeLaInterfaz.PanelArchivos,
     };
 
     public static string ClaveDePincel(TipoDeArchivoRemoto tipo) => tipo switch
@@ -194,8 +195,7 @@ public sealed class NodoRemoto : INotifyPropertyChanged
 
     public string ClaveDePincel => IconosDeArchivoRemoto.ClaveDePincel(Tipo);
 
-    public Geometry? Geometria =>
-        Application.Current?.TryFindResource(IconosDeArchivoRemoto.ClaveDeIcono(Tipo)) as Geometry;
+    public string ClaveDeIcono => IconosDeArchivoRemoto.ClaveDeIcono(Tipo);
 
     public string Detalle => EsCarpeta ? Ruta : $"{Ruta} — {Tamano} — {Modificado}";
 

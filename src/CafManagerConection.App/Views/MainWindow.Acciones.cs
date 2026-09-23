@@ -13,6 +13,7 @@ using CafManagerConection.UseCases.Abstractions;
 using CafManagerConection.UseCases.Connections;
 using CafManagerConection.UseCases.Credentials;
 using CafManagerConection.UseCases;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Views;
 
@@ -20,27 +21,6 @@ namespace CafManagerConection.App.Views;
 [SupportedOSPlatform("windows")]
 public partial class MainWindow
 {
-    // No hay glifo de edición en Themes/Estilos.xaml; mismo lienzo de 20x20 que el resto.
-    /// <summary>Editar (lápiz), para «Editar…» y «Editar carpeta…».</summary>
-    private static readonly Geometry IconoEditar = Geometry.Parse(
-        "F1 M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z "
-        + "M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z");
-
-    /// <summary>Eliminar (tacho), para toda acción que borra algo del árbol. Va siempre con el pincel «Destructivo».</summary>
-    private static readonly Geometry IconoEliminar = Geometry.Parse(
-        "F1 M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 "
-        + "1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l."
-        + "841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011."
-        + "25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25"
-        + ".56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75"
-        + " 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z");
-
-    /// <summary>Nueva conexión / nueva carpeta (más).</summary>
-    private static readonly Geometry IconoNuevo = Geometry.Parse(
-        "F1 M10 4C10.55 4 11 4.45 11 5V9H15C15.55 9 16 9.45 16 10C16 10.55 15.55 11 15 11H11V15"
-        + "C11 15.55 10.55 16 10 16C9.45 16 9 15.55 9 15V11H5C4.45 11 4 10.55 4 10C4 9.45 4.45 9 5"
-        + " 9H9V5C9 4.45 9.45 4 10 4Z");
-
     /// <summary>Selecciona el nodo bajo el puntero antes de abrir el menú.</summary>
     private void AlClicDerecho(object sender, MouseButtonEventArgs e)
     {
@@ -80,7 +60,7 @@ public partial class MainWindow
         var destructivo = (Brush)FindResource("Destructivo");
 
         void Agregar(
-            string texto, Action accion, bool destacado = false, Geometry? icono = null,
+            string texto, Action accion, bool destacado = false, string? icono = null,
             Brush? color = null) =>
             menu.Items.Add(MenuIconos.Item(texto, accion, destacado, icono, color ?? textoIcono));
 
@@ -96,12 +76,12 @@ public partial class MainWindow
                 Agregar("Copiar contraseña", () => _ = CopiarSecretoAsync(nodo));
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
-                Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconoEditar);
+                Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconosDeLaInterfaz.Editar);
                 Agregar(
                     "Duplicar", () => _ = DuplicarAsync(nodo),
-                    icono: (Geometry)FindResource("IconoCopiarTodo"));
+                    icono: IconosDeLaInterfaz.CopiarTodo);
                 Agregar(
-                    "Eliminar", () => _ = EliminarAsync(nodo), icono: IconoEliminar,
+                    "Eliminar", () => _ = EliminarAsync(nodo), icono: IconosDeLaInterfaz.Eliminar,
                     color: destructivo);
                 break;
 
@@ -119,21 +99,21 @@ public partial class MainWindow
                 Agregar("Copiar contraseña", () => _ = CopiarSecretoAsync(nodo));
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
-                Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconoEditar);
+                Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconosDeLaInterfaz.Editar);
 
                 // Sólo SSH: un túnel definido en una conexión RDP no lo levanta nadie.
                 if (conexion.Protocol == Protocol.Ssh)
                 {
                     Agregar(
                         "Túneles…", () => _ = EditarTunelesAsync(nodo),
-                        icono: (Geometry)FindResource("IconoPanelTuneles"));
+                        icono: IconosDeLaInterfaz.PanelTuneles);
                 }
 
                 Agregar(
                     "Duplicar", () => _ = DuplicarAsync(nodo),
-                    icono: (Geometry)FindResource("IconoCopiarTodo"));
+                    icono: IconosDeLaInterfaz.CopiarTodo);
                 Agregar(
-                    "Eliminar", () => _ = EliminarAsync(nodo), icono: IconoEliminar,
+                    "Eliminar", () => _ = EliminarAsync(nodo), icono: IconosDeLaInterfaz.Eliminar,
                     color: destructivo);
                 break;
 
@@ -143,32 +123,32 @@ public partial class MainWindow
                 Separar();
                 Agregar(
                     "Nueva conexión aquí…", () => _ = NuevaConexionAsync(nodo.Id),
-                    icono: IconoNuevo);
+                    icono: IconosDeLaInterfaz.Nuevo);
                 Agregar(
                     "Nueva subcarpeta…", () => _ = NuevaCarpetaAsync(nodo.Id),
-                    icono: (Geometry)FindResource("IconoCarpeta"));
+                    icono: IconosDeLaInterfaz.Carpeta);
                 Agregar("Ordenar alfabéticamente", () => _ = OrdenarHijosAsync(nodo));
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
-                Agregar("Editar carpeta…", () => _ = EditarCarpetaAsync(nodo), icono: IconoEditar);
+                Agregar("Editar carpeta…", () => _ = EditarCarpetaAsync(nodo), icono: IconosDeLaInterfaz.Editar);
                 Agregar("Renombrar…", () => _ = RenombrarCarpetaAsync(nodo));
                 Separar();
                 Agregar(
-                    "Eliminar carpeta", () => _ = EliminarAsync(nodo), icono: IconoEliminar,
+                    "Eliminar carpeta", () => _ = EliminarAsync(nodo), icono: IconosDeLaInterfaz.Eliminar,
                     color: destructivo);
                 break;
 
             default:
                 Agregar(
                     "Nueva conexión…", () => _ = NuevaConexionAsync(), destacado: true,
-                    icono: IconoNuevo);
+                    icono: IconosDeLaInterfaz.Nuevo);
                 Agregar(
                     "Nueva carpeta…", () => _ = NuevaCarpetaAsync(),
-                    icono: (Geometry)FindResource("IconoCarpeta"));
+                    icono: IconosDeLaInterfaz.Carpeta);
                 Separar();
                 Agregar(
                     "Actualizar", () => _ = RefrescarArbolAsync(_busqueda.Text),
-                    icono: (Geometry)FindResource("IconoReconectar"));
+                    icono: IconosDeLaInterfaz.Reconectar);
                 break;
         }
 
@@ -276,7 +256,7 @@ public partial class MainWindow
 
     /// <summary>Agrega «Abrir en …» por cada herramienta externa instalada.</summary>
     private void AgregarHerramientasExternas(
-        ConnectionSummary conexion, Action<string, Action, bool, Geometry?, Brush?> agregar,
+        ConnectionSummary conexion, Action<string, Action, bool, string?, Brush?> agregar,
         Action separar)
     {
         var instaladas = _root.Herramientas.Instaladas
@@ -290,7 +270,7 @@ public partial class MainWindow
 
         separar();
 
-        var iconoExterna = (Geometry)FindResource("IconoTerminalExterna");
+        var iconoExterna = IconosDeLaInterfaz.TerminalExterna;
 
         foreach (var herramienta in instaladas)
         {
@@ -710,14 +690,14 @@ public partial class MainWindow
 
         var textoIcono = (Brush)FindResource("Texto");
 
-        void Agregar(string texto, Action accion, Geometry? icono = null) =>
+        void Agregar(string texto, Action accion, string? icono = null) =>
             menu.Items.Add(MenuIconos.Item(texto, accion, icono: icono, color: textoIcono));
 
         Agregar(
             "Conexión rápida… (Ctrl+K)", () => _ = ConectarRapidoAsync(),
-            (Geometry)FindResource("IconoSsh"));
+            IconosDeLaInterfaz.Ssh);
         menu.Items.Add(new Separator());
-        Agregar("Preferencias…", () => _ = PreferenciasAsync(), (Geometry)FindResource("IconoAjustes"));
+        Agregar("Preferencias…", () => _ = PreferenciasAsync(), IconosDeLaInterfaz.Ajustes);
         menu.Items.Add(new Separator());
         Agregar("Historial de conexiones…", HistorialDeConexiones);
         Agregar("Consola de traza (F12)", () => AlternarConsola());
@@ -725,12 +705,12 @@ public partial class MainWindow
         menu.Items.Add(new Separator());
         Agregar(
             "Color de los iconos…", () => _ = ColoresDeIconosAsync(),
-            (Geometry)FindResource("IconoPaleta"));
+            IconosDeLaInterfaz.Paleta);
         Agregar("Cambiar el tema", () => AlCambiarTema(_botonTema, new RoutedEventArgs()));
         menu.Items.Add(new Separator());
         Agregar(
             "Restablecer el ancho de los paneles", () => _ = RestablecerAnchosAsync(),
-            (Geometry)FindResource("IconoRestablecer"));
+            IconosDeLaInterfaz.Restablecer);
 
         menu.IsOpen = true;
     }

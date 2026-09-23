@@ -4,6 +4,18 @@
 
 ### Novedades
 
+- **Catálogo de 250 iconos**, de Tabler, Simple Icons y Devicon, agrupados en veinte temas. Reemplaza
+  al juego de dieciséis que había: ahora una conexión o una carpeta puede llevar el icono de su
+  producto —Docker, PostgreSQL, nginx, Ubuntu— y no sólo un concepto genérico.
+- **Selector de iconos con buscador y filtros**, en lugar del panel de cuadrados. Busca por nombre,
+  etiqueta y sinónimos, sin distinguir acentos ni mayúsculas, y acota por grupo y por familia.
+  Reemplaza al panel de las ventanas de la conexión y de la carpeta.
+- **Catálogo completo en Preferencias**, para ver los iconos en los seis tamaños y en cualquiera de
+  los diez colores, en los dos temas.
+- **Los paneles de procesos y de aplicaciones muestran el logo del producto** cuando se lo reconoce:
+  nginx, PostgreSQL, Redis, Docker, Java o Python dejan de dibujarse con un icono genérico.
+- **Toda la iconografía pasó a trazo.** Los iconos del árbol, las barras, los menús y los paneles se
+  dibujan desde el catálogo; no queda ninguna geometría escrita a mano en el repositorio.
 - **Franja de métricas en las sesiones SSH.** Al pie del terminal, con uso de CPU, memoria y disco
   del servidor, su distribución, tráfico de red, carga y tiempo encendido. Se refresca cada cinco
   segundos, con un gráfico de las últimas muestras en CPU y memoria. Viene activa; se apaga en

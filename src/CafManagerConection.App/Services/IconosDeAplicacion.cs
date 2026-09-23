@@ -1,20 +1,54 @@
+using CafManagerConection.App.Themes;
 using CafManagerConection.Platform;
 
 namespace CafManagerConection.App.Services;
 
-/// <summary>Con qué glifo y color se dibuja cada clase de aplicación.</summary>
+/// <summary>Con qué icono del catálogo y qué color se dibuja cada aplicación conocida.</summary>
 public static class IconosDeAplicacion
 {
+    /// <summary>El logo del producto cuando el catálogo lo tiene, y el concepto de su clase cuando no.</summary>
+    /// <param name="aplicacion">La aplicación reconocida en el servidor.</param>
+    public static string Glifo(AplicacionConocida aplicacion) =>
+        LogoDelProducto(aplicacion.Nombre) ?? Glifo(aplicacion.Clase);
+
+    /// <summary>El concepto que le toca a una clase de aplicación.</summary>
+    /// <param name="clase">Clase a la que pertenece la aplicación.</param>
     public static string Glifo(ClaseDeAplicacion clase) => clase switch
     {
-        ClaseDeAplicacion.ServidorWeb => "IconoPanelNginx",
-        ClaseDeAplicacion.BaseDeDatos => "IconoBaseDeDatos",
-        ClaseDeAplicacion.Contenedor => "IconoPanelDocker",
-        ClaseDeAplicacion.AccesoRemoto => "IconoSsh",
-        ClaseDeAplicacion.SupervisionDeProcesos => "IconoPanelSupervisor",
-        ClaseDeAplicacion.Mensajeria => "IconoPanelTuneles",
-        ClaseDeAplicacion.ServicioDelSistema => "IconoAjustes",
-        _ => "IconoAplicacion",
+        ClaseDeAplicacion.ServidorWeb => IconosDeLaInterfaz.Web,
+        ClaseDeAplicacion.BaseDeDatos => IconosDeLaInterfaz.BaseDeDatos,
+        ClaseDeAplicacion.Contenedor => "container",
+        ClaseDeAplicacion.AccesoRemoto => IconosDeLaInterfaz.Ssh,
+        ClaseDeAplicacion.SupervisionDeProcesos => IconosDeLaInterfaz.PanelSupervisor,
+        ClaseDeAplicacion.Mensajeria => IconosDeLaInterfaz.PanelTuneles,
+        ClaseDeAplicacion.ServicioDelSistema => IconosDeLaInterfaz.Ajustes,
+        _ => IconosDeLaInterfaz.Aplicacion,
+    };
+
+    private static string? LogoDelProducto(string nombre) => nombre switch
+    {
+        "nginx" => "nginx",
+        "Apache" => "apache",
+        "Traefik" => "traefikproxy",
+
+        "PostgreSQL" => "postgresql",
+        "MySQL" => "brand-mysql",
+        "MariaDB" => "mariadb",
+        "MongoDB" => "brand-mongodb",
+        "Redis" => "redis",
+        "Elasticsearch" => "brand-elastic",
+
+        "Docker" => "brand-docker",
+        "RabbitMQ" => "rabbitmq",
+
+        "Aplicación Python" or "Gunicorn (Python)" or "uWSGI (Python)" or "Uvicorn (Python)"
+            => "brand-python",
+        "Aplicación Node.js" => "brand-nodejs",
+        "Aplicación Java" => "openjdk",
+        "Aplicación .NET" => "dotnet",
+        "PHP" => "brand-php",
+
+        _ => null,
     };
 
     /// <summary>Color por producto dentro de su clase.</summary>

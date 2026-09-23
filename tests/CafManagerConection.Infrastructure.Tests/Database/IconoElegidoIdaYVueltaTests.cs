@@ -175,14 +175,14 @@ public class IconoElegidoIdaYVueltaTests
     }
 
     [Fact]
-    public async Task Toda_clave_del_juego_sobrevive_la_ida_y_vuelta()
+    public async Task Toda_clave_del_catalogo_sobrevive_la_ida_y_vuelta()
     {
         using var db = await CrearAsync();
         var repo = new FolderRepository(db.Factory);
 
-        foreach (var icono in JuegoDeIconos.Iconos)
+        foreach (var icono in CatalogoDeIconos.Iconos)
         {
-            var carpeta = new Folder(Guid.NewGuid(), icono.Nombre) { ClaveDeIcono = icono.Clave };
+            var carpeta = new Folder(Guid.NewGuid(), icono.Etiqueta) { ClaveDeIcono = icono.Clave };
             await repo.AddAsync(carpeta);
 
             Assert.Equal(icono.Clave, (await repo.GetByIdAsync(carpeta.Id))!.ClaveDeIcono);

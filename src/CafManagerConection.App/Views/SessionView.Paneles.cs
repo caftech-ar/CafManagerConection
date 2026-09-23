@@ -9,6 +9,7 @@ using CafManagerConection.Monitoring;
 using CafManagerConection.Platform;
 using CafManagerConection.Ssh;
 using CafManagerConection.UseCases.Abstractions;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Views;
 
@@ -92,8 +93,8 @@ public partial class SessionView
             return;
         }
 
-        Registrar(TipoPanel.Archivos, "Archivos", "Archivos (SFTP)");
-        Registrar(TipoPanel.Tuneles, "Tuneles", "Túneles");
+        Registrar(TipoPanel.Archivos, IconosDeLaInterfaz.PanelArchivos, "Archivos (SFTP)");
+        Registrar(TipoPanel.Tuneles, IconosDeLaInterfaz.PanelTuneles, "Túneles");
 
         await LeerTunelesDefinidosAsync().ConfigureAwait(true);
 
@@ -136,9 +137,9 @@ public partial class SessionView
             {
                 await PrepararFranjaAsync().ConfigureAwait(true);
 
-                Registrar(TipoPanel.Estado, "Estado", "Estado del servidor");
-                Registrar(TipoPanel.Procesos, "Procesos", "Procesos del servidor", "IconoAplicacion");
-                Registrar(TipoPanel.Puertos, "Puertos", "Puertos a la escucha");
+                Registrar(TipoPanel.Estado, IconosDeLaInterfaz.PanelEstado, "Estado del servidor");
+                Registrar(TipoPanel.Procesos, IconosDeLaInterfaz.Aplicacion, "Procesos del servidor");
+                Registrar(TipoPanel.Puertos, IconosDeLaInterfaz.PanelPuertos, "Puertos a la escucha");
 
                 _ = SondeoDeSudoAsync();
             }
@@ -152,17 +153,17 @@ public partial class SessionView
 
             if (capacidades.HasDocker)
             {
-                Registrar(TipoPanel.Docker, "Docker", "Docker");
+                Registrar(TipoPanel.Docker, IconosDeLaInterfaz.PanelDocker, "Docker");
             }
 
             if (capacidades.HasNginx)
             {
-                Registrar(TipoPanel.Nginx, "Nginx", "nginx");
+                Registrar(TipoPanel.Nginx, IconosDeLaInterfaz.PanelNginx, "nginx");
             }
 
             if (capacidades.HasSupervisord)
             {
-                Registrar(TipoPanel.Supervisord, "Supervisor", "supervisord");
+                Registrar(TipoPanel.Supervisord, IconosDeLaInterfaz.PanelSupervisor, "supervisord");
             }
 
             _inventario = inventario;
@@ -174,7 +175,7 @@ public partial class SessionView
     }
 
     /// <summary>Agrega el acceso de un panel a la barra.</summary>
-    private void Registrar(TipoPanel tipo, string icono, string nombre, string? clave = null)
+    private void Registrar(TipoPanel tipo, string icono, string nombre)
     {
         if (_accesos.ContainsKey(tipo))
         {
@@ -183,13 +184,11 @@ public partial class SessionView
 
         var boton = new ToggleButton
         {
-            Content = new System.Windows.Shapes.Path
+            Content = new IconoVectorial
             {
-                Data = (System.Windows.Media.Geometry)FindResource(clave ?? $"IconoPanel{icono}"),
-                Width = 16,
-                Height = 16,
-                Stretch = System.Windows.Media.Stretch.Uniform,
-                Fill = (System.Windows.Media.Brush)FindResource("TextoTenue"),
+                Clave = icono,
+                Tamano = 16,
+                Pincel = (System.Windows.Media.Brush)FindResource("TextoTenue"),
             },
             ToolTip = nombre,
             Width = 26,

@@ -6,6 +6,7 @@ using System.Windows.Media;
 using CafManagerConection.App.Services;
 using CafManagerConection.Monitoring;
 using CafManagerConection.Platform;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Views;
 
@@ -269,7 +270,7 @@ public partial class ContenedorWindow : Window
     {
         _datos.Children.Clear();
 
-        Titulo("Identidad", "IconoPanelDocker", "IconoCyan", primero: true);
+        Titulo("Identidad", IconosDeLaInterfaz.PanelDocker, "IconoCyan", primero: true);
         Dato("Imagen", d.Imagen);
         Dato("Digest de la imagen", d.Digest ?? "—");
         Dato("Identificador", d.Id ?? "—");
@@ -285,7 +286,7 @@ public partial class ContenedorWindow : Window
 
         Titulo(
             "Estado",
-            d.Gravedad == GravedadDeContenedor.Corriendo ? "IconoOk" : "IconoAlerta",
+            d.Gravedad == GravedadDeContenedor.Corriendo ? IconosDeLaInterfaz.Ok : IconosDeLaInterfaz.Alerta,
             ColorDeGravedad(d.Gravedad));
 
         Dato("Estado", d.Estado, ColorDeGravedad(d.Gravedad));
@@ -299,20 +300,20 @@ public partial class ContenedorWindow : Window
         Dato("Política de reinicio", d.Politica ?? "ninguna");
         Dato("Desde", d.Desde?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—");
 
-        Titulo("Arranque", "IconoTerminalExterna", "IconoLima");
+        Titulo("Arranque", IconosDeLaInterfaz.TerminalExterna, "IconoLima");
         Dato("Comando", d.Comando ?? "—");
         Dato("Directorio", d.Directorio ?? "—");
 
-        Titulo("Consumo", "IconoPanelEstado", "IconoAzul");
+        Titulo("Consumo", IconosDeLaInterfaz.PanelEstado, "IconoAzul");
         Dato("Red", d.Red);
         Dato("Disco", d.Disco);
         Dato("Procesos", d.Procesos);
 
-        Titulo("Red", "IconoPanelPuertos", "IconoNaranja");
+        Titulo("Red", IconosDeLaInterfaz.PanelPuertos, "IconoNaranja");
         Lista("Redes", d.Redes, "No está conectado a ninguna.");
         Lista("Puertos publicados", d.Puertos, "No publica ninguno.");
 
-        Titulo("Almacenamiento", "IconoPanelArchivos", "IconoRosa");
+        Titulo("Almacenamiento", IconosDeLaInterfaz.PanelArchivos, "IconoRosa");
         Lista("Volúmenes", d.Volumenes, "No monta ninguno.");
     }
 
@@ -325,17 +326,15 @@ public partial class ContenedorWindow : Window
             Margin = new Thickness(0, primero ? 0 : 16, 0, 7),
         };
 
-        var glifo = new System.Windows.Shapes.Path
+        var glifo = new IconoVectorial
         {
-            Width = 13,
-            Height = 13,
-            Stretch = Stretch.Uniform,
+            Clave = icono,
+            Tamano = 13,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 7, 0),
         };
 
-        glifo.SetResourceReference(System.Windows.Shapes.Path.DataProperty, icono);
-        glifo.SetResourceReference(System.Windows.Shapes.Path.FillProperty, color);
+        glifo.SetResourceReference(IconoVectorial.PincelProperty, color);
 
         var t = new TextBlock
         {

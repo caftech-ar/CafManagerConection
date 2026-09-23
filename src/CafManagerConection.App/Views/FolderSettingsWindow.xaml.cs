@@ -61,7 +61,7 @@ public partial class FolderSettingsWindow : Window
         _iconoElegido = _carpeta.ClaveDeIcono;
 
         ArmarPaleta();
-        ArmarIconos();
+        MostrarElIcono();
         await CargarEtiquetasAsync().ConfigureAwait(true);
 
         var contenidas = await _root.ConnectionService.GetTreeAsync().ConfigureAwait(true);
@@ -479,15 +479,27 @@ public partial class FolderSettingsWindow : Window
         }
     }
 
-    private void ArmarIconos()
+    /// <summary>Muestra el icono que está elegido hoy, o el de las carpetas.</summary>
+    private void MostrarElIcono()
     {
-        ConnectionEditorWindow.ArmarSelectorDeIconos(this, _iconos, "El de las carpetas", clave =>
-        {
-            _iconoElegido = clave;
-            ConnectionEditorWindow.MarcarIconoElegido(this, _iconos, _iconoElegido);
-        });
+        _iconoMuestra.Clave = _iconoElegido ?? IconosPorOmision.Carpeta;
 
-        ConnectionEditorWindow.MarcarIconoElegido(this, _iconos, _iconoElegido);
+        _iconoNombre.Text = _iconoElegido is null
+            ? "El de las carpetas"
+            : CatalogoDeIconos.Resolver(_iconoElegido)?.Etiqueta ?? "El de las carpetas";
+    }
+
+    private void AlCambiarElIcono(object sender, RoutedEventArgs e)
+    {
+        var selector = new SelectorDeIconosWindow(_iconoElegido) { Owner = this };
+
+        if (selector.ShowDialog() != true)
+        {
+            return;
+        }
+
+        _iconoElegido = selector.IconoElegido;
+        MostrarElIcono();
     }
 
     private void Marcar()

@@ -1,6 +1,7 @@
 <UserControl x:Class="CafManagerConection.App.Panels.ProcesosPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:temas="clr-namespace:CafManagerConection.App.Themes">
 
     <UserControl.Resources>
 
@@ -131,14 +132,12 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                    <Path Width="13" Height="13"
-                                          Margin="0,0,6,0"
-                                          VerticalAlignment="Center"
-                                          Stretch="Uniform"
-                                          Data="{Binding ClaveDeIcono,
-                                                Converter={StaticResource GeometriaClave}}"
-                                          Fill="{DynamicResource TextoTenue}"
-                                          Visibility="{Binding VisibilidadDelIcono}" />
+                                    <temas:IconoVectorial Tamano="13"
+                                                          Margin="0,0,6,0"
+                                                          VerticalAlignment="Center"
+                                                          Clave="{Binding ClaveDeIcono}"
+                                                          Pincel="{DynamicResource TextoTenue}"
+                                                          Visibility="{Binding VisibilidadDelIcono}" />
 
                                     <TextBlock Text="{Binding Nombre}"
                                                TextTrimming="CharacterEllipsis" />

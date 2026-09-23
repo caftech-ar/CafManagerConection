@@ -119,7 +119,7 @@ public partial class ConnectionEditorWindow : Window
 
         await CargarPadresPosiblesAsync().ConfigureAwait(true);
         ArmarPaleta();
-        ArmarIconos();
+        MostrarElIcono();
 
         if (_editando is { } id)
         {
@@ -237,86 +237,27 @@ public partial class ConnectionEditorWindow : Window
         }
     }
 
-    private void ArmarIconos()
+    /// <summary>Muestra el icono que está elegido hoy, o el que le toca por protocolo.</summary>
+    private void MostrarElIcono()
     {
-        ArmarSelectorDeIconos(this, _iconos, "El del protocolo", clave =>
-        {
-            _iconoElegido = clave;
-            MarcarIconoElegido(this, _iconos, _iconoElegido);
-        });
+        var elegido = CatalogoDeIconos.Resolver(_iconoElegido);
 
-        MarcarIconoElegido(this, _iconos, _iconoElegido);
+        _iconoMuestra.Clave = elegido?.Clave ?? IconosPorOmision.DeProtocolo(Elegido);
+        _iconoNombre.Text = elegido?.Etiqueta ?? "El del protocolo";
     }
 
-    /// <summary>Muestras del juego de iconos, independientes de las de color. La comparte la ventana de la carpeta, igual que IndiceDeMetodoAuth.</summary>
-    internal static void ArmarSelectorDeIconos(
-        FrameworkElement dueno,
-        WrapPanel destino,
-        string textoDeOmision,
-        Action<string?> alElegir)
+    private void AlCambiarElIcono(object sender, RoutedEventArgs e)
     {
-        destino.Children.Clear();
+        var selector = new SelectorDeIconosWindow(_iconoElegido) { Owner = this };
 
-        Agregar(null, textoDeOmision);
-
-        foreach (var icono in JuegoDeIconos.Iconos)
+        if (selector.ShowDialog() != true)
         {
-            Agregar(icono.Clave, icono.Nombre);
+            return;
         }
 
-        void Agregar(string? clave, string nombre)
-        {
-            var muestra = new Border
-            {
-                Width = 30,
-                Height = 30,
-                Margin = new Thickness(0, 0, 6, 6),
-                CornerRadius = new CornerRadius(6),
-                BorderThickness = new Thickness(2),
-                BorderBrush = System.Windows.Media.Brushes.Transparent,
-                Background = (System.Windows.Media.Brush)dueno.FindResource("Apagado"),
-                Cursor = System.Windows.Input.Cursors.Hand,
-                ToolTip = nombre,
-                Tag = clave,
-                Child = MuestraDe(dueno, JuegoDeIconos.ClaveDeRecurso(clave)),
-            };
-
-            muestra.MouseLeftButtonDown += (_, _) => alElegir(clave);
-
-            destino.Children.Add(muestra);
-        }
+        _iconoElegido = selector.IconoElegido;
+        MostrarElIcono();
     }
-
-    internal static void MarcarIconoElegido(
-        FrameworkElement dueno, WrapPanel destino, string? elegido)
-    {
-        foreach (var muestra in destino.Children.OfType<Border>())
-        {
-            muestra.BorderBrush = (string?)muestra.Tag == elegido
-                ? (System.Windows.Media.Brush)dueno.FindResource("Texto")
-                : System.Windows.Media.Brushes.Transparent;
-        }
-    }
-
-    private static UIElement MuestraDe(FrameworkElement dueno, string? recurso) =>
-        recurso is null
-            ? new TextBlock
-            {
-                Text = "—",
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = (System.Windows.Media.Brush)dueno.FindResource("TextoTenue"),
-            }
-            : new System.Windows.Shapes.Path
-            {
-                Width = 16,
-                Height = 16,
-                Stretch = System.Windows.Media.Stretch.Uniform,
-                Data = (System.Windows.Media.Geometry)dueno.FindResource(recurso),
-                Fill = (System.Windows.Media.Brush)dueno.FindResource("Texto"),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
 
     private static string RutaDe(Folder carpeta, IReadOnlyList<Folder> todas)
     {
@@ -385,7 +326,7 @@ public partial class ConnectionEditorWindow : Window
         ArmarPaleta();
 
         _iconoElegido = c.ClaveDeIcono;
-        ArmarIconos();
+        MostrarElIcono();
 
         _descripcion.Text = c.Description ?? string.Empty;
         _favorita.IsChecked = c.IsFavorite;
@@ -413,8 +354,13 @@ public partial class ConnectionEditorWindow : Window
         }
     }
 
-    private void AlCambiarProtocolo(object sender, SelectionChangedEventArgs e) =>
+    private void AlCambiarProtocolo(object sender, SelectionChangedEventArgs e)
+    {
         ActualizarVisibilidad();
+
+        // La muestra del icono depende del protocolo mientras no haya uno elegido a mano.
+        MostrarElIcono();
+    }
 
     private void ActualizarVisibilidad()
     {

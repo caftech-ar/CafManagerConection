@@ -20,6 +20,7 @@ using CafManagerConection.UseCases.Abstractions;
 using CafManagerConection.UseCases.Connections;
 using CafManagerConection.UseCases.Credentials;
 using CafManagerConection.UseCases.Inheritance;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Views;
 
@@ -971,19 +972,19 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         return true;
     }
 
-    private System.Windows.Shapes.Path? _iconoPantallaCompleta;
+    private IconoVectorial? _iconoPantallaCompleta;
 
     private void ArmarBarraDeRdp()
     {
         if (_accionesSesion.Children.Count == 0)
         {
             _iconoPantallaCompleta = AgregarAccionDeRdp(
-                "IconoPantallaCompleta",
+                IconosDeLaInterfaz.PantallaCompleta,
                 "Pantalla completa dentro de la aplicación",
                 AlternarPantallaCompleta);
 
             AgregarAccionDeRdp(
-                "IconoVentanaPropia",
+                IconosDeLaInterfaz.VentanaPropia,
                 "Sacar la sesión a una ventana propia",
                 SacarAVentanaPropia);
 
@@ -1006,7 +1007,7 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
             var cual = herramienta;
 
             AgregarAccionDeRdp(
-                "IconoTerminalExterna",
+                IconosDeLaInterfaz.TerminalExterna,
                 $"Abrir este servidor en {nombre}",
                 () => AbrirRdpEn(cual));
         }
@@ -1028,16 +1029,14 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
         Informar(error ?? $"{Services.LanzadorExterno.Nombre(herramienta)} abierto");
     }
 
-    private System.Windows.Shapes.Path AgregarAccionDeRdp(
+    private IconoVectorial AgregarAccionDeRdp(
         string icono, string ayuda, Action accion)
     {
-        var dibujo = new System.Windows.Shapes.Path
+        var dibujo = new IconoVectorial
         {
-            Data = (System.Windows.Media.Geometry)FindResource(icono),
-            Width = 15,
-            Height = 15,
-            Stretch = System.Windows.Media.Stretch.Uniform,
-            Fill = new System.Windows.Media.SolidColorBrush(
+            Clave = icono,
+            Tamano = 15,
+            Pincel = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromRgb(0xD4, 0xD4, 0xD8)),
         };
 
@@ -1091,8 +1090,9 @@ public partial class SessionView : UserControl, IHostKeyVerifier, IDisposable
     {
         if (_iconoPantallaCompleta is { } dibujo)
         {
-            dibujo.Data = (System.Windows.Media.Geometry)FindResource(
-                ampliada ? "IconoRestaurarTamano" : "IconoPantallaCompleta");
+            dibujo.Clave = ampliada
+                ? IconosDeLaInterfaz.RestaurarTamano
+                : IconosDeLaInterfaz.PantallaCompleta;
         }
     }
 

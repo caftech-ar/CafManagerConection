@@ -166,6 +166,18 @@
                                 <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
                                            Margin="0,4,0,0"
                                            Text="El color de RDP, SSH y las entradas web en el árbol, elegido de una paleta cerrada de diez para que se vea bien en los dos temas." />
+
+                                <Grid Margin="0,14,0,0">
+                                    <TextBlock Text="Catálogo de iconos" Style="{StaticResource Titulo}"
+                                               FontSize="15" HorizontalAlignment="Left" />
+                                    <Button Content="Ver todos…" Style="{StaticResource BotonSecundario}"
+                                            HorizontalAlignment="Right" Padding="12,0"
+                                            Click="AlVerElCatalogoDeIconos" />
+                                </Grid>
+
+                                <TextBlock Style="{StaticResource Tenue}" TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="Los iconos que se pueden elegir para una conexión o una carpeta, en los seis tamaños y en cualquiera de los diez colores." />
                             </StackPanel>
                         </Border>
 

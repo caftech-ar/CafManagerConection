@@ -4,7 +4,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Forma = System.Windows.Shapes;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Views;
 
@@ -25,26 +25,26 @@ public partial class SessionView
 
     private void Armar()
     {
-        Agregar("IconoCopiarTodo", "Copiar toda la sesión al portapapeles", CopiarTodo);
-        Agregar("IconoGuardarComo", "Guardar toda la sesión en un archivo", GuardarEnArchivo);
-        Agregar("IconoBorrarHistorial", "Borrar el historial de desplazamiento", BorrarHistorial);
+        Agregar(IconosDeLaInterfaz.CopiarTodo, "Copiar toda la sesión al portapapeles", CopiarTodo);
+        Agregar(IconosDeLaInterfaz.GuardarComo, "Guardar toda la sesión en un archivo", GuardarEnArchivo);
+        Agregar(IconosDeLaInterfaz.BorrarHistorial, "Borrar el historial de desplazamiento", BorrarHistorial);
         Agregar(
-            "IconoRestablecer",
+            IconosDeLaInterfaz.Restablecer,
             "Restablecer el terminal, como el comando reset — no toca la conexión",
             RestablecerTerminal);
 
-        Agregar("IconoReconectar", "Reconectar: cierra la conexión y la vuelve a abrir",
+        Agregar(IconosDeLaInterfaz.Reconectar, "Reconectar: cierra la conexión y la vuelve a abrir",
             Reconectar);
 
-        Agregar("IconoElevar", "Elevar a root con sudo -i", ElevarShell);
+        Agregar(IconosDeLaInterfaz.Elevar, "Elevar a root con sudo -i", ElevarShell);
 
         Agregar(
-            "IconoElevar",
+            IconosDeLaInterfaz.Elevar,
             "Volver a pedir la contraseña de sudo para los paneles del servidor",
             ReabrirElPedidoDeSudo);
 
         Agregar(
-            "IconoPaleta",
+            IconosDeLaInterfaz.Paleta,
             "Comandos guardados (Ctrl+Shift+P)",
             AbrirPaleta);
 
@@ -60,8 +60,8 @@ public partial class SessionView
             var cual = herramienta;
 
             var icono = herramienta == Infrastructure.HerramientaExterna.Putty
-                ? "IconoTerminalExterna"
-                : "IconoArchivosExterno";
+                ? IconosDeLaInterfaz.TerminalExterna
+                : IconosDeLaInterfaz.ArchivosExterno;
 
             Agregar(icono, $"Abrir este servidor en {nombre}", () => AbrirEn(cual));
         }
@@ -127,14 +127,11 @@ public partial class SessionView
             Width = 30,
             Padding = new Thickness(0),
             ToolTip = ayuda,
-            Content = new Forma.Path
+            Content = new IconoVectorial
             {
-                Data = (Geometry)FindResource(icono),
-                Width = 15,
-                Height = 15,
-                Stretch = Stretch.Uniform,
-
-                Fill = new SolidColorBrush(Color.FromRgb(0xD4, 0xD4, 0xD8)),
+                Clave = icono,
+                Tamano = 15,
+                Pincel = new SolidColorBrush(Color.FromRgb(0xD4, 0xD4, 0xD8)),
             },
         };
 

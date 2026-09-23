@@ -551,6 +551,9 @@ public partial class PreferenciasWindow : Window
         }
     }
 
+    private void AlVerElCatalogoDeIconos(object sender, RoutedEventArgs e) =>
+        new MuestraDeIconosWindow { Owner = this }.ShowDialog();
+
     private void MostrarTamanoDelArbol()
     {
         if (_tamanoArbol.Items.Count == 0)

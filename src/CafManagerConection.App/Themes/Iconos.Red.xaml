@@ -1,0 +1,59 @@
+<!-- Generado por build/convertir-iconos.ps1 desde Assets/Iconos. No editar a mano. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/affiliate.svg · MIT -->
+    <StreamGeometry x:Key="Icono.affiliate">F1 M5.931 6.936l1.275 4.249m5.607 5.609l4.251 1.275 M11.683 12.317l5.759 -5.759 M4 5.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M17 5.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M17 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M4 15.5a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/antenna-bars-5.svg · MIT -->
+    <StreamGeometry x:Key="Icono.antenna-bars-5">F1 M6 18l0 -3 M10 18l0 -6 M14 18l0 -9 M18 18l0 -12</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/arrows-split-2.svg · MIT -->
+    <StreamGeometry x:Key="Icono.arrows-split-2">F1 M21 17h-5.397a5 5 0 0 1 -4.096 -2.133l-.514 -.734a5 5 0 0 0 -4.096 -2.133h-3.897 M21 7h-5.395a5 5 0 0 0 -4.098 2.135l-.51 .73a5 5 0 0 1 -4.097 2.135h-3.9 M18 10l3 -3l-3 -3 M18 20l3 -3l-3 -3</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/cloud-data-connection.svg · MIT -->
+    <StreamGeometry x:Key="Icono.cloud-data-connection">F1 M5 9.897c0 -1.714 1.46 -3.104 3.26 -3.104c.275 -1.22 1.255 -2.215 2.572 -2.611c1.317 -.397 2.77 -.134 3.811 .69c1.042 .822 1.514 2.08 1.239 3.3h.693a2.42 2.42 0 0 1 2.425 2.414a2.42 2.42 0 0 1 -2.425 2.414h-8.315c-1.8 0 -3.26 -1.39 -3.26 -3.103 M12 13v3 M10 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M14 18h7 M3 18h7</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/cloud-network.svg · MIT -->
+    <StreamGeometry x:Key="Icono.cloud-network">F1 M3 20h7 M14 20h7 M10 20a2 2 0 1 0 4 0a2 2 0 0 0 -4 0 M12 16v2 M8 16.004h-1.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-2.535</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/network.svg · MIT -->
+    <StreamGeometry x:Key="Icono.network">F1 M6 9a6 6 0 1 0 12 0a6 6 0 0 0 -12 0 M12 3c1.333 .333 2 2.333 2 6s-.667 5.667 -2 6 M12 3c-1.333 .333 -2 2.333 -2 6s.667 5.667 2 6 M6 9h12 M3 20h7 M14 20h7 M10 20a2 2 0 1 0 4 0a2 2 0 0 0 -4 0 M12 15v3</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/network-off.svg · MIT -->
+    <StreamGeometry x:Key="Icono.network-off">F1 M6.528 6.536a6 6 0 0 0 7.942 7.933m2.247 -1.76a6 6 0 0 0 -8.427 -8.425 M12 3c1.333 .333 2 2.333 2 6c0 .337 -.006 .66 -.017 .968m-.55 3.473c-.333 .884 -.81 1.403 -1.433 1.559 M12 3c-.936 .234 -1.544 1.29 -1.822 3.167m-.16 3.838c.116 3.029 .776 4.695 1.982 4.995 M6 9h3m4 0h5 M3 20h7 M14 20h7 M10 20a2 2 0 1 0 4 0a2 2 0 0 0 -4 0 M12 15v3 M3 3l18 18</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/radar.svg · MIT -->
+    <StreamGeometry x:Key="Icono.radar">F1 M21 12h-8a1 1 0 1 0 -1 1v8a9 9 0 0 0 9 -9 M16 9a5 5 0 1 0 -7 7 M20.486 9a9 9 0 1 0 -11.482 11.495</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/route.svg · MIT -->
+    <StreamGeometry x:Key="Icono.route">F1 M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0 M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4 M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/router.svg · MIT -->
+    <StreamGeometry x:Key="Icono.router">F1 M3 15a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -4 M17 17l0 .01 M13 17l0 .01 M15 13l0 -2 M11.75 8.75a4 4 0 0 1 6.5 0 M8.5 6.5a8 8 0 0 1 13 0</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/satellite.svg · MIT -->
+    <StreamGeometry x:Key="Icono.satellite">F1 M3.707 6.293l2.586 -2.586a1 1 0 0 1 1.414 0l5.586 5.586a1 1 0 0 1 0 1.414l-2.586 2.586a1 1 0 0 1 -1.414 0l-5.586 -5.586a1 1 0 0 1 0 -1.414 M6 10l-3 3l3 3l3 -3 M10 6l3 -3l3 3l-3 3 M12 12l1.5 1.5 M14.5 17a2.5 2.5 0 0 0 2.5 -2.5 M15 21a6 6 0 0 0 6 -6</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/sitemap.svg · MIT -->
+    <StreamGeometry x:Key="Icono.sitemap">F1 M3 17a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -2 M15 17a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -2 M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -2 M6 15v-1a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v1 M12 9l0 3</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/switch-3.svg · MIT -->
+    <StreamGeometry x:Key="Icono.switch-3">F1 M3 17h2.397a5 5 0 0 0 4.096 -2.133l.177 -.253m3.66 -5.227l.177 -.254a5 5 0 0 1 4.096 -2.133h3.397 M18 4l3 3l-3 3 M3 7h2.397a5 5 0 0 1 4.096 2.133l4.014 5.734a5 5 0 0 0 4.096 2.133h3.397 M18 20l3 -3l-3 -3</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/topology-star-3.svg · MIT -->
+    <StreamGeometry x:Key="Icono.topology-star-3">F1 M10 19a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M18 5a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M10 5a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M6 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M18 19a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M14 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M22 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0 M6 12h4 M14 12h4 M15 7l-2 3 M9 7l2 3 M11 14l-2 3 M13 14l2 3</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/wall.svg · MIT -->
+    <StreamGeometry x:Key="Icono.wall">F1 M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12 M4 8h16 M20 12h-16 M4 16h16 M9 4v4 M14 8v4 M8 12v4 M16 12v4 M11 16v4</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/wifi.svg · MIT -->
+    <StreamGeometry x:Key="Icono.wifi">F1 M12 18l.01 0 M9.172 15.172a4 4 0 0 1 5.656 0 M6.343 12.343a8 8 0 0 1 11.314 0 M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/wifi-off.svg · MIT -->
+    <StreamGeometry x:Key="Icono.wifi-off">F1 M12 18l.01 0 M9.172 15.172a4 4 0 0 1 5.656 0 M6.343 12.343a7.963 7.963 0 0 1 3.864 -2.14m4.163 .155a7.965 7.965 0 0 1 3.287 2 M3.515 9.515a12 12 0 0 1 3.544 -2.455m3.101 -.92a12 12 0 0 1 10.325 3.374 M3 3l18 18</StreamGeometry>
+
+    <!-- @tabler/icons 3.47.0 · icons/outline/world.svg · MIT -->
+    <StreamGeometry x:Key="Icono.world">F1 M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18</StreamGeometry>
+
+</ResourceDictionary>

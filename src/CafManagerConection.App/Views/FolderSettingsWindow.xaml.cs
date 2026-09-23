@@ -766,7 +766,7 @@ public partial class FolderSettingsWindow : Window
         borrador.Settings.DefinirSecretoPara(protocolo, true);
     }
 
-    private void MostrarErrorEnPestana(string mensaje, TabItem pestana, TextBlock aviso)
+    private void MostrarErrorEnPestana(string mensaje, TabItem pestana, UIElement aviso)
     {
         LimpiarAvisosDeError();
         aviso.Visibility = Visibility.Visible;

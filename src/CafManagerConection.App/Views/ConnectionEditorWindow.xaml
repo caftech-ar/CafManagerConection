@@ -21,8 +21,11 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="General" />
-                        <TextBlock x:Name="_avisoErrorGeneral" Text=" ⚠" FontWeight="Bold"
-                                   Foreground="{DynamicResource Destructivo}"
+                        <temas:IconoVectorial x:Name="_avisoErrorGeneral"
+                                   Clave="{x:Static temas:IconosDeLaInterfaz.Alerta}"
+                                   Tamano="12" Margin="5,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Pincel="{DynamicResource Destructivo}"
                                    Visibility="Collapsed" />
                     </StackPanel>
                 </TabItem.Header>
@@ -139,8 +142,11 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Protocolo" />
-                        <TextBlock x:Name="_avisoErrorProtocolo" Text=" ⚠" FontWeight="Bold"
-                                   Foreground="{DynamicResource Destructivo}"
+                        <temas:IconoVectorial x:Name="_avisoErrorProtocolo"
+                                   Clave="{x:Static temas:IconosDeLaInterfaz.Alerta}"
+                                   Tamano="12" Margin="5,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Pincel="{DynamicResource Destructivo}"
                                    Visibility="Collapsed" />
                     </StackPanel>
                 </TabItem.Header>
@@ -478,8 +484,11 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Avanzado" />
-                        <TextBlock x:Name="_avisoErrorAvanzado" Text=" ⚠" FontWeight="Bold"
-                                   Foreground="{DynamicResource Destructivo}"
+                        <temas:IconoVectorial x:Name="_avisoErrorAvanzado"
+                                   Clave="{x:Static temas:IconosDeLaInterfaz.Alerta}"
+                                   Tamano="12" Margin="5,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Pincel="{DynamicResource Destructivo}"
                                    Visibility="Collapsed" />
                     </StackPanel>
                 </TabItem.Header>
@@ -565,6 +574,7 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Button Content="Quitar"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Quitar}"
                                                             Style="{StaticResource BotonTenue}"
                                                             Click="AlQuitarCampoPropio" />
                                                 </DataTemplate>

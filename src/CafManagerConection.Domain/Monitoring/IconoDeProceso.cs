@@ -1,7 +1,14 @@
+using CafManagerConection.Domain.Settings;
+
 namespace CafManagerConection.Domain.Monitoring;
 
-/// <summary>Qué icono del catálogo le corresponde a un proceso del servidor cuando se lo reconoce. Sin coincidencia devuelve <c>null</c>: mostrar un icono genérico a todo hace que ninguno signifique nada.</summary>
-/// <remarks>Cuando el producto tiene logo en el catálogo se usa el logo; si no, el concepto que le toca.</remarks>
+/// <summary>Qué icono del catálogo le corresponde a un proceso del servidor.</summary>
+/// <remarks>
+/// Un proceso que no se reconoce devuelve el genérico, no nulo: dejar la celda vacía desarma la
+/// columna. Lo que evita que el icono se vuelva textura no es la ausencia sino el énfasis, y de eso
+/// se ocupa quien dibuja, que pinta el genérico más apagado —para eso está <c>EsConocido</c>—.
+/// Cuando el producto tiene logo en el catálogo se usa el logo; si no, el concepto que le toca.
+/// </remarks>
 public static class IconoDeProceso
 {
     // El nombre que trae /proc/<pid>/stat es el del ejecutable, sin ruta y a lo sumo 15 caracteres.
@@ -48,7 +55,15 @@ public static class IconoDeProceso
         ("systemd-timesyn", "clock"),
     ];
 
-    public static string? ClaveDeIcono(string? nombre)
+    /// <summary>La clave del catálogo con la que se dibuja un proceso; el genérico si no se reconoce.</summary>
+    /// <param name="nombre">Nombre del ejecutable, tal como lo trae el servidor.</param>
+    public static string ClaveDeIcono(string? nombre) => Reconocer(nombre) ?? IconosPorOmision.Desconocido;
+
+    /// <summary>Si el proceso está en la tabla de conocidos. Quien dibuja lo usa para el énfasis.</summary>
+    /// <param name="nombre">Nombre del ejecutable, tal como lo trae el servidor.</param>
+    public static bool EsConocido(string? nombre) => Reconocer(nombre) is not null;
+
+    private static string? Reconocer(string? nombre)
     {
         if (string.IsNullOrWhiteSpace(nombre))
         {
@@ -70,7 +85,7 @@ public static class IconoDeProceso
 
         if (dosPuntos > 0)
         {
-            return ClaveDeIcono(limpio[..dosPuntos]);
+            return Reconocer(limpio[..dosPuntos]);
         }
 
         // «python3.11» y «postgres-16» son versiones del mismo binario.
@@ -78,8 +93,6 @@ public static class IconoDeProceso
 
         return corte > 0 ? Exacto(limpio[..corte]) : null;
     }
-
-    public static bool EsConocido(string? nombre) => ClaveDeIcono(nombre) is not null;
 
     private static string? Exacto(string nombre)
     {

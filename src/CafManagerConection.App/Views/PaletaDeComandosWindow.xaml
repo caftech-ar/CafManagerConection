@@ -1,6 +1,7 @@
 <Window x:Class="CafManagerConection.App.Views.PaletaDeComandosWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:temas="clr-namespace:CafManagerConection.App.Themes"
         Title="Comandos guardados"
         Height="520" Width="760"
         MinHeight="420" MinWidth="620"
@@ -50,6 +51,7 @@
                                 Click="AlGuardar" />
 
                         <Button x:Name="_borrar" Content="Borrar"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Eliminar}"
                                 Style="{StaticResource BotonDestructivo}"
                                 Height="30" Padding="12,0" Margin="6,0,0,0"
                                 IsEnabled="False"

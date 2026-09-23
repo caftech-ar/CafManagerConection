@@ -61,6 +61,22 @@ public sealed class PincelPorClave : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>El pincel de un icono según se haya reconocido o no lo que dibuja.</summary>
+/// <remarks>Lo que evita que el icono se vuelva textura no es esconderlo sino apagarlo: con el
+/// genérico más tenue, una lista de cuarenta procesos sigue teniendo sólo cinco que se leen.</remarks>
+public sealed class PincelDelEnfasis : IValueConverter
+{
+    /// <summary>La clave del pincel que le toca a un icono según se haya reconocido o no.</summary>
+    /// <param name="conocido">Si se reconoció lo que el icono dibuja.</param>
+    public static string ClaveDelPincel(bool conocido) => conocido ? "Texto" : "TextoTenue";
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        Pinceles.De(ClaveDelPincel(value is true));
+
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c) =>
+        throw new NotSupportedException();
+}
+
 public sealed class ColorDeEstado : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>

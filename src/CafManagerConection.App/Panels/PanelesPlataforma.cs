@@ -8,6 +8,8 @@ using CafManagerConection.App.Views;
 using CafManagerConection.Platform;
 using CafManagerConection.UseCases.Abstractions;
 using CafManagerConection.App.Themes;
+using CafManagerConection.Domain.Settings;
+using CafManagerConection.Domain.Monitoring;
 
 namespace CafManagerConection.App.Panels;
 
@@ -27,6 +29,8 @@ public sealed class DockerPanel : PanelInventario
         bool Corriendo,
         string Icono,
         Brush Color,
+        string Identidad = "",
+        bool IdentidadConocida = false,
         string Real = "");
 
     /// <summary>Un proyecto compose, con sus contenedores y los servicios que no llegaron a tener uno.</summary>
@@ -76,7 +80,7 @@ public sealed class DockerPanel : PanelInventario
         _control = control;
         _servidor = servidor;
 
-        Columna("Nombre", nameof(Fila.Nombre), 2);
+        ColumnaConIdentidad("Nombre", nameof(Fila.Nombre), 2);
         Columna("Imagen", nameof(Fila.Imagen), 1.4);
         ColumnaDeEstado();
         Columna("CPU", nameof(Fila.Cpu), 0.6);
@@ -480,6 +484,7 @@ public sealed class DockerPanel : PanelInventario
             : medida is null ? "—" : Memoria(medida);
 
         var (icono, color) = EstiloDeGravedad(c.Gravedad);
+        var producto = AplicacionesConocidas.Reconocer(c.Image);
 
         return new Fila(
             sangria ? $"    {etiqueta}" : etiqueta,
@@ -492,6 +497,10 @@ public sealed class DockerPanel : PanelInventario
             c.IsRunning,
             icono,
             color,
+            Identidad: producto is null
+                ? IconosPorOmision.Desconocido
+                : IconosDeAplicacion.Glifo(producto),
+            IdentidadConocida: producto is not null,
             Real: c.Name);
     }
 
@@ -543,7 +552,13 @@ public sealed class DockerPanel : PanelInventario
 [SupportedOSPlatform("windows")]
 public sealed class NginxPanel : PanelInventario
 {
-    public sealed record Fila(string Nombres, string Puertos, string Raiz, string Archivo);
+    public sealed record Fila(
+        string Nombres,
+        string Puertos,
+        string Raiz,
+        string Archivo,
+        string Identidad,
+        bool IdentidadConocida);
 
     private readonly PlatformInventory _inventario;
 
@@ -552,7 +567,7 @@ public sealed class NginxPanel : PanelInventario
     {
         _inventario = inventario;
 
-        Agregar("Puertos", nameof(Fila.Puertos), 0.8);
+        ColumnaConIdentidad("Puertos", nameof(Fila.Puertos), 0.8);
         Agregar("Raíz", nameof(Fila.Raiz), 1.6);
         Agregar("Nombres de servidor", nameof(Fila.Nombres), 2);
         Agregar("Archivo", nameof(Fila.Archivo), 1.6);
@@ -585,13 +600,26 @@ public sealed class NginxPanel : PanelInventario
                 string.Join(", ", s.ServerNames),
                 string.Join(", ", s.ListenPorts),
                 s.DocumentRoot ?? "—",
-                s.ConfigFile ?? "—"))
+                s.ConfigFile ?? "—",
+                TipoDeSitio(s),
+                s.DocumentRoot is not null))
             .ToList();
 
         MostrarResumen(
             $"{sitios.Value!.Count} sitio(s) · doble clic para ver la configuración efectiva "
             + "· sólo lectura");
     }
+
+    // El parser trae los puertos y la raíz, y nada más: un server block sin raíz puede ser un proxy
+    // inverso o una redirección, y el icono no lo afirma.
+    /// <summary>Qué tipo de sitio es, con lo que el inventario alcanza a saber.</summary>
+    /// <param name="sitio">El server block leído del servidor.</param>
+    private static string TipoDeSitio(NginxSite sitio) =>
+        sitio.DocumentRoot is null ? IconosPorOmision.Desconocido
+        : sitio.ListenPorts.Contains(PuertoSeguro) ? IconosDeLaInterfaz.SitioSeguro
+        : IconosDeLaInterfaz.SitioWeb;
+
+    private const int PuertoSeguro = 443;
 
     private async Task VerConfiguracionAsync()
     {
@@ -629,7 +657,9 @@ public sealed class SupervisorPanel : PanelInventario
         string Detalle,
         bool Fallido,
         string Icono,
-        Brush Color);
+        Brush Color,
+        string Identidad,
+        bool IdentidadConocida);
 
     private readonly PlatformInventory _inventario;
     private readonly ControlDeSupervisor _control;
@@ -647,7 +677,7 @@ public sealed class SupervisorPanel : PanelInventario
         _canal = canal;
 
         ColumnaDeEstado();
-        Agregar("Proceso", nameof(Fila.Proceso), 1.6);
+        ColumnaConIdentidad("Proceso", nameof(Fila.Proceso), 1.6);
         Agregar("Detalle", nameof(Fila.Detalle), 2.2);
 
         var estilo = new Style(typeof(DataGridRow), (Style)FindResource(typeof(DataGridRow)));
@@ -835,7 +865,9 @@ public sealed class SupervisorPanel : PanelInventario
                 Detalle(p),
                 !p.IsRunning,
                 IconoDeGravedad(p.Gravedad),
-                (Brush)FindResource(ColorDeGravedad(p.Gravedad))))
+                (Brush)FindResource(ColorDeGravedad(p.Gravedad)),
+                IconoDeProceso.ClaveDeIcono(p.Name),
+                IconoDeProceso.EsConocido(p.Name)))
             .ToList();
 
         var caidos = procesos.Value!.Count(p => p.Gravedad == GravedadDeProceso.Falla);

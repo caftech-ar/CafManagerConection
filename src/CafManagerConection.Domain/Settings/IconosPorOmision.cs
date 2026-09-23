@@ -12,6 +12,12 @@ public static class IconosPorOmision
     public const string Web = "world-www";
     public const string Aplicacion = "box";
 
+    /// <summary>Lo que se dibuja cuando no se reconoce qué hay del otro lado.</summary>
+    /// <remarks>Una caja y no un signo de pregunta: en un servidor con cuarenta procesos, treinta y
+    /// cinco llevan este icono, y treinta y cinco signos de pregunta se leen como un problema que no
+    /// existe. Quien dibuja lo pinta más apagado que los reconocidos; ese es todo el truco.</remarks>
+    public const string Desconocido = "box";
+
     /// <summary>El icono que le toca a un protocolo.</summary>
     /// <param name="protocolo">Protocolo de la conexión, o null si no se sabe.</param>
     public static string DeProtocolo(Protocol? protocolo) => protocolo switch

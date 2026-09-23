@@ -183,6 +183,7 @@
                         MinWidth="110" Click="AlReiniciar" />
 
                 <Button x:Name="_detener" Content="Detener…"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Detener}"
                         Style="{StaticResource BotonDestructivo}"
                         MinWidth="100" Margin="8,0,0,0" Click="AlDetener" />
 

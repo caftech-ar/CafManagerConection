@@ -1,6 +1,6 @@
 # Historial de versiones
 
-## 0.2.1
+## 0.2.2
 
 ### Novedades
 
@@ -14,8 +14,20 @@
   los diez colores, en los dos temas.
 - **Los paneles de procesos y de aplicaciones muestran el logo del producto** cuando se lo reconoce:
   nginx, PostgreSQL, Redis, Docker, Java o Python dejan de dibujarse con un icono genérico.
+- **Iconos en los paneles de la sesión.** Docker y supervisord muestran qué es cada contenedor y cada
+  proceso, además de cómo está; nginx marca si el sitio es seguro; túneles muestra si está levantado;
+  y lo que no se reconoce lleva un icono genérico apagado en vez de un hueco que desarmaba la
+  columna.
+- **Iconos en las acciones.** Los filtros de SSH y RDP emparejan con el de Favoritas, el menú del
+  árbol quedó completo, y los botones de barra y los destructivos llevan el suyo. Se fue el último
+  emoji que hacía de icono.
 - **Toda la iconografía pasó a trazo.** Los iconos del árbol, las barras, los menús y los paneles se
   dibujan desde el catálogo; no queda ninguna geometría escrita a mano en el repositorio.
+
+## 0.2.1
+
+### Novedades
+
 - **Franja de métricas en las sesiones SSH.** Al pie del terminal, con uso de CPU, memoria y disco
   del servidor, su distribución, tráfico de red, carga y tiempo encendido. Se refresca cada cinco
   segundos, con un gráfico de las últimas muestras en CPU y memoria. Viene activa; se apaga en

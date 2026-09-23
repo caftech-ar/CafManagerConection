@@ -1260,7 +1260,7 @@ public partial class ConnectionEditorWindow : Window
     }
 
     /// <summary>Muestra un error de validación propio de esta ventana y lleva al usuario a la pestaña donde está el campo que lo causó, marcándola además con un aviso que sobrevive a que se vuelva a cambiar de pestaña.</summary>
-    private void MostrarErrorEnPestana(string mensaje, TabItem pestana, TextBlock aviso)
+    private void MostrarErrorEnPestana(string mensaje, TabItem pestana, UIElement aviso)
     {
         LimpiarAvisosDeError();
         aviso.Visibility = Visibility.Visible;

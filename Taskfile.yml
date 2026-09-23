@@ -122,10 +122,15 @@ tasks:
       los comandos de publicación en su propio guion en lugar de usar estas tareas, y entonces la
       forma de armar el paquete se separaba entre el CI y esta máquina — que es de donde salen
       los defectos que aparecen recién en el equipo del usuario.
+
+      Con CONFIG se elige la configuración. Por omisión Debug, que es la vuelta rápida mientras
+      se trabaja; `publish` y `check` la llaman en Release, porque lo que se prueba tiene que ser
+      lo mismo que se entrega.
     vars:
       FILTRO: '{{.FILTRO | default ""}}'
+      CONFIG: '{{.CONFIG | default "Debug"}}'
     cmds:
-      - dotnet test {{.SLN}} {{if .FILTRO}}--filter "{{.FILTRO}}"{{end}}
+      - dotnet test {{.SLN}} --configuration {{.CONFIG}} {{if .FILTRO}}--filter "{{.FILTRO}}"{{end}}
 
   test:quick:
     desc: Ejecuta sólo Domain y UseCases
@@ -154,7 +159,9 @@ tasks:
       de reflexión.
 
       El resultado no necesita .NET instalado ni privilegios de administrador.
-    deps: [test]
+    deps:
+      - task: test
+        vars: { CONFIG: Release }
     cmds:
       - cmd: pwsh -NoProfile -Command "if (Test-Path '{{.PUBLISH_DIR}}') { Remove-Item '{{.PUBLISH_DIR}}' -Recurse -Force }"
       - dotnet publish {{.APP}} --configuration Release --runtime {{.RID}} --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false --output {{.PUBLISH_DIR}}
@@ -314,5 +321,6 @@ tasks:
     cmds:
       - task: build:release
       - task: test
+        vars: { CONFIG: Release }
       - cmd: pwsh -NoProfile -Command "Write-Host '' ; Write-Host 'Verificación completa OK.' -ForegroundColor Green"
         silent: true

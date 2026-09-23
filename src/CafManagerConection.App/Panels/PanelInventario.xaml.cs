@@ -1,6 +1,7 @@
 using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace CafManagerConection.App.Panels;
 
@@ -136,6 +137,44 @@ public partial class PanelInventario : UserControl
     }
 
     /// <summary>Estilo de celda que cambia el color del texto cuando se cumple una condición de la fila.</summary>
+    /// <summary>Una columna de texto con el icono de qué es cada fila delante.</summary>
+    /// <param name="cabecera">Título de la columna.</param>
+    /// <param name="propiedad">Propiedad de la fila con el texto.</param>
+    /// <param name="peso">Ancho relativo de la columna.</param>
+    /// <remarks>La fila tiene que exponer <c>Identidad</c> con la clave y <c>IdentidadConocida</c>
+    /// con si se reconoció: el genérico se pinta apagado para no competir con los reconocidos.</remarks>
+    protected void ColumnaConIdentidad(string cabecera, string propiedad, double peso)
+    {
+        var plantilla = new DataTemplate();
+        var fila = new FrameworkElementFactory(typeof(StackPanel));
+        fila.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
+
+        var icono = new FrameworkElementFactory(typeof(Themes.IconoVectorial));
+        icono.SetValue(Themes.IconoVectorial.TamanoProperty, 13.0);
+        icono.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 6, 0));
+        icono.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        icono.SetBinding(Themes.IconoVectorial.ClaveProperty, new Binding("Identidad"));
+        icono.SetBinding(
+            Themes.IconoVectorial.PincelProperty,
+            new Binding("IdentidadConocida") { Converter = new Themes.PincelDelEnfasis() });
+        fila.AppendChild(icono);
+
+        var texto = new FrameworkElementFactory(typeof(TextBlock));
+        texto.SetBinding(TextBlock.TextProperty, new Binding(propiedad));
+        texto.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        texto.SetValue(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
+        fila.AppendChild(texto);
+
+        plantilla.VisualTree = fila;
+
+        Tabla.Columns.Add(new DataGridTemplateColumn
+        {
+            Header = cabecera,
+            CellTemplate = plantilla,
+            Width = new DataGridLength(peso, DataGridLengthUnitType.Star),
+        });
+    }
+
     protected Style ColorDeCelda(string propiedad, object valor, System.Windows.Media.Brush pincel)
     {
         var estilo = new Style(typeof(DataGridCell), (Style)FindResource(typeof(DataGridCell)));

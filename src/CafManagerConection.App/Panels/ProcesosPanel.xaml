@@ -78,6 +78,7 @@
 
                 <Button x:Name="_botonEscalar" Grid.Column="1"
                         Content="Reintentar con privilegios"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Privilegios}"
                         Style="{StaticResource BotonSecundario}"
                         Height="26" Padding="10,0" Margin="10,0,0,0"
                         FontWeight="Normal"
@@ -136,8 +137,8 @@
                                                           Margin="0,0,6,0"
                                                           VerticalAlignment="Center"
                                                           Clave="{Binding ClaveDeIcono}"
-                                                          Pincel="{DynamicResource TextoTenue}"
-                                                          Visibility="{Binding VisibilidadDelIcono}" />
+                                                          Pincel="{Binding ClaveDePincelDelIcono,
+                                                                  Converter={StaticResource PincelClave}}" />
 
                                     <TextBlock Text="{Binding Nombre}"
                                                TextTrimming="CharacterEllipsis" />

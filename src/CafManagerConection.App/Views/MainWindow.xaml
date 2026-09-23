@@ -285,7 +285,14 @@
                               Tag="Ssh"
                               ToolTip="Sólo SSH. Apretalo de nuevo para ver todo."
                               Click="AlAlternarFiltro">
-                    <TextBlock Text="SSH" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal">
+                        <temas:IconoVectorial Clave="{x:Static temas:IconosDeLaInterfaz.Ssh}"
+                                              Tamano="10"
+                                              Pincel="{DynamicResource ProtocoloSsh}"
+                                              Margin="0,0,5,0"
+                                              VerticalAlignment="Center" />
+                        <TextBlock Text="SSH" VerticalAlignment="Center" />
+                    </StackPanel>
                 </ToggleButton>
 
                 <ToggleButton x:Name="_filtroRdp"
@@ -293,7 +300,14 @@
                               Tag="Rdp"
                               ToolTip="Sólo RDP. Apretalo de nuevo para ver todo."
                               Click="AlAlternarFiltro">
-                    <TextBlock Text="RDP" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal">
+                        <temas:IconoVectorial Clave="{x:Static temas:IconosDeLaInterfaz.Rdp}"
+                                              Tamano="10"
+                                              Pincel="{DynamicResource ProtocoloRdp}"
+                                              Margin="0,0,5,0"
+                                              VerticalAlignment="Center" />
+                        <TextBlock Text="RDP" VerticalAlignment="Center" />
+                    </StackPanel>
                 </ToggleButton>
             </StackPanel>
 

@@ -63,6 +63,7 @@
                 <StackPanel Orientation="Horizontal">
                     <Button x:Name="_botonSubir"
                             Content="Subir un archivo o directorio…"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Subir}"
                             Style="{StaticResource BotonSecundario}"
                             Height="30" Padding="10,0" FontWeight="Normal"
                             ToolTip="Confirma a qué carpeta del servidor va antes de transferir"
@@ -75,12 +76,14 @@
                         </Button.ContextMenu>
                     </Button>
 
-                    <Button Content="Bajar…" Style="{StaticResource BotonSecundario}"
+                    <Button Content="Bajar…"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Bajar}" Style="{StaticResource BotonSecundario}"
                             Height="30" Padding="10,0" FontWeight="Normal" Margin="4,0,0,0"
                             ToolTip="Pregunta dónde guardar lo seleccionado"
                             Click="AlBajar" />
 
-                    <Button Content="Actualizar" Style="{StaticResource BotonSecundario}"
+                    <Button Content="Actualizar"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Refrescar}" Style="{StaticResource BotonSecundario}"
                             Height="30" Padding="10,0" FontWeight="Normal" Margin="4,0,0,0"
                             ToolTip="Vuelve a leer el nivel seleccionado"
                             Click="AlActualizar" />

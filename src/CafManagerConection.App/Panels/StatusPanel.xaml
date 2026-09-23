@@ -1,6 +1,7 @@
 <UserControl x:Class="CafManagerConection.App.Panels.StatusPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:temas="clr-namespace:CafManagerConection.App.Themes"
              xmlns:oxy="http://oxyplot.org/wpf">
 
     <UserControl.Resources>
@@ -64,6 +65,7 @@
                 </StackPanel>
 
                 <Button Grid.Column="1" x:Name="_botonInterfaces" Content="Interfaces…"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.Interfaces}"
                         Style="{StaticResource BotonTenue}" Height="24" Padding="8,0"
                         Margin="8,0,0,0"
                         Click="AlElegirInterfacesClick" />
@@ -233,6 +235,7 @@
                                          Checked="AlCambiarOrdenDeProcesos" />
 
                             <Button x:Name="_verTodos" Content="Ver todos…"
+                            temas:BotonConIcono.Clave="{x:Static temas:IconosDeLaInterfaz.VerTodos}"
                                     Style="{StaticResource BotonTenue}"
                                     Height="22" Padding="8,0" Margin="12,0,0,0"
                                     FontWeight="Normal"

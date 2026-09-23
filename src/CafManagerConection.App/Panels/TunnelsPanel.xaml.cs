@@ -5,6 +5,7 @@ using CafManagerConection.App.Bootstrap;
 using CafManagerConection.App.Views;
 using CafManagerConection.Domain.Connections;
 using CafManagerConection.Ssh;
+using CafManagerConection.App.Themes;
 
 namespace CafManagerConection.App.Panels;
 
@@ -12,7 +13,14 @@ namespace CafManagerConection.App.Panels;
 [SupportedOSPlatform("windows")]
 public partial class TunnelsPanel : UserControl
 {
-    public sealed record Fila(string Nombre, string Local, string Remoto, string Estado, SshTunnel Tunel);
+    public sealed record Fila(
+        string Nombre,
+        string Local,
+        string Remoto,
+        string Estado,
+        SshTunnel Tunel,
+        string Identidad,
+        bool IdentidadConocida);
 
     private readonly TunnelHost _host;
     private readonly CompositionRoot _root;
@@ -48,7 +56,10 @@ public partial class TunnelsPanel : UserControl
                     estado.IsActive
                         ? "activo"
                         : estado.FailureMessage ?? "detenido",
-                    t);
+                    t,
+                    // Definido y apagado no es una falla: va tenue, no en rojo.
+                    estado.IsActive ? IconosDeLaInterfaz.TunelActivo : IconosDeLaInterfaz.TunelCaido,
+                    estado.IsActive);
             })
             .ToList();
 

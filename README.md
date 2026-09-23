@@ -2,7 +2,7 @@
 
 Administrador de servidores para Windows: sesiones RDP y SSH en pestañas, con carpetas, herencia de
 credenciales y entradas web. Interfaz WPF; el terminal y el cliente RDP van alojados con
-`WindowsFormsHost`, que es lo único para lo que se conserva WinForms. Versión 0.2.1.
+`WindowsFormsHost`, que es lo único para lo que se conserva WinForms. Versión 0.2.2.
 
 Cuatro clases de afirmación de este documento se cruzan contra el código en cada corrida de las
 pruebas: la versión que declara, los nombres de tarea que menciona, los atajos que lista y las

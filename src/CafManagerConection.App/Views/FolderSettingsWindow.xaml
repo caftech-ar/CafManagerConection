@@ -84,8 +84,11 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Acceso" />
-                        <TextBlock x:Name="_avisoErrorAcceso" Text=" ⚠" FontWeight="Bold"
-                                   Foreground="{DynamicResource Destructivo}"
+                        <temas:IconoVectorial x:Name="_avisoErrorAcceso"
+                                   Clave="{x:Static temas:IconosDeLaInterfaz.Alerta}"
+                                   Tamano="12" Margin="5,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Pincel="{DynamicResource Destructivo}"
                                    Visibility="Collapsed" />
                     </StackPanel>
                 </TabItem.Header>
@@ -367,8 +370,11 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="SSH" />
-                        <TextBlock x:Name="_avisoErrorSsh" Text=" ⚠" FontWeight="Bold"
-                                   Foreground="{DynamicResource Destructivo}"
+                        <temas:IconoVectorial x:Name="_avisoErrorSsh"
+                                   Clave="{x:Static temas:IconosDeLaInterfaz.Alerta}"
+                                   Tamano="12" Margin="5,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Pincel="{DynamicResource Destructivo}"
                                    Visibility="Collapsed" />
                     </StackPanel>
                 </TabItem.Header>

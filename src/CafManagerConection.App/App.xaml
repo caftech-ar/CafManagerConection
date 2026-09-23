@@ -35,6 +35,7 @@
             <temas:SiNegrita x:Key="ASiNegrita" />
             <temas:ColorDeEstado x:Key="ColorEstado" />
             <temas:PincelPorClave x:Key="PincelClave" />
+            <temas:PincelDelEnfasis x:Key="PincelEnfasis" />
             <temas:TextoDeEstado x:Key="TextoEstado" />
         </ResourceDictionary>
     </Application.Resources>

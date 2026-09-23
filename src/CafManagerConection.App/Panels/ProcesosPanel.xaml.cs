@@ -345,11 +345,12 @@ public partial class ProcesosPanel : UserControl
         /// <summary>Vacío cuando el servidor no dejó leer el dueño del proceso.</summary>
         public string Usuario => usuario;
 
-        /// <summary>Clave del icono cuando el proceso se reconoce, y <c>null</c> cuando no.</summary>
-        public string? ClaveDeIcono => Domain.Monitoring.IconoDeProceso.ClaveDeIcono(nombre);
+        /// <summary>Clave del icono; el genérico cuando el proceso no se reconoce.</summary>
+        public string ClaveDeIcono => Domain.Monitoring.IconoDeProceso.ClaveDeIcono(nombre);
 
-        public Visibility VisibilidadDelIcono =>
-            ClaveDeIcono is null ? Visibility.Collapsed : Visibility.Visible;
+        /// <summary>Pincel del icono: el genérico va apagado para no competir con los reconocidos.</summary>
+        public string ClaveDePincelDelIcono =>
+            Domain.Monitoring.IconoDeProceso.EsConocido(nombre) ? "Texto" : "TextoTenue";
 
         public string Cpu => cpu;
 

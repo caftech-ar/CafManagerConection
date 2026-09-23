@@ -69,11 +69,15 @@ public partial class MainWindow
         switch (nodo)
         {
             case { EsCarpeta: false, Protocolo: Protocol.Web, Conexion: { } web }:
-                Agregar("Abrir en el navegador", () => AbrirWeb(web), destacado: true);
+                Agregar("Abrir en el navegador", () => AbrirWeb(web), destacado: true,
+                    icono: IconosDeLaInterfaz.AbrirEnNavegador);
                 Separar();
-                Agregar("Copiar dirección", () => _ = CopiarDestinoAsync(nodo));
-                Agregar("Copiar usuario", () => CopiarUsuario(nodo));
-                Agregar("Copiar contraseña", () => _ = CopiarSecretoAsync(nodo));
+                Agregar("Copiar dirección", () => _ = CopiarDestinoAsync(nodo),
+                    icono: IconosDeLaInterfaz.CopiarAlPortapapeles);
+                Agregar("Copiar usuario", () => CopiarUsuario(nodo),
+                    icono: IconosDeLaInterfaz.CopiarAlPortapapeles);
+                Agregar("Copiar contraseña", () => _ = CopiarSecretoAsync(nodo),
+                    icono: IconosDeLaInterfaz.CopiarAlPortapapeles);
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
                 Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconosDeLaInterfaz.Editar);
@@ -86,17 +90,24 @@ public partial class MainWindow
                 break;
 
             case { EsCarpeta: false, Conexion: { } conexion }:
-                Agregar("Conectar", () => AbrirSesion(conexion), destacado: true);
-                Agregar("Abrir otra sesión", () => AbrirSesion(conexion, forzarNueva: true));
-                Agregar("Hacer ping", () => HacerPing(conexion.Name, [conexion]));
-                Agregar("Ver bitácoras", () => VerBitacoras(conexion.Name));
+                Agregar("Conectar", () => AbrirSesion(conexion), destacado: true,
+                    icono: IconosDeLaInterfaz.Conectar);
+                Agregar("Abrir otra sesión", () => AbrirSesion(conexion, forzarNueva: true),
+                    icono: IconosDeLaInterfaz.AbrirOtraSesion);
+                Agregar("Hacer ping", () => HacerPing(conexion.Name, [conexion]),
+                    icono: IconosDeLaInterfaz.Ping);
+                Agregar("Ver bitácoras", () => VerBitacoras(conexion.Name),
+                    icono: IconosDeLaInterfaz.Bitacoras);
 
                 AgregarHerramientasExternas(conexion, Agregar, Separar);
 
                 Separar();
-                Agregar("Copiar host", () => _ = CopiarDestinoAsync(nodo));
-                Agregar("Copiar usuario", () => CopiarUsuario(nodo));
-                Agregar("Copiar contraseña", () => _ = CopiarSecretoAsync(nodo));
+                Agregar("Copiar host", () => _ = CopiarDestinoAsync(nodo),
+                    icono: IconosDeLaInterfaz.CopiarAlPortapapeles);
+                Agregar("Copiar usuario", () => CopiarUsuario(nodo),
+                    icono: IconosDeLaInterfaz.CopiarAlPortapapeles);
+                Agregar("Copiar contraseña", () => _ = CopiarSecretoAsync(nodo),
+                    icono: IconosDeLaInterfaz.CopiarAlPortapapeles);
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
                 Agregar("Editar…", () => _ = EditarAsync(nodo), icono: IconosDeLaInterfaz.Editar);
@@ -118,8 +129,10 @@ public partial class MainWindow
                 break;
 
             case { EsCarpeta: true }:
-                Agregar("Abrir todas las conexiones", () => AbrirTodasAsync(nodo), destacado: true);
-                Agregar("Hacer ping", () => HacerPing(nodo.Nombre, DelSubarbol(nodo)));
+                Agregar("Abrir todas las conexiones", () => AbrirTodasAsync(nodo), destacado: true,
+                    icono: IconosDeLaInterfaz.Conectar);
+                Agregar("Hacer ping", () => HacerPing(nodo.Nombre, DelSubarbol(nodo)),
+                    icono: IconosDeLaInterfaz.Ping);
                 Separar();
                 Agregar(
                     "Nueva conexión aquí…", () => _ = NuevaConexionAsync(nodo.Id),
@@ -127,11 +140,13 @@ public partial class MainWindow
                 Agregar(
                     "Nueva subcarpeta…", () => _ = NuevaCarpetaAsync(nodo.Id),
                     icono: IconosDeLaInterfaz.Carpeta);
-                Agregar("Ordenar alfabéticamente", () => _ = OrdenarHijosAsync(nodo));
+                Agregar("Ordenar alfabéticamente", () => _ = OrdenarHijosAsync(nodo),
+                    icono: IconosDeLaInterfaz.Ordenar);
                 Separar();
                 menu.Items.Add(MenuDeEtiquetas(nodo));
                 Agregar("Editar carpeta…", () => _ = EditarCarpetaAsync(nodo), icono: IconosDeLaInterfaz.Editar);
-                Agregar("Renombrar…", () => _ = RenombrarCarpetaAsync(nodo));
+                Agregar("Renombrar…", () => _ = RenombrarCarpetaAsync(nodo),
+                    icono: IconosDeLaInterfaz.Renombrar);
                 Separar();
                 Agregar(
                     "Eliminar carpeta", () => _ = EliminarAsync(nodo), icono: IconosDeLaInterfaz.Eliminar,
@@ -699,14 +714,15 @@ public partial class MainWindow
         menu.Items.Add(new Separator());
         Agregar("Preferencias…", () => _ = PreferenciasAsync(), IconosDeLaInterfaz.Ajustes);
         menu.Items.Add(new Separator());
-        Agregar("Historial de conexiones…", HistorialDeConexiones);
-        Agregar("Consola de traza (F12)", () => AlternarConsola());
-        Agregar("Comandos guardados…", AdministrarComandos);
+        Agregar("Historial de conexiones…", HistorialDeConexiones, IconosDeLaInterfaz.Historial);
+        Agregar("Consola de traza (F12)", () => AlternarConsola(), IconosDeLaInterfaz.ConsolaDeTraza);
+        Agregar("Comandos guardados…", AdministrarComandos, IconosDeLaInterfaz.ComandosGuardados);
         menu.Items.Add(new Separator());
         Agregar(
             "Color de los iconos…", () => _ = ColoresDeIconosAsync(),
             IconosDeLaInterfaz.Paleta);
-        Agregar("Cambiar el tema", () => AlCambiarTema(_botonTema, new RoutedEventArgs()));
+        Agregar("Cambiar el tema", () => AlCambiarTema(_botonTema, new RoutedEventArgs()),
+            IconosDeLaInterfaz.CambiarTema);
         menu.Items.Add(new Separator());
         Agregar(
             "Restablecer el ancho de los paneles", () => _ = RestablecerAnchosAsync(),
